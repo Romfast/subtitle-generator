@@ -1,0 +1,11 @@
+# Creați directoarele și fișierele .gitkeep folosind aceste comenzi:
+
+mkdir -p frontend/public/
+mkdir -p frontend/src/
+mkdir -p backend/uploads/
+mkdir -p backend/processed/
+mkdir -p shared/
+
+touch backend/uploads/.gitkeep
+touch backend/processed/.gitkeep
+touch shared/.gitkeep
