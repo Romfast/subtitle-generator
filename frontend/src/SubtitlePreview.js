@@ -29,29 +29,49 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     
     // Împărțim textul în cuvinte
     const allWords = processedText.split(/\s+/).filter(word => word.length > 0);
-    const maxWordsPerLine = subtitleStyle.maxWordsPerLine || 4;
-    const maxLines = subtitleStyle.maxLines || 3;
+    
+    // Obținem limitele din stilul subtitrării
+    const maxWordsPerLine = parseInt(subtitleStyle.maxWordsPerLine || 3, 10); 
+    const maxLines = parseInt(subtitleStyle.maxLines || 1, 10);
+    
+    console.log(`Limiting to ${maxWordsPerLine} words per line and ${maxLines} lines`);
     
     // Distribuim cuvintele pe linii
     const lines = [];
-    let remainingWords = [...allWords];
     
-    for (let lineIdx = 0; lineIdx < maxLines && remainingWords.length > 0; lineIdx++) {
-      // Ia maxim maxWordsPerLine cuvinte pentru linia curentă
-      const lineWords = remainingWords.slice(0, maxWordsPerLine);
+    // Ia câte maxWordsPerLine cuvinte la fiecare linie
+    for (let i = 0; i < allWords.length && lines.length < maxLines; i += maxWordsPerLine) {
+      const lineWords = allWords.slice(i, i + maxWordsPerLine);
       lines.push(lineWords.join(' '));
-      
-      // Elimină cuvintele deja folosite
-      remainingWords = remainingWords.slice(maxWordsPerLine);
     }
     
-    // Dacă mai există cuvinte rămase și am atins numărul maxim de linii,
-    // adaugă restul la ultima linie
-    if (remainingWords.length > 0 && lines.length === maxLines) {
-      lines[maxLines - 1] += ' ' + remainingWords.join(' ');
+    // Dacă avem mai multe cuvinte decât încap în maxLines cu maxWordsPerLine,
+    // restul le adăugăm la ultima linie
+    if (allWords.length > maxLines * maxWordsPerLine && lines.length === maxLines) {
+      const extraWords = allWords.slice(maxLines * maxWordsPerLine);
+      if (extraWords.length > 0) {
+        lines[maxLines - 1] += ' ' + extraWords.join(' ');
+      }
     }
     
-    return { lines, allWords };
+    // Adăugăm o verificare pentru a ne asigura că lungimea cuvintelor nu depășește lățimea maximă
+    const truncateIfNeeded = (line, maxChars = 25) => {
+      if (line.length <= maxChars) return line;
+      return line.substring(0, maxChars - 3) + '...';
+    };
+    
+    // Aplicăm truncherea dacă e necesar
+    const truncatedLines = lines.map(line => truncateIfNeeded(line, 30));
+    
+    console.log("Formatted subtitle:", {
+      original: text,
+      maxWordsPerLine,
+      maxLines,
+      lines: truncatedLines,
+      wordCount: allWords.length
+    });
+    
+    return { lines: truncatedLines, allWords };
   };
   
   // Evidențiază cuvântul curent în funcție de timpul de redare
@@ -103,16 +123,20 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   const renderLines = () => {
     if (!currentSubtitle || formattedDisplay.lines.length === 0) return null;
     
-    // Split fiecare linie în cuvinte pentru a putea evidenția cuvântul curent
-    let wordCounter = 0;
-    
+    // Afișează fiecare linie, respectând limitele de cuvinte pe linie
     return formattedDisplay.lines.map((line, lineIndex) => {
+      // Împărțim linia în cuvinte individuale
       const lineWords = line.split(/\s+/).filter(w => w.length > 0);
+      
+      // Calculăm indexul global al primului cuvânt din această linie
+      let globalWordIndex = 0;
+      for (let i = 0; i < lineIndex; i++) {
+        globalWordIndex += formattedDisplay.lines[i].split(/\s+/).filter(w => w.length > 0).length;
+      }
       
       // Construim JSX pentru fiecare cuvânt din această linie
       const wordElements = lineWords.map((word, wordIndex) => {
-        const isCurrentWord = wordCounter === currentWordIndex;
-        wordCounter++;
+        const isCurrentWord = (globalWordIndex + wordIndex) === currentWordIndex;
         
         return (
           <span
@@ -318,13 +342,16 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         style={{
           position: 'absolute',
           ...positionStyle,
-          maxWidth: `${subtitleStyle.maxWidth || 70}%`,
+          maxWidth: `${subtitleStyle.maxWidth || 50}%`, // Limitează la 50% din lățimea video
+          width: 'auto', // Permite redimensionare automată
           textAlign: 'center',
           zIndex: 10,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           padding: '5px 10px',
           borderRadius: '4px',
-          cursor: isEditing ? 'text' : 'move'
+          cursor: isEditing ? 'text' : 'move',
+          // Adăugăm word-break pentru a gestiona cuvintele lungi
+          wordBreak: 'break-word'
         }}
         onMouseDown={handleMouseDown}
         onClick={isEditing ? undefined : handleSubtitleClick}
@@ -364,7 +391,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
               fontSize: `${subtitleStyle.fontSize}px`,
               color: subtitleStyle.fontColor,
               lineHeight: '1.2',
-              textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none'
+              textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none',
+              // Limitare la 50% din lățimea video
+              maxWidth: '100%'
             }}
           >
             {renderLines()}

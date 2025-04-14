@@ -1,7 +1,18 @@
-# Modificări necesare în backend/custom_position.py
+# Funcții pentru procesarea subtitrărilor cu poziție personalizată
 
-# Adăugați aceste noi funcții pentru a procesa textul conform opțiunilor 
-# ALL CAPS și remove punctuation
+def hex_to_ass_color(hex_color):
+    """Convert hex color to ASS color format."""
+    if hex_color.startswith('#'):
+        hex_color = hex_color[1:]
+    
+    if len(hex_color) == 6:
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        # ASS uses BGR format with alpha in front
+        return f'&H00{b:02X}{g:02X}{r:02X}'
+    
+    return '&H00FFFFFF'  # Default to white if invalid
 
 def process_text_with_options(text, style):
     """
@@ -28,7 +39,14 @@ def process_text_with_options(text, style):
     
     return processed_text
 
-# În funcția create_ass_file_with_custom_position, adăugați procesarea textului:
+def format_ass_timestamp(seconds):
+    """Convert seconds to ASS timestamp format (h:mm:ss.cc)."""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds_int = int(seconds % 60)
+    centiseconds = int((seconds % 1) * 100)
+    
+    return f"{hours}:{minutes:02d}:{seconds_int:02d}.{centiseconds:02d}"
 
 def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles):
     """

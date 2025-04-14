@@ -376,20 +376,36 @@ def create_video_with_subtitles():
         
         # Extract style parameters
         font_size = style.get('fontSize', 24)
-        font_color = style.get('fontColor', 'white')
-        border_color = style.get('borderColor', 'black')
+        font_color = style.get('fontColor', '#FFFFFF')
+        border_color = style.get('borderColor', '#000000')
         border_width = style.get('borderWidth', 2)
         position = style.get('position', 'bottom')
         font_family = style.get('fontFamily', 'Sans')
         use_custom_position = style.get('useCustomPosition', False)
         custom_x = style.get('customX', 50)
         custom_y = style.get('customY', 90)
-        
+
+        # Asigură-te că culorile sunt în format corect (cu # în față)
+        if font_color and not font_color.startswith('#'):
+            font_color = '#' + font_color
+            
+        if border_color and not border_color.startswith('#'):
+            border_color = '#' + border_color
+
         # Extragem parametrii pentru cuvântul curent
         current_word_color = style.get('currentWordColor', '#FFFF00')
+        if current_word_color and not current_word_color.startswith('#'):
+            current_word_color = '#' + current_word_color
+            
         current_word_border_color = style.get('currentWordBorderColor', '#000000')
-        
-        update_task_status(task_id, "processing", 30, "Aplicare subtitrări pe video")
+        if current_word_border_color and not current_word_border_color.startswith('#'):
+            current_word_border_color = '#' + current_word_border_color
+
+        # Log pentru debugging
+        print(f"Applying subtitle style: font={font_family}, size={font_size}, color={font_color}, border={border_color}, width={border_width}")
+        print(f"Position: {'custom' if use_custom_position else position}, X={custom_x}, Y={custom_y}")
+
+        update_task_status(task_id, "processing", 30, "Aplicare subtitrări cu stil personalizat")
         
         # Map position to FFmpeg subtitle positioning
         if use_custom_position:
@@ -448,21 +464,59 @@ def create_video_with_subtitles():
             f"MarginV=10"
         )
         
+        # Modificări în app.py pentru a include culoarea de evidențiere în subtitrarea finală
+
+        # În funcția create_video_with_subtitles, asigură-te că funcția create_ass_file_with_custom_position
+        # primește toate culorile necesare:
+
+        # Creăm fișierul ASS pentru subtitrări cu poziționare personalizată
         if use_custom_position:
-            # Pentru poziționare manuală, creăm un fișier ASS personalizat
             ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
             
-            # Creăm fișierul ASS cu poziție personalizată
+            # Asigură-te că culorile sunt transmise corect
             create_ass_file_with_custom_position(
                 temp_srt_path,
                 ass_path,
-                style,
+                {
+                    'fontFamily': font_family,
+                    'fontSize': font_size,
+                    'fontColor': font_color,
+                    'borderColor': border_color,
+                    'borderWidth': border_width,
+                    'useCustomPosition': use_custom_position,
+                    'customX': custom_x,
+                    'customY': custom_y,
+                    'currentWordColor': current_word_color,
+                    'currentWordBorderColor': current_word_border_color,
+                    'allCaps': style.get('allCaps', False),
+                    'removePunctuation': style.get('removePunctuation', False)
+                },
                 formatted_subtitles
             )
+            
+            # Log pentru debugging
+            print(f"Created ASS file with custom position at {ass_path}")
+            print(f"Current word color: {current_word_color}, border: {current_word_border_color}")
             
             # Folosim fișierul ASS pentru subtitrări în loc de SRT
             vf_filter = f"ass={ass_path}"
         else:
+            # Construim opțiunile pentru stilul subtitrărilor cu poziționarea standard
+            # Adăugăm și culorile pentru evidențiere
+            subtitle_style = (
+                f"FontName={font_family},"
+                f"FontSize={font_size},"
+                f"PrimaryColour={hex_to_ass_color(font_color)},"
+                f"SecondaryColour={hex_to_ass_color(current_word_color)},"  # Adăugăm culoarea de evidențiere
+                f"OutlineColour={hex_to_ass_color(border_color)},"
+                f"BorderStyle=1,"
+                f"Outline={border_width},"
+                f"Alignment={text_align},"
+                f"MarginL=10,"
+                f"MarginR=10,"
+                f"MarginV=10"
+            )
+            
             vf_filter = f"subtitles={temp_srt_path}:force_style='{subtitle_style}'"
         
         # Create the FFmpeg command for adding styled subtitles

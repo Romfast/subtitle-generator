@@ -66,14 +66,27 @@ const EditableSubtitleItem = ({ subtitle, index, formatTime, updateSubtitle, see
     }
     
     // Împărțim textul în cuvinte
-    const words = processedText.split(/\s+/);
-    const maxWordsPerLine = subtitleStyle?.maxWordsPerLine || 4;
+    const words = processedText.split(/\s+/).filter(word => word.length > 0);
+    const maxWordsPerLine = Math.max(1, Math.min(subtitleStyle?.maxWordsPerLine || 3, 4)); // între 1 și 4 cuvinte
+    const maxLines = Math.max(1, subtitleStyle?.maxLines || 1); // minim 1 linie
     
     // Distribuim cuvintele pe linii
     const lines = [];
-    for (let i = 0; i < words.length; i += maxWordsPerLine) {
-      const lineWords = words.slice(i, i + maxWordsPerLine);
+    let remainingWords = [...words];
+    
+    for (let lineIdx = 0; lineIdx < maxLines && remainingWords.length > 0; lineIdx++) {
+      // Ia maxim maxWordsPerLine cuvinte pentru linia curentă
+      const lineWords = remainingWords.slice(0, maxWordsPerLine);
       lines.push(lineWords.join(' '));
+      
+      // Elimină cuvintele deja folosite
+      remainingWords = remainingWords.slice(maxWordsPerLine);
+    }
+    
+    // Dacă mai există cuvinte rămase și am atins numărul maxim de linii,
+    // adaugă restul la ultima linie
+    if (remainingWords.length > 0 && lines.length === maxLines) {
+      lines[maxLines - 1] += ' ' + remainingWords.join(' ');
     }
     
     // Combinăm liniile cu caractere de întrerupere linie

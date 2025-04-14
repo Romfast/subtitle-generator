@@ -99,7 +99,7 @@ function App() {
   }, []);
   
   // Funcție pentru monitorizarea progresului unei activități
-  const pollTaskProgress = async (taskId, setProgressFunc, taskType, interval = 1000) => {
+  const pollTaskProgress = async (taskId, setProgressFunc, taskType, completionCallback = null) => {
     if (!taskId) return;
     
     const checkProgress = async () => {
@@ -111,15 +111,18 @@ function App() {
           
           // Dacă task-ul nu e complet, continuăm polling-ul
           if (response.data.status !== 'completed' && response.data.status !== 'error') {
-            setTimeout(checkProgress, interval);
+            setTimeout(checkProgress, 1000);
           } else if (response.data.status === 'error') {
             setError(`Eroare: ${response.data.message}`);
             setIsProcessing(false);
+          } else if (response.data.status === 'completed' && completionCallback) {
+            // Apelăm callback-ul la finalizare
+            completionCallback(response.data);
           }
         }
       } catch (err) {
         console.error(`Error checking ${taskType} progress:`, err);
-        setTimeout(checkProgress, interval * 2); // În caz de eroare, mărim intervalul
+        setTimeout(checkProgress, 2000); // În caz de eroare, mărim intervalul
       }
     };
     
@@ -258,52 +261,108 @@ function App() {
       text: newText
     };
     setSubtitles(updatedSubtitles);
+    
+    // Dacă subtitrarea e cea curent afișată, actualizăm și starea currentTime
+    // pentru a forța reîmprospătarea previzualizării
+    if (currentTime >= updatedSubtitles[index].start && 
+        currentTime <= updatedSubtitles[index].end) {
+      // Facem o mică modificare la currentTime pentru a forța reactualizarea
+      setCurrentTime(prev => prev + 0.001);
+    }
   };
 
-  const createVideoWithSubtitles = async () => {
-    if (!uploadedFileName || subtitles.length === 0) {
-      setError('Asigurați-vă că ați încărcat un videoclip și ați generat subtitrări.');
-      return;
-    }
+// Înlocuiește funcția createAndDownloadVideoWithSubtitles și adaugă o funcție directDownload
+// în App.js:
 
-    setError('');
-    setIsProcessing(true);
-    setUploadStatus('Se creează videoclipul cu subtitrări... Acest proces poate dura câteva minute.');
-    setProcessProgress(0);
+// Funcție pentru a descărca direct un fișier
+const directDownload = (url) => {
+  console.log("Downloading from URL:", url);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', ''); // Forțează descărcarea
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
-    try {
-      // Transmit toate opțiunile de stil, inclusiv allCaps și removePunctuation
-      const response = await axios.post(`${API_URL}/create-video`, {
-        filename: uploadedFileName,
-        subtitles: subtitles,
-        style: {
-          ...subtitleStyle,
-          // Asigură-te că acestea sunt trimise explicit
-          allCaps: subtitleStyle.allCaps || false,
-          removePunctuation: subtitleStyle.removePunctuation || false,
-          currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
-          currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000'
-        }
-      });
+// Modificări în funcția createAndDownloadVideoWithSubtitles din App.js pentru a opri rotița de progres
 
-      setOutputVideo(response.data.output_filename);
-      setUploadStatus('Videoclip cu subtitrări creat cu succes!');
+const createAndDownloadVideoWithSubtitles = async () => {
+  if (!uploadedFileName || subtitles.length === 0) {
+    setError('Asigurați-vă că ați încărcat un videoclip și ați generat subtitrări.');
+    return;
+  }
+
+  setError('');
+  setIsProcessing(true);
+  setUploadStatus('Se creează videoclipul cu subtitrări... Acest proces poate dura câteva minute.');
+  setProcessProgress(0);
+
+  try {
+    // Transmit toate opțiunile de stil
+    const response = await axios.post(`${API_URL}/create-video`, {
+      filename: uploadedFileName,
+      subtitles: subtitles,
+      style: subtitleStyle
+    });
+
+    setOutputVideo(response.data.output_filename);
+    setUploadStatus('Videoclip cu subtitrări creat. Se inițiază descărcarea...');
+    
+    // Verificăm progresul pe server
+    if (response.data.task_id) {
+      setProcessTaskId(response.data.task_id);
       
-      // Verificăm progresul pe server dacă primim un task_id
-      if (response.data.task_id) {
-        setProcessTaskId(response.data.task_id);
-        pollTaskProgress(response.data.task_id, setProcessProgress, 'process');
-      } else {
-        setProcessProgress(100); // Dacă nu avem task_id, presupunem că s-a terminat
-      }
-    } catch (err) {
-      console.error('Error creating video with subtitles:', err);
-      setError(`Eroare la crearea videoclipului: ${err.response?.data?.error || err.message}`);
-      setProcessProgress(0);
-    } finally {
-      setIsProcessing(false);
+      // Folosim polling cu funcție de callback
+      const monitorProgress = async () => {
+        try {
+          const statusResponse = await axios.get(`${API_URL}/status/${response.data.task_id}`);
+          if (statusResponse.data && statusResponse.data.progress !== undefined) {
+            setProcessProgress(statusResponse.data.progress);
+            setProgressStatus(statusResponse.data.message || '');
+            
+            // Verificăm statusul
+            if (statusResponse.data.status === 'completed') {
+              // Descărcăm automat fișierul când procesarea e gata
+              const downloadUrl = `${API_URL}/download/${response.data.output_filename}`;
+              console.log("Download initiated for:", downloadUrl);
+              directDownload(downloadUrl);
+              setUploadStatus('Videoclip cu subtitrări creat și descărcat cu succes!');
+              setIsProcessing(false); // Oprim rotița de progres
+              return; // Oprim monitorizarea
+            } else if (statusResponse.data.status === 'error') {
+              setError(`Eroare: ${statusResponse.data.message}`);
+              setIsProcessing(false);
+              return; // Oprim monitorizarea
+            } 
+            
+            // Continuăm monitorizarea dacă task-ul e în curs
+            setTimeout(monitorProgress, 1000);
+          }
+        } catch (err) {
+          console.error("Error monitoring task:", err);
+          setIsProcessing(false); // Oprim rotița în caz de eroare
+          setError(`Eroare la monitorizarea progresului: ${err.message}`);
+        }
+      };
+      
+      // Începem monitorizarea
+      monitorProgress();
+    } else {
+      setProcessProgress(100);
+      // Descărcăm direct fișierul dacă nu avem task_id
+      const downloadUrl = `${API_URL}/download/${response.data.output_filename}`;
+      directDownload(downloadUrl);
+      setUploadStatus('Videoclip cu subtitrări creat și descărcat cu succes!');
+      setIsProcessing(false); // Oprim rotița de progres
     }
-  };
+  } catch (err) {
+    console.error('Error creating video with subtitles:', err);
+    setError(`Eroare la crearea videoclipului: ${err.response?.data?.error || err.message}`);
+    setProcessProgress(0);
+    setIsProcessing(false); // Asigurăm oprirea rotiței în caz de eroare
+  }
+};
 
   const downloadVideo = () => {
     if (outputVideo) {
@@ -347,48 +406,33 @@ function App() {
           <h2>Acțiuni</h2>
           
           <div className="control-panel-content">
-            <div className="file-select-area">
-              <label className="control-label">1. Selectați un fișier video:</label>
-              <input 
-                type="file" 
-                accept="video/*" 
-                onChange={handleFileChange} 
-                ref={fileInputRef}
-                className="file-input"
-              />
-            </div>
-            
-            <div className="all-buttons-container">
-              <div className="button-group">
-                <h3 className="button-group-label">2. Procesare:</h3>
-                <button 
-                  onClick={generateSubtitles} 
-                  disabled={!uploadedFileName || isProcessing}
-                  className="action-button generate-button"
-                >
-                  Generează Subtitrări
-                </button>
+            <div className="horizontal-controls">
+              <div className="file-select-area">
+                <label className="control-label">1. Selectați video:</label>
+                <input 
+                  type="file" 
+                  accept="video/*" 
+                  onChange={handleFileChange} 
+                  ref={fileInputRef}
+                  className="file-input"
+                />
               </div>
               
-              <div className="button-group">
-                <h3 className="button-group-label">3. Finalizare:</h3>
-                <button 
-                  onClick={createVideoWithSubtitles} 
-                  disabled={!subtitles.length || isProcessing}
-                  className="action-button create-button"
-                >
-                  Creează Video
-                </button>
-                
-                {outputVideo && (
-                  <button 
-                    onClick={downloadVideo}
-                    className="action-button download-button"
-                  >
-                    Descarcă Video
-                  </button>
-                )}
-              </div>
+              <button 
+                onClick={generateSubtitles} 
+                disabled={!uploadedFileName || isProcessing}
+                className="action-button generate-button"
+              >
+                2. Generează Subtitrări
+              </button>
+              
+              <button 
+                onClick={createAndDownloadVideoWithSubtitles} 
+                disabled={!subtitles.length || isProcessing}
+                className="action-button create-button"
+              >
+                3. Creează & Descarcă Video
+              </button>
             </div>
           </div>
           

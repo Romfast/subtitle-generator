@@ -99,13 +99,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="fontColor" 
                 value={subtitleStyle.fontColor} 
                 onChange={handleStyleChange}
+                style={{ width: '100%', height: '40px' }}
               />
-              <div className="color-preview" style={{
-                backgroundColor: subtitleStyle.fontColor,
-                color: getContrastColor(subtitleStyle.fontColor)
-              }}>
-                Text
-              </div>
             </div>
           </div>
           
@@ -117,13 +112,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="borderColor" 
                 value={subtitleStyle.borderColor} 
                 onChange={handleStyleChange}
+                style={{ width: '100%', height: '40px' }}
               />
-              <div className="color-preview" style={{
-                backgroundColor: subtitleStyle.borderColor,
-                color: getContrastColor(subtitleStyle.borderColor)
-              }}>
-                Contur
-              </div>
             </div>
           </div>
           
@@ -295,13 +285,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="currentWordColor" 
                 value={subtitleStyle.currentWordColor || '#FFFF00'} 
                 onChange={handleStyleChange}
+                style={{ width: '100%', height: '40px' }}
               />
-              <div className="color-preview" style={{
-                backgroundColor: subtitleStyle.currentWordColor || '#FFFF00',
-                color: getContrastColor(subtitleStyle.currentWordColor || '#FFFF00')
-              }}>
-                Curent
-              </div>
             </div>
           </div>
           
