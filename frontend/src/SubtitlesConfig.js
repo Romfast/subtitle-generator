@@ -308,8 +308,29 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
             </div>
           </div>
           
+          <div className="style-item">
+            <label>Activare evidențiere cuvânt curent:</label>
+            <div className="toggle-switch">
+              <label className="switch">
+                <input 
+                  type="checkbox" 
+                  checked={subtitleStyle.useKaraoke !== false} 
+                  onChange={() => handleToggleChange('useKaraoke')}
+                />
+                <span className="slider round"></span>
+              </label>
+              <span className="toggle-label">
+                {subtitleStyle.useKaraoke !== false ? 'Activat' : 'Dezactivat'}
+              </span>
+            </div>
+            <p className="help-text">
+              Când este activat, cuvintele sunt evidențiate pe măsură ce sunt pronunțate
+            </p>
+          </div>
+          
           <div className="style-info">
-            <p>Fiecare cuvânt din subtitrare va fi evidențiat pe măsură ce avansează timpul în videoclip.</p>
+            <p>Efectul de evidențiere cuvânt cu cuvânt este cunoscut și sub numele de "karaoke".</p>
+            <p>Fiecare cuvânt va fi afișat cu culoarea și stilul de evidențiere pe măsură ce avansează timpul în videoclip.</p>
           </div>
         </div>
       )}

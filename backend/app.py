@@ -12,8 +12,8 @@ import whisper
 import ffmpeg
 import webvtt
 from werkzeug.utils import secure_filename
-from subtitles_utils import format_srt_with_line_limits
-from custom_position import create_ass_file_with_custom_position
+from subtitles_utils import format_srt_with_line_limits, break_long_subtitles, split_subtitle_into_lines
+from custom_position import create_ass_file_with_custom_position, create_karaoke_ass_file, create_word_by_word_karaoke
 
 app = Flask(__name__)
 
@@ -171,6 +171,11 @@ def generate_subtitles():
     data = request.json
     filename = data.get('filename')
     
+    # Obținem stilul din request (dacă există)
+    style = data.get('style', {})
+    max_words_per_line = style.get('maxWordsPerLine', 4)
+    max_lines = style.get('maxLines', 1)
+    
     # Create a unique task ID for transcription
     task_id = str(uuid.uuid4())
     update_task_status(task_id, "started", 0, "Inițializare transcriere")
@@ -203,26 +208,6 @@ def generate_subtitles():
         
         # Transcribe audio
         print(f"Transcribing audio: {audio_path}")
-        # Imitam raportarea progresului pentru fiecare segment procesat 
-        # (în realitate Whisper nu raportează progresul)
-        
-        # Folosim un custom callback pentru a raporta progresul
-        class ProgressCallback:
-            def __init__(self):
-                self.last_segment_time = 0
-                self.last_update_time = time.time()
-            
-            def __call__(self, segment_idx, segment_count):
-                # Raportăm progresul doar la fiecare 2 secunde pentru a evita prea multe actualizări
-                current_time = time.time()
-                if current_time - self.last_update_time > 2:
-                    progress = min(30 + int((segment_idx / max(segment_count, 1)) * 60), 90)
-                    update_task_status(task_id, "transcribing", progress, 
-                                      f"Transcriere: {segment_idx}/{segment_count} segmente")
-                    self.last_update_time = current_time
-                return True
-        
-        progress_callback = ProgressCallback()
         
         # Simulăm progresul pentru că Whisper nu oferă un callback de progres
         update_task_status(task_id, "transcribing", 40, "Procesare audio...")
@@ -236,25 +221,58 @@ def generate_subtitles():
         
         update_task_status(task_id, "processing", 90, "Transcriere finalizată. Generare subtitrări...")
         
+        # Pregătim subtitrările inițiale din rezultatul Whisper
+        raw_subtitles = [
+            {
+                'start': segment['start'],
+                'end': segment['end'],
+                'text': segment['text'].strip()
+            }
+            for segment in result['segments']
+        ]
+        
+        # Aplicăm limitarea numărului de cuvinte per linie și de linii CHIAR LA GENERARE
+        # Folosim funcțiile din subtitles_utils.py
+        max_width_percent = style.get('maxWidth', 50)
+        
+        # Pasul 1: Împărțim subtitrările lungi în segmente separate cu maxim max_words_per_line cuvinte
+        segmented_subtitles = break_long_subtitles(raw_subtitles, max_words_per_line)
+        
+        # Pasul 2: Formatăm fiecare segment pentru a respecta numărul maxim de linii
+        formatted_subtitles = []
+        for subtitle in segmented_subtitles:
+            formatted_text = split_subtitle_into_lines(
+                subtitle['text'], 
+                max_lines, 
+                max_width_percent,
+                max_words_per_line
+            )
+            
+            formatted_subtitles.append({
+                'start': subtitle['start'],
+                'end': subtitle['end'],
+                'text': formatted_text
+            })
+        
         # Create subtitle file in VTT format
         subtitle_path = os.path.join(UPLOAD_FOLDER, f"{os.path.splitext(filename)[0]}.vtt")
         
         with open(subtitle_path, 'w', encoding='utf-8') as vtt_file:
             vtt_file.write("WEBVTT\n\n")
             
-            for i, segment in enumerate(result['segments']):
-                start_time = format_timestamp(segment['start'])
-                end_time = format_timestamp(segment['end'])
-                text = segment['text'].strip()
+            for i, subtitle in enumerate(formatted_subtitles):
+                start_time = format_timestamp(subtitle['start'])
+                end_time = format_timestamp(subtitle['end'])
+                text = subtitle['text']
                 
                 vtt_file.write(f"{start_time} --> {end_time}\n")
                 vtt_file.write(f"{text}\n\n")
                 
                 # Raportăm progresul pentru fiecare 10% de segmente procesate
-                if i % max(1, len(result['segments']) // 10) == 0:
-                    progress = 90 + int((i / len(result['segments'])) * 10)
+                if i % max(1, len(formatted_subtitles) // 10) == 0:
+                    progress = 90 + int((i / len(formatted_subtitles)) * 10)
                     update_task_status(task_id, "generating_subtitles", progress, 
-                                      f"Generare subtitrări: {i}/{len(result['segments'])}")
+                                      f"Generare subtitrări: {i}/{len(formatted_subtitles)}")
         
         # Clean up temporary files
         if os.path.exists(audio_path):
@@ -265,14 +283,7 @@ def generate_subtitles():
         return jsonify({
             'message': 'Subtitles generated successfully',
             'subtitle_path': subtitle_path,
-            'subtitles': [
-                {
-                    'start': segment['start'],
-                    'end': segment['end'],
-                    'text': segment['text'].strip()
-                }
-                for segment in result['segments']
-            ],
+            'subtitles': formatted_subtitles,  # Returnăm subtitrările formatate
             'task_id': task_id
         }), 200
     
@@ -319,33 +330,12 @@ def create_video_with_subtitles():
         
         update_task_status(task_id, "processing", 10, "Creare fișier temporar de subtitrări")
         
-        # Formatează subtitrările pentru a respecta numărul maxim de linii și lățimea maximă
+        # Extragem parametrii de stil
         max_lines = style.get('maxLines', 1)  # Default 1 linie
         max_width = style.get('maxWidth', 50)
-        max_words_per_line = style.get('maxWordsPerLine', 3)  # Default 3 cuvinte
+        max_words_per_line = style.get('maxWordsPerLine', 4)  # Default 4 cuvinte
         
-        # Modificăm funcția split_subtitle_into_lines pentru a limita numărul de cuvinte per linie
-        def custom_split_subtitle(text):
-            words = text.split()
-            lines = []
-            
-            for i in range(0, len(words), max_words_per_line):
-                # Luăm maxim max_words_per_line cuvinte pentru fiecare linie
-                line_words = words[i:i + max_words_per_line]
-                lines.append(" ".join(line_words))
-                
-                # Dacă am ajuns la numărul maxim de linii, ne oprim
-                if len(lines) >= max_lines:
-                    # Dacă mai avem cuvinte rămase, le adăugăm la ultima linie
-                    if i + max_words_per_line < len(words):
-                        remaining_words = words[i + max_words_per_line:]
-                        lines[-1] = lines[-1] + " " + " ".join(remaining_words)
-                    break
-            
-            return "\n".join(lines)
-        
-        # Aplicăm formtarea personalizată pentru fiecare subtitrare
-        # Împărțim subtitrările în segmente mai mici cu maxim 4 cuvinte
+        # Deja s-a aplicat limitarea la generare, dar o aplicăm din nou pentru siguranță
         formatted_subtitles = format_srt_with_line_limits(
             subtitles, 
             max_lines, 
@@ -400,10 +390,14 @@ def create_video_with_subtitles():
         current_word_border_color = style.get('currentWordBorderColor', '#000000')
         if current_word_border_color and not current_word_border_color.startswith('#'):
             current_word_border_color = '#' + current_word_border_color
+            
+        # Activăm sau dezactivăm karaoke (evidențierea cuvântului curent)
+        use_karaoke = style.get('useKaraoke', True)  # Default activat
 
         # Log pentru debugging
         print(f"Applying subtitle style: font={font_family}, size={font_size}, color={font_color}, border={border_color}, width={border_width}")
         print(f"Position: {'custom' if use_custom_position else position}, X={custom_x}, Y={custom_y}")
+        print(f"Karaoke mode: {use_karaoke}, current word color: {current_word_color}")
 
         update_task_status(task_id, "processing", 30, "Aplicare subtitrări cu stil personalizat")
         
@@ -449,65 +443,82 @@ def create_video_with_subtitles():
             vertical_position = position_map.get(position, 'h-text_h-10')
             horizontal_position = horizontal_map.get(position, '(w-text_w)/2')
             text_align = text_align_map.get(position, 2)
-            
-        # Construim opțiunile pentru stilul subtitrărilor cu poziționarea corectă
-        subtitle_style = (
-            f"FontName={font_family},"
-            f"FontSize={font_size},"
-            f"PrimaryColour={hex_to_ass_color(font_color)},"
-            f"OutlineColour={hex_to_ass_color(border_color)},"
-            f"BorderStyle=1,"
-            f"Outline={border_width},"
-            f"Alignment={text_align},"
-            f"MarginL=10,"
-            f"MarginR=10,"
-            f"MarginV=10"
-        )
-        
-        # Modificări în app.py pentru a include culoarea de evidențiere în subtitrarea finală
 
-        # În funcția create_video_with_subtitles, asigură-te că funcția create_ass_file_with_custom_position
-        # primește toate culorile necesare:
-
-        # Creăm fișierul ASS pentru subtitrări cu poziționare personalizată
-        if use_custom_position:
+        # Folosim un fișier ASS cu karaoke pentru a evidenția cuvântul curent
+        if use_karaoke:
             ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
             
-            # Asigură-te că culorile sunt transmise corect
-            create_ass_file_with_custom_position(
-                temp_srt_path,
-                ass_path,
-                {
-                    'fontFamily': font_family,
-                    'fontSize': font_size,
-                    'fontColor': font_color,
-                    'borderColor': border_color,
-                    'borderWidth': border_width,
-                    'useCustomPosition': use_custom_position,
-                    'customX': custom_x,
-                    'customY': custom_y,
-                    'currentWordColor': current_word_color,
-                    'currentWordBorderColor': current_word_border_color,
-                    'allCaps': style.get('allCaps', False),
-                    'removePunctuation': style.get('removePunctuation', False)
-                },
-                formatted_subtitles
-            )
+            # Adăugăm o ușoară întârziere pentru a compensa desincronizarea
+            sync_delay = 0.3  # 300ms întârziere
+            
+            # Ajustăm timpii subtitrărilor pentru sincronizare mai bună
+            synced_subtitles = []
+            for sub in formatted_subtitles:
+                synced_subtitles.append({
+                    'start': sub['start'] + sync_delay,
+                    'end': sub['end'] + sync_delay,
+                    'text': sub['text']
+                })
+            
+            # Alegem metoda potrivită în funcție de poziție și compatibilitate
+            if use_custom_position:
+                # Folosim metoda word_by_word pentru poziționare personalizată
+                # Aceasta este mai compatibilă cu FFmpeg și sincronizată mai bine
+                create_word_by_word_karaoke(
+                    temp_srt_path,
+                    ass_path,
+                    {
+                        'fontFamily': font_family,
+                        'fontSize': font_size,
+                        'fontColor': font_color,
+                        'borderColor': border_color,
+                        'borderWidth': border_width,
+                        'useCustomPosition': use_custom_position,
+                        'customX': custom_x,
+                        'customY': custom_y,
+                        'currentWordColor': current_word_color,
+                        'currentWordBorderColor': current_word_border_color,
+                        'allCaps': style.get('allCaps', False),
+                        'removePunctuation': style.get('removePunctuation', False),
+                        'textAlign': text_align
+                    },
+                    synced_subtitles  # Folosim subtitrările sincronizate
+                )
+            else:
+                # Folosim karaoke îmbunătățit pentru poziționare normală
+                create_karaoke_ass_file(
+                    temp_srt_path,
+                    ass_path,
+                    {
+                        'fontFamily': font_family,
+                        'fontSize': font_size,
+                        'fontColor': font_color,
+                        'borderColor': border_color,
+                        'borderWidth': border_width,
+                        'position': position,
+                        'currentWordColor': current_word_color,
+                        'currentWordBorderColor': current_word_border_color,
+                        'allCaps': style.get('allCaps', False),
+                        'removePunctuation': style.get('removePunctuation', False),
+                        'textAlign': text_align,
+                        'useCustomPosition': use_custom_position,
+                        'customX': custom_x,
+                        'customY': custom_y
+                    },
+                    synced_subtitles  # Folosim subtitrările sincronizate
+                )
             
             # Log pentru debugging
-            print(f"Created ASS file with custom position at {ass_path}")
-            print(f"Current word color: {current_word_color}, border: {current_word_border_color}")
+            print(f"Created ASS file with enhanced karaoke effect at {ass_path}")
             
-            # Folosim fișierul ASS pentru subtitrări în loc de SRT
-            vf_filter = f"ass={ass_path}"
+            # Folosim filtrul 'ass' direct cu opțiunea "fontsdir" pentru a asigura compatibilitatea cu FFmpeg
+            vf_filter = f"ass={ass_path}:fontsdir=/usr/share/fonts"
         else:
             # Construim opțiunile pentru stilul subtitrărilor cu poziționarea standard
-            # Adăugăm și culorile pentru evidențiere
             subtitle_style = (
                 f"FontName={font_family},"
                 f"FontSize={font_size},"
                 f"PrimaryColour={hex_to_ass_color(font_color)},"
-                f"SecondaryColour={hex_to_ass_color(current_word_color)},"  # Adăugăm culoarea de evidențiere
                 f"OutlineColour={hex_to_ass_color(border_color)},"
                 f"BorderStyle=1,"
                 f"Outline={border_width},"
@@ -579,7 +590,7 @@ def create_video_with_subtitles():
         if os.path.exists(temp_srt_path):
             os.remove(temp_srt_path)
             
-        if use_custom_position and os.path.exists(ass_path):
+        if use_karaoke and os.path.exists(ass_path):
             os.remove(ass_path)
         
         update_task_status(task_id, "completed", 100, "Video cu subtitrări creat cu succes")
