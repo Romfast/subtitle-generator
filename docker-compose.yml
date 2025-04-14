@@ -38,6 +38,7 @@ services:
       - ./shared:/shared
       - uploaded_videos:/app/uploads
       - processed_videos:/app/processed
+      - whisper_models:/root/.cache/whisper
     environment:
       - WHISPER_MODEL=small
       - MAX_UPLOAD_SIZE=3000MB
@@ -51,3 +52,4 @@ services:
 volumes:
   uploaded_videos:
   processed_videos:
+  whisper_models:

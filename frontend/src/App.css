@@ -83,43 +83,126 @@ button:disabled {
   padding: 10px 20px;
   font-size: 1rem;
   background-color: #2980b9;
+  min-width: 180px;
 }
 
 .download-button {
   background-color: #27ae60;
-  margin-top: 10px;
 }
 
 .download-button:hover {
   background-color: #219653;
 }
 
-.edit-button {
-  background-color: #f39c12;
-  padding: 5px 10px;
-  font-size: 0.9rem;
-}
-
-.edit-button:hover {
-  background-color: #e67e22;
-}
-
-/* Upload Section */
-.upload-section {
+/* Control Panel */
+.control-panel {
   text-align: center;
 }
 
+.control-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.file-select-area {
+  width: 100%;
+  text-align: left;
+}
+
+.control-label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+}
+
 .file-input {
-  margin-bottom: 15px;
+  width: 100%;
   padding: 10px;
   border: 1px dashed #ccc;
   border-radius: 4px;
-  width: 100%;
 }
 
-/* Video Preview */
-.video-preview {
+.all-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.button-group-label {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #2c3e50;
+}
+
+.upload-button {
+  background-color: #2980b9;
+}
+
+.generate-button {
+  background-color: #16a085;
+}
+
+.create-button {
+  background-color: #9b59b6;
+}
+
+.download-button {
+  background-color: #27ae60;
+}
+
+.progress-indicators {
+  margin-top: 20px;
+}
+
+/* Layout Toggle Button */
+.layout-controls {
+  margin-bottom: 15px;
+  text-align: right;
+}
+
+.layout-toggle-button {
+  background-color: #6c757d;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+.layout-toggle-button:hover {
+  background-color: #5a6268;
+}
+
+/* Video Section with Responsive Layout */
+.video-section {
   margin: 20px 0;
+}
+
+.video-subtitle-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.video-subtitle-container.side {
+  flex-direction: row;
+}
+
+.video-subtitle-container.bottom {
+  flex-direction: column;
+}
+
+.video-preview-container {
+  flex: 1;
+  min-width: 0; /* Necesar pentru ca flexbox să se comporte corect */
 }
 
 .player-wrapper {
@@ -131,6 +214,223 @@ button:disabled {
   position: absolute;
   top: 0;
   left: 0;
+}
+
+/* Subtitles Panel */
+.subtitles-panel {
+  width: 350px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-subtitle-container.bottom .subtitles-panel {
+  width: 100%;
+  height: 250px;
+}
+
+.video-subtitle-container.side .subtitles-panel {
+  height: auto;
+  max-height: 500px;
+}
+
+.subtitles-panel h4 {
+  padding: 10px;
+  margin: 0;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.subtitles-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.subtitle-header {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  padding: 10px;
+  background-color: #e9ecef;
+  font-weight: bold;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.subtitle-items-container {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.subtitle-item {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.subtitle-item:hover {
+  background-color: #f0f8ff;
+}
+
+.subtitle-item.active {
+  background-color: #e3f2fd;
+}
+
+.subtitle-time {
+  cursor: pointer;
+  color: #2980b9;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle-time:hover {
+  text-decoration: underline;
+}
+
+.subtitle-text {
+  padding: 0 10px;
+  word-break: break-word;
+}
+
+.subtitle-text.current {
+  font-weight: 500;
+  background-color: rgba(255, 248, 107, 0.2);
+  border-radius: 3px;
+}
+
+.subtitle-text.editable {
+  cursor: pointer;
+  position: relative;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.subtitle-text.editable:hover {
+  background-color: #f0f8ff;
+  border-radius: 4px;
+}
+
+.subtitle-content {
+  position: relative;
+  width: 100%;
+}
+
+.subtitle-formatted-text {
+  font-family: inherit;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.edit-hint {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.7rem;
+  color: #888;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.subtitle-text.editable:hover .edit-hint {
+  opacity: 1;
+}
+
+.subtitle-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.subtitle-duration {
+  text-align: right;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+/* Subtitle Preview */
+.subtitle-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.subtitle-overlay {
+  pointer-events: auto;
+  cursor: move; /* Indică faptul că poate fi tras direct */
+}
+
+.subtitle-overlay.dragging {
+  opacity: 0.8;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.subtitle-edit-overlay {
+  width: 100%;
+  pointer-events: auto;
+}
+
+.subtitle-edit-textarea {
+  width: 100%;
+  padding: 5px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  margin-bottom: 5px;
+}
+
+.edit-instructions {
+  font-size: 0.8rem;
+  color: #ddd;
+  text-align: center;
+  margin-top: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 3px;
+  border-radius: 3px;
+}
+
+/* Subtitle line and word styling */
+.subtitle-line {
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.subtitle-word {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 0 1px;
+  border-radius: 2px;
+  transition: color 0.2s, transform 0.2s, background-color 0.2s;
+}
+
+.subtitle-word.highlighted {
+  transform: scale(1.05);
+  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.3);
 }
 
 /* Subtitle Customization */
@@ -145,11 +445,49 @@ button:disabled {
   border-radius: 6px;
 }
 
+.style-tabs {
+  margin-bottom: 15px;
+}
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background-color: transparent;
+  color: #6c757d;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  margin-right: 5px;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.tab-button:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+  color: #495057;
+}
+
+.tab-button.active {
+  color: #495057;
+  background-color: #fff;
+  border-color: #dee2e6;
+  border-bottom-color: transparent;
+}
+
 .style-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 15px;
   margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 0 0 6px 6px;
+  border: 1px solid #dee2e6;
+  border-top: none;
 }
 
 .style-item {
@@ -169,29 +507,40 @@ button:disabled {
   border-radius: 4px;
 }
 
-/* Poziționare manuală */
-.position-options {
+/* Color selector with preview */
+.color-selector {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
 }
 
-.position-preset {
+.color-selector input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.color-preview {
   flex: 1;
-}
-
-.position-toggle {
+  min-height: 40px;
+  padding: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: 500;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.toggle-label {
-  font-size: 0.85rem;
-  color: #555;
+/* Toggle switches */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Stiluri pentru switch toggle */
 .switch {
   position: relative;
   display: inline-block;
@@ -247,6 +596,22 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+.toggle-label {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* Poziționare manuală */
+.position-options {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.position-preset {
+  flex: 1;
+}
+
 /* Controale pentru poziție manuală */
 .custom-position-controls {
   padding: 10px;
@@ -279,30 +644,18 @@ input:checked + .slider:before {
   font-style: italic;
 }
 
-/* Stiluri pentru previzualizare subtitlare */
-.subtitle-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
+.style-info {
+  grid-column: 1 / -1;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #495057;
+  border-left: 3px solid #2980b9;
 }
 
-.subtitle-overlay {
-  pointer-events: none;
-}
-
-.subtitle-overlay.draggable {
-  pointer-events: auto;
-}
-
-.subtitle-overlay.dragging {
-  opacity: 0.8;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
+/* Preview section */
 .subtitle-preview-box {
   height: 100px;
   position: relative;
@@ -317,93 +670,6 @@ input:checked + .slider:before {
   text-align: center;
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 3px;
-}
-
-/* Subtitles List */
-.subtitles-list {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
-.subtitle-header {
-  display: grid;
-  grid-template-columns: 150px 1fr 80px;
-  padding: 10px;
-  background-color: #f4f4f4;
-  font-weight: bold;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.subtitle-item {
-  display: grid;
-  grid-template-columns: 150px 1fr 80px;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
-  align-items: center;
-}
-
-.subtitle-item:hover {
-  background-color: #f9f9f9;
-}
-
-.subtitle-time {
-  cursor: pointer;
-  color: #2980b9;
-  font-size: 0.9rem;
-}
-
-.subtitle-text {
-  padding: 0 10px;
-}
-
-.subtitle-text.editable {
-  cursor: pointer;
-  position: relative;
-}
-
-.subtitle-text.editable:hover {
-  background-color: #f0f8ff;
-  border-radius: 4px;
-}
-
-.subtitle-content {
-  position: relative;
-}
-
-.edit-hint {
-  position: absolute;
-  top: 0;
-  right: 0;
-  font-size: 0.7rem;
-  color: #888;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 2px 4px;
-  border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.subtitle-text.editable:hover .edit-hint {
-  opacity: 1;
-}
-
-.subtitle-textarea {
-  width: 100%;
-  min-height: 60px;
-  padding: 8px;
-  border: 1px solid #4a90e2;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  resize: vertical;
-}
-
-.subtitle-duration {
-  text-align: right;
-  color: #777;
-  font-size: 0.9rem;
 }
 
 /* Status Messages */
@@ -473,14 +739,34 @@ input:checked + .slider:before {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 768px) {
-  .subtitle-item,
-  .subtitle-header {
-    grid-template-columns: 100px 1fr 60px;
+@media (max-width: 992px) {
+  .video-subtitle-container.side {
+    flex-direction: column;
+  }
+  
+  .subtitles-panel {
+    width: 100%;
+    height: 250px;
   }
   
   .style-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .all-buttons-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .button-group {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .subtitle-item,
+  .subtitle-header {
+    grid-template-columns: 90px 1fr 40px;
   }
   
   .status-message,

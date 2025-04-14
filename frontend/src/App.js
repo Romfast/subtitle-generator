@@ -24,6 +24,7 @@ function App() {
   const [error, setError] = useState('');
   const [outputVideo, setOutputVideo] = useState('');
   const [apiStatus, setApiStatus] = useState('Verificare conexiune...');
+  const [layoutMode, setLayoutMode] = useState('side'); // 'side' sau 'bottom'
   
   // Stări pentru videoplayer și subtitrări
   const [currentTime, setCurrentTime] = useState(0);
@@ -47,12 +48,16 @@ function App() {
     fontFamily: 'Sans',
     borderColor: '#000000',
     borderWidth: 2,
-    maxLines: 3,
-    maxWidth: 50, // Procentaj din lățimea videoului - redus la 50%
-    maxWordsPerLine: 4, // Strict 4 cuvinte pe linie
+    maxLines: 1,  // Inițializat cu 1 linie
+    maxWidth: 50, // Procentaj din lățimea videoului
+    maxWordsPerLine: 3, // Inițializat cu 3 cuvinte per linie
     useCustomPosition: false, // Flag pentru activarea poziției personalizate
     customX: 50, // Poziția X procentuală (0-100)
-    customY: 90  // Poziția Y procentuală (0-100)
+    customY: 90,  // Poziția Y procentuală (0-100)
+    currentWordColor: '#FFFF00', // Culoare cuvânt curent (galben default)
+    currentWordBorderColor: '#000000', // Culoare contur cuvânt curent
+    allCaps: false, // Opțiune pentru ALL CAPS
+    removePunctuation: false // Opțiune pentru eliminarea punctuației
   });
 
   const fileInputRef = useRef();
@@ -75,6 +80,22 @@ function App() {
     };
 
     testApiConnection();
+    
+    // Detectăm lățimea ecranului și setăm layout-ul implicit
+    const handleResize = () => {
+      setLayoutMode(window.innerWidth < 992 ? 'bottom' : 'side');
+    };
+    
+    // Setare layout inițial
+    handleResize();
+    
+    // Adaugă listener pentru resize
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
   
   // Funcție pentru monitorizarea progresului unei activități
@@ -116,11 +137,15 @@ function App() {
       setUploadedFileName('');
       setSubtitles([]);
       setOutputVideo('');
+      
+      // Încărcăm automat fișierul după ce e selectat
+      handleUpload(file);
     }
   };
 
-  const handleUpload = async () => {
-    if (!videoFile) {
+  const handleUpload = async (fileToUpload = null) => {
+    const file = fileToUpload || videoFile;
+    if (!file) {
       setError('Vă rugăm să selectați un fișier video.');
       return;
     }
@@ -131,7 +156,7 @@ function App() {
     setUploadProgress(0);
 
     const formData = new FormData();
-    formData.append('file', videoFile);
+    formData.append('file', file);
 
     try {
       console.log(`Uploading to ${API_URL}/upload`);
@@ -180,7 +205,13 @@ function App() {
         filename: uploadedFileName
       });
 
-      setSubtitles(response.data.subtitles);
+      // Adăugăm o întârziere mică la fiecare subtitrare pentru a evita apariția prematură
+      const adjustedSubtitles = response.data.subtitles.map(subtitle => ({
+        ...subtitle,
+        start: subtitle.start + 0.05 // Adăugăm 50ms pentru a evita apariția prematură
+      }));
+
+      setSubtitles(adjustedSubtitles);
       setUploadStatus('Subtitrări generate cu succes!');
       
       // Verificăm progresul pe server dacă primim un task_id
@@ -203,16 +234,19 @@ function App() {
     const { name, value } = e.target;
     setSubtitleStyle(prev => ({
       ...prev,
-      [name]: name === 'maxLines' || name === 'maxWidth' || name === 'maxWordsPerLine' || name === 'customX' || name === 'customY' ? parseInt(value, 10) : value
+      [name]: name === 'maxLines' || name === 'maxWidth' || name === 'maxWordsPerLine' || 
+               name === 'customX' || name === 'customY' || name === 'fontSize' ? 
+               parseInt(value, 10) : value
     }));
   };
   
   // Funcție pentru actualizarea poziției subtitrărilor prin drag-and-drop
-  const updateSubtitlePosition = (x, y) => {
+  const updateSubtitlePosition = (x, y, enableCustomPosition = false) => {
     setSubtitleStyle(prev => ({
       ...prev,
       customX: Math.round(x),
-      customY: Math.round(y)
+      customY: Math.round(y),
+      useCustomPosition: enableCustomPosition ? true : prev.useCustomPosition
     }));
   };
 
@@ -238,10 +272,18 @@ function App() {
     setProcessProgress(0);
 
     try {
+      // Transmit toate opțiunile de stil, inclusiv allCaps și removePunctuation
       const response = await axios.post(`${API_URL}/create-video`, {
         filename: uploadedFileName,
         subtitles: subtitles,
-        style: subtitleStyle
+        style: {
+          ...subtitleStyle,
+          // Asigură-te că acestea sunt trimise explicit
+          allCaps: subtitleStyle.allCaps || false,
+          removePunctuation: subtitleStyle.removePunctuation || false,
+          currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
+          currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000'
+        }
       });
 
       setOutputVideo(response.data.output_filename);
@@ -284,6 +326,11 @@ function App() {
     }
   };
   
+  // Toggle intre layout side/bottom
+  const toggleLayoutMode = () => {
+    setLayoutMode(prev => prev === 'side' ? 'bottom' : 'side');
+  };
+  
   // Handler pentru actualizarea timpului curent al videoclipului
   const handleProgress = (state) => {
     setCurrentTime(state.playedSeconds);
@@ -296,72 +343,64 @@ function App() {
       </header>
 
       <div className="main-container">
-        <section className="upload-section">
-          <h2>1. Încărcați un video</h2>
-          <input 
-            type="file" 
-            accept="video/*" 
-            onChange={handleFileChange} 
-            ref={fileInputRef}
-            className="file-input"
-          />
-          <button 
-            onClick={handleUpload} 
-            disabled={!videoFile || isProcessing}
-            className="action-button"
-          >
-            Încarcă Video
-          </button>
+        <section className="control-panel">
+          <h2>Acțiuni</h2>
           
-          {uploadProgress > 0 && uploadProgress < 100 && (
-            <ProgressBar 
-              progress={uploadProgress} 
-              label="Progres încărcare" 
-              status={progressStatus || "Se încarcă fișierul..."}
-            />
-          )}
-        </section>
-
-        {videoUrl && (
-          <section className="video-preview">
-            <h3>Previzualizare Video</h3>
-            <div className="player-wrapper" ref={playerContainerRef}>
-              <ReactPlayer 
-                ref={videoPlayerRef}
-                url={videoUrl} 
-                controls 
-                width="100%" 
-                height="100%" 
-                className="react-player"
-                playing={playing}
-                onProgress={handleProgress}
-                onPause={() => setPlaying(false)}
-                onPlay={() => setPlaying(true)}
+          <div className="control-panel-content">
+            <div className="file-select-area">
+              <label className="control-label">1. Selectați un fișier video:</label>
+              <input 
+                type="file" 
+                accept="video/*" 
+                onChange={handleFileChange} 
+                ref={fileInputRef}
+                className="file-input"
               />
-              
-              {/* Overlay pentru subtitrări peste video */}
-              {subtitles.length > 0 && (
-                <SubtitlePreview 
-                  subtitles={subtitles}
-                  currentTime={currentTime}
-                  subtitleStyle={subtitleStyle}
-                  updatePosition={updateSubtitlePosition}
-                />
-              )}
             </div>
-          </section>
-        )}
-
-        {uploadedFileName && (
-          <section className="generate-subtitles">
-            <h2>2. Generați subtitrări</h2>
-            <button 
-              onClick={generateSubtitles} 
-              disabled={isProcessing}
-              className="action-button"
-            >
-              Generează subtitrări
-            </button>
+            
+            <div className="all-buttons-container">
+              <div className="button-group">
+                <h3 className="button-group-label">2. Procesare:</h3>
+                <button 
+                  onClick={generateSubtitles} 
+                  disabled={!uploadedFileName || isProcessing}
+                  className="action-button generate-button"
+                >
+                  Generează Subtitrări
+                </button>
+              </div>
+              
+              <div className="button-group">
+                <h3 className="button-group-label">3. Finalizare:</h3>
+                <button 
+                  onClick={createVideoWithSubtitles} 
+                  disabled={!subtitles.length || isProcessing}
+                  className="action-button create-button"
+                >
+                  Creează Video
+                </button>
+                
+                {outputVideo && (
+                  <button 
+                    onClick={downloadVideo}
+                    className="action-button download-button"
+                  >
+                    Descarcă Video
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Bare de progres */}
+          <div className="progress-indicators">
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <ProgressBar 
+                progress={uploadProgress} 
+                label="Progres încărcare" 
+                status={progressStatus || "Se încarcă fișierul..."}
+              />
+            )}
             
             {transcribeProgress > 0 && transcribeProgress < 100 && (
               <ProgressBar 
@@ -370,50 +409,6 @@ function App() {
                 status={progressStatus || "Se procesează audio..."}
               />
             )}
-          </section>
-        )}
-
-        {subtitles.length > 0 && (
-          <section className="customize-section">
-            <h2>3. Editați și personalizați subtitrările</h2>
-            
-            <SubtitlesConfig 
-              subtitleStyle={subtitleStyle}
-              handleStyleChange={handleStyleChange}
-            />
-            
-            <h3>Lista subtitrări</h3>
-            <div className="subtitles-list">
-              <div className="subtitle-header">
-                <span className="subtitle-time">Timp</span>
-                <span className="subtitle-text">Text</span>
-                <span className="subtitle-duration">Durată</span>
-              </div>
-              
-              {subtitles.map((subtitle, index) => (
-                <EditableSubtitleItem
-                  key={index}
-                  subtitle={subtitle}
-                  index={index}
-                  formatTime={formatTime}
-                  updateSubtitle={updateSubtitle}
-                  seekToTime={seekToTime}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {subtitles.length > 0 && (
-          <section className="create-video-section">
-            <h2>4. Creați videoclipul cu subtitrări</h2>
-            <button 
-              onClick={createVideoWithSubtitles} 
-              disabled={isProcessing}
-              className="action-button"
-            >
-              Creează videoclip cu subtitrări
-            </button>
             
             {processProgress > 0 && processProgress < 100 && (
               <ProgressBar 
@@ -422,22 +417,90 @@ function App() {
                 status={progressStatus || "Se procesează video..."}
               />
             )}
+          </div>
+        </section>
+
+        {videoUrl && (
+          <section className="video-section">
+            <h2>Previzualizare și editare</h2>
             
-            {outputVideo && (
-              <div className="download-section">
-                <p>Videoclipul a fost creat cu succes!</p>
-                <button 
-                  onClick={downloadVideo}
-                  className="download-button"
-                >
-                  Descarcă videoclipul
-                </button>
+            <div className="layout-controls">
+              <button 
+                onClick={toggleLayoutMode} 
+                className="layout-toggle-button"
+              >
+                Schimbă Layout: {layoutMode === 'side' ? 'Lateral' : 'Sub video'}
+              </button>
+            </div>
+            
+            <div className={`video-subtitle-container ${layoutMode}`}>
+              <div className="video-preview-container">
+                <div className="player-wrapper" ref={playerContainerRef}>
+                  <ReactPlayer 
+                    ref={videoPlayerRef}
+                    url={videoUrl} 
+                    controls 
+                    width="100%" 
+                    height="100%" 
+                    className="react-player"
+                    playing={playing}
+                    onProgress={handleProgress}
+                    onPause={() => setPlaying(false)}
+                    onPlay={() => setPlaying(true)}
+                  />
+                  
+                  {/* Overlay pentru subtitrări peste video */}
+                  {subtitles.length > 0 && (
+                    <SubtitlePreview 
+                      subtitles={subtitles}
+                      currentTime={currentTime}
+                      subtitleStyle={subtitleStyle}
+                      updatePosition={updateSubtitlePosition}
+                      updateSubtitle={updateSubtitle}
+                    />
+                  )}
+                </div>
               </div>
-            )}
+              
+              {subtitles.length > 0 && (
+                <div className="subtitles-panel">
+                  <h4>Subtitrări</h4>
+                  <div className="subtitles-list">
+                    <div className="subtitle-header">
+                      <span className="subtitle-time">Timp</span>
+                      <span className="subtitle-text">Text</span>
+                      <span className="subtitle-duration">Durată</span>
+                    </div>
+                    
+                    <div className="subtitle-items-container">
+                      {subtitles.map((subtitle, index) => (
+                        <EditableSubtitleItem
+                          key={index}
+                          subtitle={subtitle}
+                          index={index}
+                          formatTime={formatTime}
+                          updateSubtitle={updateSubtitle}
+                          seekToTime={seekToTime}
+                          isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
+                          subtitleStyle={subtitleStyle}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {subtitles.length > 0 && (
+          <section className="customize-section">
+            <h2>Personalizare subtitrări</h2>
             
-            <p className="mt-2 text-sm text-gray-600">
-              Notă: Limita maximă de încărcare este de 3GB. Procesarea poate dura câteva minute, în funcție de lungimea videoclipului.
-            </p>
+            <SubtitlesConfig 
+              subtitleStyle={subtitleStyle}
+              handleStyleChange={handleStyleChange}
+            />
           </section>
         )}
 

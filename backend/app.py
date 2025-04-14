@@ -4,6 +4,7 @@ import time
 import uuid
 import subprocess
 import tempfile
+import re
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -59,6 +60,35 @@ def update_task_status(task_id, status, progress, message=""):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def process_subtitle_text(text, style):
+    """Procesează textul subtitrării conform opțiunilor de stil."""
+    processed_text = text
+    
+    # Aplicăm ALL CAPS dacă este activat
+    if style.get('allCaps', False):
+        processed_text = processed_text.upper()
+    
+    # Eliminăm semnele de punctuație dacă este selectat
+    if style.get('removePunctuation', False):
+        processed_text = re.sub(r'[.,\/#!$%\^&\*;:{}=\-_`~()]', '', processed_text)
+        processed_text = re.sub(r'\s{2,}', ' ', processed_text)  # eliminăm spațiile multiple
+    
+    return processed_text
+
+def hex_to_ass_color(hex_color):
+    """Convert hex color to ASS color format."""
+    if hex_color.startswith('#'):
+        hex_color = hex_color[1:]
+    
+    if len(hex_color) == 6:
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        # ASS uses BGR format with alpha in front
+        return f'&H00{b:02X}{g:02X}{r:02X}'
+    
+    return '&H00FFFFFF'  # Default to white if invalid
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -290,9 +320,9 @@ def create_video_with_subtitles():
         update_task_status(task_id, "processing", 10, "Creare fișier temporar de subtitrări")
         
         # Formatează subtitrările pentru a respecta numărul maxim de linii și lățimea maximă
-        max_lines = style.get('maxLines', 3)
+        max_lines = style.get('maxLines', 1)  # Default 1 linie
         max_width = style.get('maxWidth', 50)
-        max_words_per_line = style.get('maxWordsPerLine', 4)
+        max_words_per_line = style.get('maxWordsPerLine', 3)  # Default 3 cuvinte
         
         # Modificăm funcția split_subtitle_into_lines pentru a limita numărul de cuvinte per linie
         def custom_split_subtitle(text):
@@ -330,7 +360,9 @@ def create_video_with_subtitles():
             for i, sub in enumerate(formatted_subtitles, 1):
                 start_time = format_srt_timestamp(sub['start'])
                 end_time = format_srt_timestamp(sub['end'])
-                text = sub['text'].strip()
+                
+                # Procesează textul conform opțiunilor de stil (ALL CAPS, eliminare punctuație)
+                text = process_subtitle_text(sub['text'].strip(), style)
                 
                 srt_file.write(f"{i}\n")
                 srt_file.write(f"{start_time} --> {end_time}\n")
@@ -352,6 +384,10 @@ def create_video_with_subtitles():
         use_custom_position = style.get('useCustomPosition', False)
         custom_x = style.get('customX', 50)
         custom_y = style.get('customY', 90)
+        
+        # Extragem parametrii pentru cuvântul curent
+        current_word_color = style.get('currentWordColor', '#FFFF00')
+        current_word_border_color = style.get('currentWordBorderColor', '#000000')
         
         update_task_status(task_id, "processing", 30, "Aplicare subtitrări pe video")
         
@@ -514,20 +550,6 @@ def format_srt_timestamp(seconds):
     milliseconds = int((seconds % 1) * 1000)
     
     return f"{hours:02d}:{minutes:02d}:{seconds_int:02d},{milliseconds:03d}"
-
-def hex_to_ass_color(hex_color):
-    """Convert hex color to ASS color format."""
-    if hex_color.startswith('#'):
-        hex_color = hex_color[1:]
-    
-    if len(hex_color) == 6:
-        r = int(hex_color[0:2], 16)
-        g = int(hex_color[2:4], 16)
-        b = int(hex_color[4:6], 16)
-        # ASS uses BGR format with alpha in front
-        return f'&H00{b:02X}{g:02X}{r:02X}'
-    
-    return '&H00FFFFFF'  # Default to white if invalid
 
 @app.route('/api/download/<filename>', methods=['GET'])
 def download_file(filename):

@@ -1,5 +1,34 @@
-import os
-import tempfile
+# Modificări necesare în backend/custom_position.py
+
+# Adăugați aceste noi funcții pentru a procesa textul conform opțiunilor 
+# ALL CAPS și remove punctuation
+
+def process_text_with_options(text, style):
+    """
+    Procesează textul conform opțiunilor din style (ALL CAPS, eliminare punctuație).
+    
+    Args:
+        text: Textul de procesat
+        style: Dicționar cu opțiunile de stil
+    
+    Returns:
+        str: Textul procesat
+    """
+    processed_text = text
+    
+    # Aplicăm ALL CAPS dacă este activat
+    if style.get('allCaps', False):
+        processed_text = processed_text.upper()
+    
+    # Eliminăm semnele de punctuație dacă este selectat
+    if style.get('removePunctuation', False):
+        import re
+        processed_text = re.sub(r'[.,\/#!$%\^&\*;:{}=\-_`~()]', '', processed_text)
+        processed_text = re.sub(r'\s{2,}', ' ', processed_text)  # eliminăm spațiile multiple
+    
+    return processed_text
+
+# În funcția create_ass_file_with_custom_position, adăugați procesarea textului:
 
 def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles):
     """
@@ -31,6 +60,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},0,0,0,0,100,100,0,0,1,{outline_width},0,2,10,10,10,1
+Style: CurrentWord,{font_family},{font_size},&H{current_word_color},&H{secondary_color},&H{current_word_border_color},&H{back_color},1,0,0,0,100,100,0,0,1,{outline_width},0,2,10,10,10,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -43,6 +73,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
     outline_width = style.get('borderWidth', 2)
     
+    # Extragem culorile pentru cuvântul curent
+    current_word_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))
+    current_word_border_color = hex_to_ass_color(style.get('currentWordBorderColor', '#000000'))
+    
     # Completăm header-ul cu informațiile de stil
     ass_header = ass_header.format(
         font_family=font_family,
@@ -50,6 +84,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         primary_color=font_color[2:],  # Eliminăm &H din început
         secondary_color="FFFFFF",
         outline_color=outline_color[2:],
+        current_word_color=current_word_color[2:],
+        current_word_border_color=current_word_border_color[2:],
         back_color="000000",
         outline_width=outline_width
     )
@@ -62,7 +98,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         for sub in subtitles:
             start_time = format_ass_timestamp(sub['start'])
             end_time = format_ass_timestamp(sub['end'])
-            text = sub['text'].strip().replace('\n', '\\N')
+            
+            # Procesează textul conform opțiunilor din style
+            text = process_text_with_options(sub['text'].strip(), style)
+            text = text.replace('\n', '\\N')
             
             # Adăugăm poziția personalizată ca tag override
             position_tag = f"{{\\pos({x_pos * 1280},{y_pos * 720})}}"
@@ -72,30 +111,3 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             ass_file.write(dialog_line)
     
     return output_path
-
-def format_ass_timestamp(seconds):
-    """
-    Convertește timpul în secunde în formatul ASS (h:mm:ss.cc).
-    """
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds_int = int(seconds % 60)
-    centiseconds = int((seconds % 1) * 100)
-    
-    return f"{hours}:{minutes:02d}:{seconds_int:02d}.{centiseconds:02d}"
-
-def hex_to_ass_color(hex_color):
-    """
-    Convertește o culoare hex în formatul ASS.
-    """
-    if hex_color.startswith('#'):
-        hex_color = hex_color[1:]
-    
-    if len(hex_color) == 6:
-        r = int(hex_color[0:2], 16)
-        g = int(hex_color[2:4], 16)
-        b = int(hex_color[4:6], 16)
-        # ASS uses format &HAABBGGRR (where AA is alpha, 00 is opaque)
-        return f'&H00{b:02X}{g:02X}{r:02X}'
-    
-    return '&H00FFFFFF'  # Default la alb dacă e invalid
