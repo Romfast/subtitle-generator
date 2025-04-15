@@ -87,8 +87,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
     # Extragem parametrii de stil
-    font_family = style.get('fontFamily', 'Sans')
-    font_size = style.get('fontSize', 24)
+    font_family = style.get('fontFamily', 'Arial')
+    # Ajustăm dimensiunea fontului în funcție de rezoluția video
+    base_font_size = style.get('fontSize', 24)
+    # Dimensiunea fontului ar trebui să fie aproximativ 2.5% din înălțimea video pentru 24px
+    # la o rezoluție de 720p
+    font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
+    
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
     outline_width = style.get('borderWidth', 2)
@@ -111,7 +116,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     )
     
     # Adăugăm o întârziere pentru sincronizare
-    sync_delay = 0.3  # 300ms întârziere
+    sync_delay = 0.5  # 500ms întârziere
     
     # Creăm fișierul ASS
     with open(output_path, 'w', encoding='utf-8') as ass_file:
@@ -171,8 +176,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
     # Parametri de stil
-    font_family = style.get('fontFamily', 'Sans')
-    font_size = style.get('fontSize', 24)
+    font_family = style.get('fontFamily', 'Arial')
+    # Ajustăm dimensiunea fontului în funcție de rezoluția video
+    base_font_size = style.get('fontSize', 24)
+    # Dimensiunea fontului ar trebui să fie aproximativ 2.5% din înălțimea video pentru 24px
+    # la o rezoluție de 720p
+    font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
+    
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]  # Fără &H prefix
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
@@ -214,7 +224,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         f.write(ass_header)
         
         # Adăugăm o întârziere pentru sincronizare
-        sync_delay = 0.3  # 300ms întârziere
+        sync_delay = 0.5  # 500ms întârziere
         
         # Verificăm dacă trebuie să folosim poziționare personalizată
         position_tag = ""
@@ -313,8 +323,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
     # Parametri
-    font_family = style.get('fontFamily', 'Sans')
-    font_size = style.get('fontSize', 24)
+    font_family = style.get('fontFamily', 'Arial')
+    # Ajustăm dimensiunea fontului în funcție de rezoluția video
+    base_font_size = style.get('fontSize', 24)
+    # Dimensiunea fontului ar trebui să fie aproximativ 2.5% din înălțimea video pentru 24px
+    # la o rezoluție de 720p
+    font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
+    
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
@@ -358,7 +373,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         f.write(ass_header)
         
         # Introducem o întârziere universală pentru a îmbunătăți sincronizarea
-        sync_delay = 0.3  # 300ms întârziere
+        sync_delay = 0.5  # 500ms întârziere
         
         for sub in subtitles:
             text = process_text_with_options(sub['text'].strip(), style)

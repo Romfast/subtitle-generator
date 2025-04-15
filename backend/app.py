@@ -90,6 +90,38 @@ def hex_to_ass_color(hex_color):
     
     return '&H00FFFFFF'  # Default to white if invalid
 
+# Funcția adjust_font_size_for_video corectată
+def adjust_font_size_for_video(base_size, video_width=1280, reference_width=1920):
+    """
+    Ajustează dimensiunea fontului proporțional cu lățimea video-ului,
+    dar evită dimensiunile prea mici.
+    
+    Args:
+        base_size: Dimensiunea de bază a fontului (ex: 24)
+        video_width: Lățimea video-ului țintă
+        reference_width: Lățimea de referință pentru dimensiunea fontului
+    
+    Returns:
+        int: Dimensiunea fontului ajustată
+    """
+    # Factorul de scaling pentru dimensiunea fontului
+    # Folosim un factor minim de 0.75 pentru a evita fonturile prea mici
+    scaling_factor = max(0.75, video_width / reference_width)
+    
+    # Adăugăm și un bonus pentru dimensiunile mici
+    # pentru a asigura lizibilitatea
+    size_bonus = 0
+    if video_width < 1280:
+        size_bonus = 4  # Adăugăm bonus pentru rezoluții mai mici
+    
+    # Dimensiunea minima nu va fi mai mică de 18px pentru lizibilitate
+    adjusted_size = max(18, int(base_size * scaling_factor) + size_bonus)
+    
+    print(f"Font size calculation: base={base_size}, video_width={video_width}, " 
+          f"factor={scaling_factor:.2f}, bonus={size_bonus}, result={adjusted_size}")
+    
+    return adjusted_size
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     print("API: Received upload request")
@@ -322,6 +354,26 @@ def create_video_with_subtitles():
         return jsonify({'error': 'Video file not found', 'task_id': task_id}), 404
     
     try:
+        # Verificăm dimensiunea video-ului real pentru a face ajustări mai precise
+        try:
+            # Obținem dimensiunile video-ului original
+            probe_cmd = [
+                'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                '-show_entries', 'stream=width,height', '-of', 'csv=s=x:p=0',
+                input_path
+            ]
+            video_dimensions = subprocess.check_output(probe_cmd, universal_newlines=True).strip()
+            if 'x' in video_dimensions:
+                video_width, video_height = map(int, video_dimensions.split('x'))
+                print(f"Detected video dimensions: {video_width}x{video_height}")
+            else:
+                # Valori default dacă nu putem determina dimensiunile
+                video_width, video_height = 1280, 720
+        except Exception as e:
+            print(f"Could not determine video dimensions: {str(e)}")
+            # Valori default
+            video_width, video_height = 1280, 720
+        
         # Generate a unique ID for the output file
         unique_id = str(uuid.uuid4())[:8]
         base_name = os.path.splitext(filename)[0]
@@ -365,12 +417,16 @@ def create_video_with_subtitles():
                                      f"Creare fișier subtitrări: {i}/{len(subtitles)}")
         
         # Extract style parameters
-        font_size = style.get('fontSize', 24)
+        font_family = style.get('fontFamily', 'Sans')
+        base_font_size = style.get('fontSize', 24)
+        # Ajustăm dimensiunea fontului pentru video
+        font_size = adjust_font_size_for_video(base_font_size, video_width, 1920)
+        print(f"Font size adjusted from {base_font_size} to {font_size} for video width {video_width}px")
+        
         font_color = style.get('fontColor', '#FFFFFF')
         border_color = style.get('borderColor', '#000000')
         border_width = style.get('borderWidth', 2)
         position = style.get('position', 'bottom')
-        font_family = style.get('fontFamily', 'Sans')
         use_custom_position = style.get('useCustomPosition', False)
         custom_x = style.get('customX', 50)
         custom_y = style.get('customY', 90)
@@ -401,69 +457,25 @@ def create_video_with_subtitles():
 
         update_task_status(task_id, "processing", 30, "Aplicare subtitrări cu stil personalizat")
         
-        # Map position to FFmpeg subtitle positioning
-        if use_custom_position:
-            # Pentru poziționare manuală, folosim coordonate absolute
-            # Valorile ASS pentru poziție: 1=jos-stânga, 2=jos-centru, 3=jos-dreapta, etc.
-            vertical_position = f"{custom_y}%"
-            horizontal_position = f"{custom_x}%"
-            text_align = 2  # Centrat
-        else:
-            # Map position to FFmpeg subtitle positioning
-            position_map = {
-                'top': '10',
-                'middle': '(h-text_h)/2',
-                'bottom': 'h-text_h-10',
-                'top-left': '10',
-                'top-right': '10',
-                'bottom-left': 'h-text_h-10',
-                'bottom-right': 'h-text_h-10'
-            }
-            
-            horizontal_map = {
-                'top': '(w-text_w)/2',
-                'middle': '(w-text_w)/2',
-                'bottom': '(w-text_w)/2',
-                'top-left': '10',
-                'top-right': 'w-text_w-10',
-                'bottom-left': '10',
-                'bottom-right': 'w-text_w-10'
-            }
-            
-            text_align_map = {
-                'top': 2,        # Centrat
-                'middle': 2,     # Centrat
-                'bottom': 2,     # Centrat
-                'top-left': 1,   # Stânga
-                'top-right': 3,  # Dreapta
-                'bottom-left': 1,# Stânga
-                'bottom-right': 3 # Dreapta
-            }
-            
-            vertical_position = position_map.get(position, 'h-text_h-10')
-            horizontal_position = horizontal_map.get(position, '(w-text_w)/2')
-            text_align = text_align_map.get(position, 2)
-
         # Folosim un fișier ASS cu karaoke pentru a evidenția cuvântul curent
-        if use_karaoke:
-            ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
-            
-            # Adăugăm o ușoară întârziere pentru a compensa desincronizarea
-            sync_delay = 0.3  # 300ms întârziere
-            
-            # Ajustăm timpii subtitrărilor pentru sincronizare mai bună
-            synced_subtitles = []
-            for sub in formatted_subtitles:
-                synced_subtitles.append({
-                    'start': sub['start'] + sync_delay,
-                    'end': sub['end'] + sync_delay,
-                    'text': sub['text']
-                })
-            
-            # Alegem metoda potrivită în funcție de poziție și compatibilitate
-            if use_custom_position:
-                # Folosim metoda word_by_word pentru poziționare personalizată
-                # Aceasta este mai compatibilă cu FFmpeg și sincronizată mai bine
+        ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
+        
+        # Adăugăm o ușoară întârziere pentru a compensa desincronizarea
+        sync_delay = 0.5  # 500ms întârziere
+        
+        # Ajustăm timpii subtitrărilor pentru sincronizare mai bună
+        synced_subtitles = []
+        for sub in formatted_subtitles:
+            synced_subtitles.append({
+                'start': sub['start'] + sync_delay,
+                'end': sub['end'] + sync_delay,
+                'text': sub['text']
+            })
+        
+        # Alegem metoda potrivită în funcție de poziție și compatibilitate
+        if use_custom_position:
+            # Folosim metoda word_by_word pentru poziționare personalizată
+            if use_karaoke:
                 create_word_by_word_karaoke(
                     temp_srt_path,
                     ass_path,
@@ -480,11 +492,32 @@ def create_video_with_subtitles():
                         'currentWordBorderColor': current_word_border_color,
                         'allCaps': style.get('allCaps', False),
                         'removePunctuation': style.get('removePunctuation', False),
-                        'textAlign': text_align
+                        'textAlign': 2  # Centrat pentru poziție personalizată
                     },
                     synced_subtitles  # Folosim subtitrările sincronizate
                 )
             else:
+                # Dacă nu folosim karaoke, creăm un fișier ASS simplu cu poziție personalizată
+                create_ass_file_with_custom_position(
+                    temp_srt_path,
+                    ass_path,
+                    {
+                        'fontFamily': font_family,
+                        'fontSize': font_size,
+                        'fontColor': font_color,
+                        'borderColor': border_color,
+                        'borderWidth': border_width,
+                        'useCustomPosition': use_custom_position,
+                        'customX': custom_x,
+                        'customY': custom_y,
+                        'allCaps': style.get('allCaps', False),
+                        'removePunctuation': style.get('removePunctuation', False)
+                    },
+                    synced_subtitles
+                )
+        else:
+            # Poziționare standard
+            if use_karaoke:
                 # Folosim karaoke îmbunătățit pentru poziționare normală
                 create_karaoke_ass_file(
                     temp_srt_path,
@@ -499,36 +532,34 @@ def create_video_with_subtitles():
                         'currentWordColor': current_word_color,
                         'currentWordBorderColor': current_word_border_color,
                         'allCaps': style.get('allCaps', False),
-                        'removePunctuation': style.get('removePunctuation', False),
-                        'textAlign': text_align,
-                        'useCustomPosition': use_custom_position,
-                        'customX': custom_x,
-                        'customY': custom_y
+                        'removePunctuation': style.get('removePunctuation', False)
                     },
-                    synced_subtitles  # Folosim subtitrările sincronizate
+                    synced_subtitles
                 )
-            
-            # Log pentru debugging
-            print(f"Created ASS file with enhanced karaoke effect at {ass_path}")
-            
-            # Folosim filtrul 'ass' direct cu opțiunea "fontsdir" pentru a asigura compatibilitatea cu FFmpeg
-            vf_filter = f"ass={ass_path}:fontsdir=/usr/share/fonts"
-        else:
-            # Construim opțiunile pentru stilul subtitrărilor cu poziționarea standard
-            subtitle_style = (
-                f"FontName={font_family},"
-                f"FontSize={font_size},"
-                f"PrimaryColour={hex_to_ass_color(font_color)},"
-                f"OutlineColour={hex_to_ass_color(border_color)},"
-                f"BorderStyle=1,"
-                f"Outline={border_width},"
-                f"Alignment={text_align},"
-                f"MarginL=10,"
-                f"MarginR=10,"
-                f"MarginV=10"
-            )
-            
-            vf_filter = f"subtitles={temp_srt_path}:force_style='{subtitle_style}'"
+            else:
+                # Poziționare standard fără karaoke
+                # Cream un fișier ASS simplu
+                create_ass_file_with_custom_position(
+                    temp_srt_path,
+                    ass_path,
+                    {
+                        'fontFamily': font_family,
+                        'fontSize': font_size,
+                        'fontColor': font_color,
+                        'borderColor': border_color,
+                        'borderWidth': border_width,
+                        'position': position,
+                        'allCaps': style.get('allCaps', False),
+                        'removePunctuation': style.get('removePunctuation', False)
+                    },
+                    synced_subtitles
+                )
+        
+        # Log pentru debugging
+        print(f"Created ASS file at {ass_path}")
+        
+        # Folosim filtrul 'ass' direct
+        vf_filter = f"ass={ass_path}:fontsdir=/usr/share/fonts"
         
         # Create the FFmpeg command for adding styled subtitles
         ffmpeg_cmd = [
@@ -590,7 +621,7 @@ def create_video_with_subtitles():
         if os.path.exists(temp_srt_path):
             os.remove(temp_srt_path)
             
-        if use_karaoke and os.path.exists(ass_path):
+        if os.path.exists(ass_path):
             os.remove(ass_path)
         
         update_task_status(task_id, "completed", 100, "Video cu subtitrări creat cu succes")
