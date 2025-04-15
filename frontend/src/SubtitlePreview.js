@@ -93,8 +93,8 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         const formattedResult = formatSubtitleText(activeSubtitle.text);
         setFormattedDisplay(formattedResult);
       }
-    } else if (activeSubtitle && formattedDisplay.allWords.length > 0) {
-      // Actualizăm cuvântul curent bazat pe timp doar dacă subtitrarea e aceeași
+    } else if (activeSubtitle && formattedDisplay.allWords.length > 0 && subtitleStyle.useKaraoke === true) {
+      // Actualizăm cuvântul curent bazat pe timp doar dacă subtitrarea e aceeași și useKaraoke este activat
       const duration = activeSubtitle.end - activeSubtitle.start;
       const relativeTime = currentTime - activeSubtitle.start;
       const wordDuration = duration / formattedDisplay.allWords.length;
@@ -109,7 +109,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         setCurrentWordIndex(wordIndex);
       }
     }
-  }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines]);
+  }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines, subtitleStyle.useKaraoke]);
   
   // Acest efect re-formatează textul când se schimbă opțiunile de stil
   useEffect(() => {
@@ -136,7 +136,10 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       
       // Construim JSX pentru fiecare cuvânt din această linie
       const wordElements = lineWords.map((word, wordIndex) => {
-        const isCurrentWord = (globalWordIndex + wordIndex) === currentWordIndex;
+        // Verificăm dacă evidențierea cuvintelor este activată
+        // Dacă nu este activată, ignorăm complet logica de evidențiere
+        const isCurrentWord = subtitleStyle.useKaraoke === true && 
+                         (globalWordIndex + wordIndex) === currentWordIndex;
         
         return (
           <span

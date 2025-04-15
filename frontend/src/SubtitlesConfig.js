@@ -314,13 +314,13 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
               <label className="switch">
                 <input 
                   type="checkbox" 
-                  checked={subtitleStyle.useKaraoke !== false} 
+                  checked={subtitleStyle.useKaraoke === true} 
                   onChange={() => handleToggleChange('useKaraoke')}
                 />
                 <span className="slider round"></span>
               </label>
               <span className="toggle-label">
-                {subtitleStyle.useKaraoke !== false ? 'Activat' : 'Dezactivat'}
+                {subtitleStyle.useKaraoke === true ? 'Activat' : 'Dezactivat'}
               </span>
             </div>
             <p className="help-text">

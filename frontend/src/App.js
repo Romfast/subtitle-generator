@@ -58,7 +58,7 @@ function App() {
     currentWordBorderColor: '#000000', // Culoare contur cuvânt curent
     allCaps: false, // Opțiune pentru ALL CAPS
     removePunctuation: false, // Opțiune pentru eliminarea punctuației
-    useKaraoke: true // Opțiune pentru activarea efectului de karaoke (evidențiere cuvânt cu cuvânt)
+    useKaraoke: false // Modificat din true în false pentru a dezactiva implicit evidențierea cuvântului curent
   });
 
   const fileInputRef = useRef();

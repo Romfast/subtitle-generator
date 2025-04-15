@@ -392,7 +392,7 @@ def create_video_with_subtitles():
             current_word_border_color = '#' + current_word_border_color
             
         # Activăm sau dezactivăm karaoke (evidențierea cuvântului curent)
-        use_karaoke = style.get('useKaraoke', True)  # Default activat
+        use_karaoke = style.get('useKaraoke', False)  # Default dezactivat
 
         # Log pentru debugging
         print(f"Applying subtitle style: font={font_family}, size={font_size}, color={font_color}, border={border_color}, width={border_width}")
