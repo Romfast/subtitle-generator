@@ -564,6 +564,15 @@ button:disabled {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
+.subtitle-overlay.mobile-mode {
+  cursor: move !important;
+}
+
+.subtitle-overlay.mobile-mode:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
 .subtitle-edit-overlay {
   width: 100%;
   pointer-events: auto;
@@ -621,6 +630,55 @@ button:disabled {
   padding: 15px;
   background-color: #f5f7fa;
   border-radius: 6px;
+}
+
+/* Colapsible section pentru mobil */
+.collapsible-section {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.collapsible-header {
+  background-color: #f8f9fa;
+  padding: 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.collapsible-header:hover {
+  background-color: #e9ecef;
+}
+
+.collapsible-arrow {
+  transition: transform 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.collapsible-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.collapsible-content.collapsed {
+  max-height: 0;
+}
+
+.collapsible-content.expanded {
+  max-height: 1000px;
 }
 
 .style-tabs {
@@ -919,102 +977,6 @@ input:checked + .slider:before {
   color: #2c3e50;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 992px) {
-  .video-subtitle-container.side {
-    flex-direction: column;
-  }
-  
-  .subtitles-panel {
-    width: 100%;
-    height: 250px;
-  }
-  
-  .style-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .all-buttons-container {
-    flex-direction: column;
-    gap: 20px;
-  }
-  
-  .button-group {
-    width: 100%;
-  }
-
-  .whisper-model-selector {
-    padding: 15px;
-  }
-
-  .model-performance {
-    gap: 10px;
-  }
-}
-
-@media (max-width: 768px) {
-  .horizontal-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  
-  .file-select-area {
-    width: 100%;
-  }
-  
-  .action-button {
-    width: 100%;
-    min-width: auto;
-  }
-  
-  .subtitle-item,
-  .subtitle-header {
-    grid-template-columns: 90px 1fr 40px;
-  }
-  
-  .status-message,
-  .error-message {
-    padding: 15px 10px;
-  }
-  
-  .App {
-    padding: 10px;
-  }
-
-  .whisper-model-selector {
-    padding: 12px;
-  }
-
-  .model-performance {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .performance-metric {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .performance-bar {
-    width: 60%;
-    margin-left: 10px;
-  }
-}
-
-/* Helpers */
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-gray-600 {
-  color: #718096;
-}
-
 /* Stiluri pentru culorile predefinite */
 .predefined-colors {
   margin-top: 10px;
@@ -1045,6 +1007,67 @@ input:checked + .slider:before {
   border: 2px solid #2196F3;
   transform: scale(1.1);
   box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+}
+
+/* Stiluri mobile pentru controale */
+.mobile-grid {
+  grid-template-columns: 1fr !important;
+  gap: 18px;
+}
+
+.mobile-tabs .tab-button {
+  flex: 1;
+  text-align: center;
+  font-size: 0.95rem;
+  padding: 10px 8px;
+}
+
+.range-input-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-input {
+  flex: 1;
+  height: 6px;
+  background: #ddd;
+  outline: none;
+  border-radius: 3px;
+}
+
+.range-value {
+  min-width: 45px;
+  text-align: right;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.color-input {
+  width: 100%;
+  height: 45px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.coordinate-input {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.coordinate-field {
+  width: 70px;
+  text-align: center;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.karaoke-toggle {
+  grid-column: 1 / -1;
 }
 
 /* Adăugați acest cod în App.css pentru a importa fonturile */
@@ -1172,4 +1195,330 @@ select[name="fontFamily"] option[value="Comfortaa"] {
   border: 5px solid transparent;
   border-top-color: #333;
   z-index: 1000;
+}
+
+/* ÎMBUNĂTĂȚIRI MOBILE RESPONSIVE */
+
+/* Responsive Adjustments pentru tablet și mobil */
+@media (max-width: 992px) {
+  .video-subtitle-container.side {
+    flex-direction: column;
+  }
+  
+  .subtitles-panel {
+    width: 100%;
+    height: 250px;
+  }
+  
+  .style-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .all-buttons-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .button-group {
+    width: 100%;
+  }
+
+  .whisper-model-selector {
+    padding: 15px;
+  }
+
+  .model-performance {
+    gap: 10px;
+  }
+}
+
+/* Optimizări speciale pentru dispozitive mobile mici */
+@media (max-width: 768px) {
+  /* Layout general */
+  .App {
+    padding: 10px;
+  }
+  
+  .header {
+    margin-bottom: 20px;
+    padding: 15px 0;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  /* Video mai mare pe mobil */
+  .video-section {
+    margin: 15px 0;
+  }
+  
+  .player-wrapper {
+    padding-top: 62.5%; /* Aspect ratio puțin mai înalt pentru mobil */
+  }
+  
+  .video-preview-container {
+    width: 100%;
+  }
+  
+  /* Panoul de subtitrări mai compact */
+  .subtitles-panel {
+    height: 200px;
+  }
+  
+  .subtitle-item,
+  .subtitle-header {
+    grid-template-columns: 80px 1fr 35px;
+    padding: 8px;
+  }
+  
+  .subtitle-time {
+    font-size: 0.8rem;
+  }
+  
+  .subtitle-duration {
+    font-size: 0.8rem;
+  }
+  
+  /* Controale orizontale devin verticale pe mobil */
+  .horizontal-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .file-select-area {
+    width: 100%;
+  }
+  
+  .action-button {
+    width: 100%;
+    min-width: auto;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    height: 48px; /* Mai înalt pentru touch */
+  }
+  
+  /* Setări colapsabile pe mobil */
+  .subtitle-style-controls {
+    padding: 0;
+    background-color: transparent;
+  }
+  
+  .style-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 15px;
+  }
+  
+  .style-item input, 
+  .style-item select {
+    padding: 12px; /* Mai mari pentru touch */
+    font-size: 1rem;
+  }
+  
+  /* Tab buttons mai mari pe mobil */
+  .tab-button {
+    padding: 12px 16px;
+    font-size: 1rem;
+  }
+  
+  /* Toggle switches mai mari */
+  .switch {
+    width: 60px;
+    height: 30px;
+  }
+  
+  .switch input:checked + .slider:before {
+    transform: translateX(30px);
+  }
+  
+  .slider:before {
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+  }
+  
+  /* Color selector mai mare */
+  .color-selector input[type="color"] {
+    height: 50px;
+  }
+  
+  .color-swatch {
+    width: 32px;
+    height: 32px;
+  }
+  
+  /* Range inputs mai mari pentru touch */
+  .range-input {
+    height: 8px;
+  }
+  
+  .range-value {
+    font-size: 1rem;
+    min-width: 50px;
+  }
+  
+  .coordinate-field {
+    width: 80px;
+    padding: 12px 8px;
+    font-size: 1rem;
+  }
+  
+  /* Tab buttons responsive */
+  .mobile-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .mobile-tabs .tab-button {
+    min-width: 120px;
+    margin-right: 5px;
+  }
+  
+  /* Status messages */
+  .status-message,
+  .error-message {
+    padding: 15px 10px;
+    font-size: 1rem;
+  }
+  
+  /* Whisper model selector optimizat pentru mobil */
+  .whisper-model-selector {
+    padding: 12px;
+  }
+
+  .model-performance {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .performance-metric {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .performance-bar {
+    width: 60%;
+    margin-left: 10px;
+  }
+  
+  /* Butonul de layout toggle */
+  .layout-toggle-button {
+    padding: 10px 15px;
+    font-size: 1rem;
+  }
+  
+  /* Position coordinates mai mari pentru touch */
+  .position-coordinates input {
+    width: 80px;
+    padding: 10px;
+  }
+  
+  /* Subtitle preview mai mare pe mobil */
+  .subtitle-overlay {
+    min-height: 44px; /* Touch target minim */
+    padding: 8px 12px !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Hide layout controls pe mobil foarte mic */
+  .layout-controls {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+}
+
+/* Optimizări pentru dispozitive foarte mici */
+@media (max-width: 480px) {
+  .App {
+    padding: 5px;
+  }
+  
+  h1 {
+    font-size: 1.6rem;
+  }
+  
+  section {
+    padding: 15px;
+  }
+  
+  .action-button {
+    font-size: 1rem;
+    height: 44px;
+  }
+  
+  .subtitle-item,
+  .subtitle-header {
+    grid-template-columns: 70px 1fr 30px;
+    padding: 6px;
+  }
+  
+  .subtitles-panel {
+    height: 180px;
+  }
+  
+  /* Performance bars pe o singură coloană */
+  .model-performance {
+    gap: 6px;
+  }
+  
+  .performance-metric span {
+    font-size: 0.7rem;
+  }
+  
+  /* Subtitrări mai mari pe ecrane foarte mici pentru lizibilitate */
+  .subtitle-overlay {
+    padding: 10px 15px !important;
+    font-size: 1.2em !important;
+    line-height: 1.3;
+  }
+}
+
+/* Helpers */
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-gray-600 {
+  color: #718096;
+}
+
+/* Touch device specific improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Pentru dispozitive touch */
+  .subtitle-overlay {
+    cursor: move !important;
+  }
+  
+  /* Mărește zona de touch pentru controale mici */
+  .color-swatch {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .switch {
+    width: 64px;
+    height: 34px;
+  }
+  
+  .slider:before {
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(30px);
+  }
 }

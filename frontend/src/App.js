@@ -11,8 +11,6 @@ import './ProgressBar.css';
 // Backend API base URL
 const API_URL = process.env.REACT_APP_API_URL || '/api';
 
-const [loadingModel, setLoadingModel] = useState(''); // Modelul care se încarcă
-
 // Configurare axios
 axios.defaults.timeout = 3600000; // 1 oră pentru încărcări mari
 
@@ -27,6 +25,8 @@ function App() {
   const [outputVideo, setOutputVideo] = useState('');
   const [apiStatus, setApiStatus] = useState('Verificare conexiune...');
   const [layoutMode, setLayoutMode] = useState('side'); // 'side' sau 'bottom'
+  const [isMobile, setIsMobile] = useState(false);
+  const [loadingModel, setLoadingModel] = useState(''); // Modelul care se încarcă
   
   // Stări pentru model Whisper
   const [whisperModel, setWhisperModel] = useState('small');
@@ -45,6 +45,10 @@ function App() {
   const [processProgress, setProcessProgress] = useState(0);
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
+  
+  // Stări pentru secțiuni colapsabile pe mobil
+  const [settingsExpanded, setSettingsExpanded] = useState(false);
+  const [whisperSelectorExpanded, setWhisperSelectorExpanded] = useState(true);
   
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 24,
@@ -72,8 +76,20 @@ function App() {
   const videoPlayerRef = useRef();
   const playerContainerRef = useRef();
 
-  // Verificare conexiune API și încărcarea modelelor disponibile
+  // Detectare mobil și verificare conexiune API
   useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth <= 768 || 'ontouchstart' in window;
+      setIsMobile(isMobileDevice);
+      
+      // Pe mobil, layout-ul este mereu 'bottom'
+      if (isMobileDevice) {
+        setLayoutMode('bottom');
+        // Pe mobil, setările sunt inițial colapsate pentru a economisi spațiu
+        setSettingsExpanded(false);
+      }
+    };
+    
     const testApiConnection = async () => {
       try {
         const response = await axios.get(`${API_URL}/test`);
@@ -125,23 +141,16 @@ function App() {
       }
     };
 
+    checkMobile();
     testApiConnection();
     fetchAvailableModels();
     
-    // Detectăm lățimea ecranului și setăm layout-ul implicit
-    const handleResize = () => {
-      setLayoutMode(window.innerWidth < 992 ? 'bottom' : 'side');
-    };
-    
-    // Setare layout inițial
-    handleResize();
-    
     // Adaugă listener pentru resize
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', checkMobile);
     
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', checkMobile);
     };
   }, []);
 
@@ -150,6 +159,7 @@ function App() {
     if (newModel === whisperModel || isProcessing) return;
     
     setModelLoading(true);
+    setLoadingModel(newModel);
     try {
       const response = await axios.post(`${API_URL}/change-model`, { model: newModel });
       setWhisperModel(newModel);
@@ -160,6 +170,7 @@ function App() {
       setError(`Eroare la schimbarea modelului: ${err.response?.data?.error || err.message}`);
     } finally {
       setModelLoading(false);
+      setLoadingModel('');
     }
   };
   
@@ -447,9 +458,11 @@ function App() {
     }
   };
   
-  // Toggle intre layout side/bottom
+  // Toggle intre layout side/bottom (doar pe desktop)
   const toggleLayoutMode = () => {
-    setLayoutMode(prev => prev === 'side' ? 'bottom' : 'side');
+    if (!isMobile) {
+      setLayoutMode(prev => prev === 'side' ? 'bottom' : 'side');
+    }
   };
   
   // Handler pentru actualizarea timpului curent al videoclipului
@@ -463,10 +476,36 @@ function App() {
     return currentModel ? currentModel.description : '';
   };
 
+  // Componente pentru secțiuni colapsabile pe mobil
+  const CollapsibleSection = ({ title, isExpanded, onToggle, children }) => (
+    <div className="collapsible-section">
+      <button 
+        className="collapsible-header"
+        onClick={onToggle}
+        type="button"
+      >
+        <span>{title}</span>
+        <span className={`collapsible-arrow ${isExpanded ? 'expanded' : ''}`}>
+          ▼
+        </span>
+      </button>
+      <div className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+        <div style={{ padding: '15px' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="App">
       <header className="header">
         <h1>Generator de Subtitrări Automate</h1>
+        {isMobile && (
+          <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '10px' }}>
+            Interfață optimizată pentru mobil
+          </p>
+        )}
       </header>
 
       <div className="main-container">
@@ -474,76 +513,112 @@ function App() {
           <h2>Acțiuni</h2>
           
           <div className="control-panel-content">
-            {/* Selector pentru modelul Whisper */}
-            <div className="whisper-model-selector">
-              <label className="control-label">
-                Model Whisper pentru transcriere:
-                <span className={`model-indicator ${whisperModel}`}>
-                  {whisperModel.toUpperCase()}
-                </span>
-              </label>
-              <select 
-                value={whisperModel} 
-                onChange={(e) => handleModelChange(e.target.value)}
-                className={`model-select ${modelLoading ? 'model-loading' : ''}`}
-                disabled={isProcessing || modelLoading}
+            {/* Selector pentru modelul Whisper - colapsabil pe mobil */}
+            {isMobile ? (
+              <CollapsibleSection 
+                title={`Model Whisper: ${whisperModel.toUpperCase()}`}
+                isExpanded={whisperSelectorExpanded}
+                onToggle={() => setWhisperSelectorExpanded(!whisperSelectorExpanded)}
               >
-                {availableModels.map(model => (
-                  <option key={model.value} value={model.value}>
-                    {model.name} - {model.size}
-                  </option>
-                ))}
-              </select>
-              
-              {getCurrentModelDescription() && (
-                <p className="model-description">
-                  {getCurrentModelDescription()}
-                </p>
-              )}
-              
-              {/* Indicatori de performanță vizuali */}
-              <div className="model-performance">
-                <div className="performance-metric">
-                  <span>Viteză</span>
-                  <div className="performance-bar">
-                    <div 
-                      className="performance-fill speed" 
-                      style={{ 
-                        width: whisperModel === 'base' ? '100%' : 
-                               whisperModel === 'small' ? '80%' : 
-                               whisperModel === 'medium' ? '50%' : '25%' 
-                      }}
-                    ></div>
-                  </div>
+                <div className="whisper-model-content">
+                  <label className="control-label">
+                    Model Whisper pentru transcriere:
+                    <span className={`model-indicator ${whisperModel}`}>
+                      {whisperModel.toUpperCase()}
+                    </span>
+                  </label>
+                  <select 
+                    value={whisperModel} 
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    className={`model-select ${modelLoading ? 'model-loading' : ''}`}
+                    disabled={isProcessing || modelLoading}
+                  >
+                    {availableModels.map(model => (
+                      <option key={model.value} value={model.value}>
+                        {model.name} - {model.size}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {getCurrentModelDescription() && (
+                    <p className="model-description">
+                      {getCurrentModelDescription()}
+                    </p>
+                  )}
                 </div>
-                <div className="performance-metric">
-                  <span>Precizie</span>
-                  <div className="performance-bar">
-                    <div 
-                      className="performance-fill accuracy" 
-                      style={{ 
-                        width: whisperModel === 'base' ? '70%' : 
-                               whisperModel === 'small' ? '85%' : 
-                               whisperModel === 'medium' ? '95%' : '100%' 
-                      }}
-                    ></div>
+              </CollapsibleSection>
+            ) : (
+              // Pe desktop, afișează normal
+              <div className="whisper-model-selector">
+                <label className="control-label">
+                  Model Whisper pentru transcriere:
+                  <span className={`model-indicator ${whisperModel}`}>
+                    {whisperModel.toUpperCase()}
+                  </span>
+                </label>
+                <select 
+                  value={whisperModel} 
+                  onChange={(e) => handleModelChange(e.target.value)}
+                  className={`model-select ${modelLoading ? 'model-loading' : ''}`}
+                  disabled={isProcessing || modelLoading}
+                >
+                  {availableModels.map(model => (
+                    <option key={model.value} value={model.value}>
+                      {model.name} - {model.size}
+                    </option>
+                  ))}
+                </select>
+                
+                {getCurrentModelDescription() && (
+                  <p className="model-description">
+                    {getCurrentModelDescription()}
+                  </p>
+                )}
+                
+                {/* Indicatori de performanță vizuali */}
+                <div className="model-performance">
+                  <div className="performance-metric">
+                    <span>Viteză</span>
+                    <div className="performance-bar">
+                      <div 
+                        className="performance-fill speed" 
+                        style={{ 
+                          width: whisperModel === 'base' ? '100%' : 
+                                 whisperModel === 'small' ? '80%' : 
+                                 whisperModel === 'medium' ? '50%' : '25%' 
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                </div>
-                <div className="performance-metric">
-                  <span>Mărime</span>
-                  <div className="performance-bar">
-                    <div 
-                      className="performance-fill size" 
-                      style={{ 
-                        width: whisperModel === 'base' ? '25%' : 
-                               whisperModel === 'small' ? '40%' : 
-                               whisperModel === 'medium' ? '70%' : '100%' 
-                      }}
-                    ></div>
+                  <div className="performance-metric">
+                    <span>Precizie</span>
+                    <div className="performance-bar">
+                      <div 
+                        className="performance-fill accuracy" 
+                        style={{ 
+                          width: whisperModel === 'base' ? '70%' : 
+                                 whisperModel === 'small' ? '85%' : 
+                                 whisperModel === 'medium' ? '95%' : '100%' 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="performance-metric">
+                    <span>Mărime</span>
+                    <div className="performance-bar">
+                      <div 
+                        className="performance-fill size" 
+                        style={{ 
+                          width: whisperModel === 'base' ? '25%' : 
+                                 whisperModel === 'small' ? '40%' : 
+                                 whisperModel === 'medium' ? '70%' : '100%' 
+                        }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="horizontal-controls">
               <div className="file-select-area">
@@ -607,14 +682,16 @@ function App() {
           <section className="video-section">
             <h2>Previzualizare și editare</h2>
             
-            <div className="layout-controls">
-              <button 
-                onClick={toggleLayoutMode} 
-                className="layout-toggle-button"
-              >
-                Schimbă Layout: {layoutMode === 'side' ? 'Lateral' : 'Sub video'}
-              </button>
-            </div>
+            {!isMobile && (
+              <div className="layout-controls">
+                <button 
+                  onClick={toggleLayoutMode} 
+                  className="layout-toggle-button"
+                >
+                  Schimbă Layout: {layoutMode === 'side' ? 'Lateral' : 'Sub video'}
+                </button>
+              </div>
+            )}
             
             <div className={`video-subtitle-container ${layoutMode}`}>
               <div className="video-preview-container">
@@ -643,16 +720,31 @@ function App() {
                     />
                   )}
                 </div>
+                
+                {/* Instrucțiuni pentru mobil */}
+                {isMobile && subtitles.length > 0 && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '10px',
+                    backgroundColor: '#e7f3ff',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    color: '#0066cc'
+                  }}>
+                    💡 <strong>Mobil:</strong> Atingeți și trageți subtitrarea pentru a o poziționa. 
+                    Pentru editare, folosiți lista de mai jos.
+                  </div>
+                )}
               </div>
               
               {subtitles.length > 0 && (
                 <div className="subtitles-panel">
-                  <h4>Subtitrări</h4>
+                  <h4>Subtitrări {isMobile && '(atingeți pentru editare)'}</h4>
                   <div className="subtitles-list">
                     <div className="subtitle-header">
                       <span className="subtitle-time">Timp</span>
                       <span className="subtitle-text">Text</span>
-                      <span className="subtitle-duration">Durată</span>
+                      <span className="subtitle-duration">Dur.</span>
                     </div>
                     
                     <div className="subtitle-items-container">
@@ -678,12 +770,28 @@ function App() {
 
         {subtitles.length > 0 && (
           <section className="customize-section">
-            <h2>Personalizare subtitrări</h2>
-            
-            <SubtitlesConfig 
-              subtitleStyle={subtitleStyle}
-              handleStyleChange={handleStyleChange}
-            />
+            {isMobile ? (
+              // Pe mobil, setările sunt colapsabile
+              <CollapsibleSection 
+                title="Personalizare subtitrări"
+                isExpanded={settingsExpanded}
+                onToggle={() => setSettingsExpanded(!settingsExpanded)}
+              >
+                <SubtitlesConfig 
+                  subtitleStyle={subtitleStyle}
+                  handleStyleChange={handleStyleChange}
+                />
+              </CollapsibleSection>
+            ) : (
+              // Pe desktop, afișează normal
+              <>
+                <h2>Personalizare subtitrări</h2>
+                <SubtitlesConfig 
+                  subtitleStyle={subtitleStyle}
+                  handleStyleChange={handleStyleChange}
+                />
+              </>
+            )}
           </section>
         )}
 
@@ -706,6 +814,11 @@ function App() {
               {' | '}Model curent: <strong>{whisperModel.toUpperCase()}</strong>
             </span>
           )}
+          {isMobile && (
+            <span style={{ display: 'block', marginTop: '5px', fontSize: '0.8rem' }}>
+              📱 Mod mobil activ
+            </span>
+          )}
         </div>
         
         {(isProcessing || modelLoading) && (
@@ -713,7 +826,7 @@ function App() {
             <div className="processing-spinner"></div>
             <p>
               {modelLoading 
-                ? `Se încarcă modelul ${loadingModel.toUpperCase()}...` // ← Folosim loadingModel
+                ? `Se încarcă modelul ${loadingModel.toUpperCase()}...`
                 : 'Se procesează... Vă rugăm să așteptați.'
               }
             </p>

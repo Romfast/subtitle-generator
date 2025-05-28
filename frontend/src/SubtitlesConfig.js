@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Adăugăm o listă de culori predefinite
 const predefinedColors = {
@@ -32,6 +32,21 @@ const predefinedColors = {
 const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
   const [activeTab, setActiveTab] = useState('general');
   const [useCustomPosition, setUseCustomPosition] = useState(subtitleStyle.useCustomPosition || false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectare mobil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const toggleCustomPosition = () => {
     const newValue = !useCustomPosition;
@@ -98,29 +113,41 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
     );
   };
 
+  // Componenta pentru controale într-o grilă responsivă
+  const ResponsiveStyleGrid = ({ children }) => (
+    <div className={`style-grid ${isMobile ? 'mobile-grid' : ''}`}>
+      {children}
+    </div>
+  );
+
+  // Componentă pentru tab-uri mobile-friendly
+  const MobileTabs = () => (
+    <div className="style-tabs">
+      <div className={`tab-buttons ${isMobile ? 'mobile-tabs' : ''}`}>
+        <button 
+          className={`tab-button ${activeTab === 'general' ? 'active' : ''}`}
+          onClick={() => setActiveTab('general')}
+        >
+          {isMobile ? 'Stil' : 'Stil general'}
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'highlight' ? 'active' : ''}`}
+          onClick={() => setActiveTab('highlight')}
+        >
+          {isMobile ? 'Evidențiere' : 'Evidențiere cuvinte'}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="subtitle-style-controls">
       <h3>Stil subtitrare</h3>
       
-      <div className="style-tabs">
-        <div className="tab-buttons">
-          <button 
-            className={`tab-button ${activeTab === 'general' ? 'active' : ''}`}
-            onClick={() => setActiveTab('general')}
-          >
-            Stil general
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'highlight' ? 'active' : ''}`}
-            onClick={() => setActiveTab('highlight')}
-          >
-            Evidențiere cuvinte
-          </button>
-        </div>
-      </div>
+      <MobileTabs />
       
       {activeTab === 'general' && (
-        <div className="style-grid">
+        <ResponsiveStyleGrid>
           <div className="style-item">
             <label>Font:</label>
             <select 
@@ -142,15 +169,18 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           
           <div className="style-item">
             <label>Mărime font:</label>
-            <input 
-              type="range" 
-              name="fontSize" 
-              min="12" 
-              max="48" 
-              value={subtitleStyle.fontSize} 
-              onChange={handleStyleChange}
-            />
-            <span>{subtitleStyle.fontSize}px</span>
+            <div className="range-input-container">
+              <input 
+                type="range" 
+                name="fontSize" 
+                min="12" 
+                max="48" 
+                value={subtitleStyle.fontSize} 
+                onChange={handleStyleChange}
+                className="range-input"
+              />
+              <span className="range-value">{subtitleStyle.fontSize}px</span>
+            </div>
           </div>
           
           <div className="style-item">
@@ -161,7 +191,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="fontColor" 
                 value={subtitleStyle.fontColor} 
                 onChange={handleStyleChange}
-                style={{ width: '100%', height: '40px' }}
+                className="color-input"
               />
               <PredefinedColorSelector 
                 colorType="text" 
@@ -179,7 +209,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="borderColor" 
                 value={subtitleStyle.borderColor} 
                 onChange={handleStyleChange}
-                style={{ width: '100%', height: '40px' }}
+                className="color-input"
               />
               <PredefinedColorSelector 
                 colorType="border" 
@@ -191,16 +221,19 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           
           <div className="style-item">
             <label>Grosime contur:</label>
-            <input 
-              type="range" 
-              name="borderWidth" 
-              min="0" 
-              max="5" 
-              step="0.5" 
-              value={subtitleStyle.borderWidth} 
-              onChange={handleStyleChange}
-            />
-            <span>{subtitleStyle.borderWidth}px</span>
+            <div className="range-input-container">
+              <input 
+                type="range" 
+                name="borderWidth" 
+                min="0" 
+                max="5" 
+                step="0.5" 
+                value={subtitleStyle.borderWidth} 
+                onChange={handleStyleChange}
+                className="range-input"
+              />
+              <span className="range-value">{subtitleStyle.borderWidth}px</span>
+            </div>
           </div>
           
           <div className="style-item">
@@ -266,7 +299,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                   />
                   <span className="slider round"></span>
                 </label>
-                <span className="toggle-label">Poziție manuală</span>
+                <span className="toggle-label">
+                  {isMobile ? 'Manual' : 'Poziție manuală'}
+                </span>
               </div>
             </div>
           </div>
@@ -275,7 +310,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
             <div className="style-item custom-position-controls">
               <label>Poziție manuală:</label>
               <div className="position-coordinates">
-                <div>
+                <div className="coordinate-input">
                   <label>X:</label>
                   <input
                     type="number"
@@ -284,10 +319,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                     max="100"
                     value={subtitleStyle.customX || 50}
                     onChange={handlePositionChange}
+                    className="coordinate-field"
                   />
                   <span>%</span>
                 </div>
-                <div>
+                <div className="coordinate-input">
                   <label>Y:</label>
                   <input
                     type="number"
@@ -296,11 +332,17 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                     max="100"
                     value={subtitleStyle.customY || 90}
                     onChange={handlePositionChange}
+                    className="coordinate-field"
                   />
                   <span>%</span>
                 </div>
               </div>
-              <p className="help-text">Trage direct subtitrarea în previzualizare pentru poziționare.</p>
+              <p className="help-text">
+                {isMobile 
+                  ? 'Atingeți și trageți subtitrarea în previzualizare pentru poziționare.' 
+                  : 'Trageți direct subtitrarea în previzualizare pentru poziționare.'
+                }
+              </p>
             </div>
           )}
           
@@ -320,15 +362,18 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           
           <div className="style-item">
             <label>Lățime maximă (% din video):</label>
-            <input 
-              type="range" 
-              name="maxWidth" 
-              min="30" 
-              max="70" 
-              value={subtitleStyle.maxWidth || 50} 
-              onChange={handleStyleChange}
-            />
-            <span>{subtitleStyle.maxWidth || 50}%</span>
+            <div className="range-input-container">
+              <input 
+                type="range" 
+                name="maxWidth" 
+                min="30" 
+                max="70" 
+                value={subtitleStyle.maxWidth || 50} 
+                onChange={handleStyleChange}
+                className="range-input"
+              />
+              <span className="range-value">{subtitleStyle.maxWidth || 50}%</span>
+            </div>
           </div>
           
           <div className="style-item">
@@ -344,11 +389,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
               <option value={4}>4 cuvinte</option>
             </select>
           </div>
-        </div>
+        </ResponsiveStyleGrid>
       )}
       
       {activeTab === 'highlight' && (
-        <div className="style-grid">
+        <ResponsiveStyleGrid>
           <div className="style-item">
             <label>Culoare cuvânt curent:</label>
             <div className="color-selector">
@@ -357,7 +402,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="currentWordColor" 
                 value={subtitleStyle.currentWordColor || '#FFFF00'} 
                 onChange={handleStyleChange}
-                style={{ width: '100%', height: '40px' }}
+                className="color-input"
               />
               <PredefinedColorSelector 
                 colorType="highlight" 
@@ -375,6 +420,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 name="currentWordBorderColor" 
                 value={subtitleStyle.currentWordBorderColor || '#000000'} 
                 onChange={handleStyleChange}
+                className="color-input"
               />
               <PredefinedColorSelector 
                 colorType="border" 
@@ -384,7 +430,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
             </div>
           </div>
           
-          <div className="style-item">
+          <div className="style-item karaoke-toggle">
             <label>Activare evidențiere cuvânt curent:</label>
             <div className="toggle-switch">
               <label className="switch">
@@ -400,15 +446,22 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
               </span>
             </div>
             <p className="help-text">
-              Când este activat, cuvintele sunt evidențiate pe măsură ce sunt pronunțate
+              {isMobile 
+                ? 'Evidențiază cuvintele pe măsură ce sunt pronunțate'
+                : 'Când este activat, cuvintele sunt evidențiate pe măsură ce sunt pronunțate'
+              }
             </p>
           </div>
           
           <div className="style-info">
-            <p>Efectul de evidențiere cuvânt cu cuvânt este cunoscut și sub numele de "karaoke".</p>
-            <p>Fiecare cuvânt va fi afișat cu culoarea și stilul de evidențiere pe măsură ce avansează timpul în videoclip.</p>
+            <p>
+              {isMobile 
+                ? 'Efectul de evidențiere se numește "karaoke" și afișează fiecare cuvânt cu culoarea de evidențiere.'
+                : 'Efectul de evidențiere cuvânt cu cuvânt este cunoscut și sub numele de "karaoke". Fiecare cuvânt va fi afișat cu culoarea și stilul de evidențiere pe măsură ce avansează timpul în videoclip.'
+              }
+            </p>
           </div>
-        </div>
+        </ResponsiveStyleGrid>
       )}
       
       <div className="style-preview">
@@ -421,7 +474,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
             className="subtitle-preview-text"
             style={{
               fontFamily: subtitleStyle.fontFamily,
-              fontSize: `${subtitleStyle.fontSize}px`,
+              fontSize: isMobile ? `${Math.max(14, subtitleStyle.fontSize * 0.7)}px` : `${subtitleStyle.fontSize}px`,
               color: subtitleStyle.fontColor,
               textShadow: subtitleStyle.borderWidth > 0 ? 
                 `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${subtitleStyle.borderColor},
