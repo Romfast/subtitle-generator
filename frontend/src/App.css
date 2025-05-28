@@ -171,7 +171,7 @@ button:disabled {
   gap: 24px;
 }
 
-/* Modern Whisper Model Selector */
+/* Modern Whisper Model Selector - ULTRA COMPACT */
 .whisper-model-selector {
   margin-bottom: 24px;
   padding: 24px;
@@ -181,15 +181,71 @@ button:disabled {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
-.whisper-model-selector .control-label {
-  font-weight: 700;
-  color: #1e293b;
+.whisper-model-selector.ultra-compact {
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.whisper-model-selector.compact {
+  padding: 16px;
   margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 1.15rem;
+  border-radius: 12px;
+}
+
+.model-indicator.compact {
+  font-size: 0.7rem !important;
+  padding: 4px 8px !important;
+}
+
+/* Status messages - COMPACT AND MOVED TO BOTTOM */
+.bottom-status {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.status-message.compact {
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.error-message.compact {
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.api-status.compact {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0;
+}
+
+/* Mobile instructions - ULTRA COMPACT */
+.mobile-instructions.compact {
+  padding: 8px 12px !important;
+  margin: 12px 12px 0 12px !important;
+  gap: 8px !important;
+  font-size: 0.8rem !important;
+  border-radius: 8px !important;
+}
+
+.mobile-instructions.compact .emoji {
+  font-size: 1rem !important;
+}
+
+/* Customize section - ULTRA COMPACT */
+.customize-section.ultra-compact {
+  padding: 16px !important;
+  margin: 0 !important;
 }
 
 .model-select {
@@ -282,17 +338,33 @@ button:disabled {
   background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
-/* Layout controls */
+/* Layout controls - COMPACT */
 .horizontal-controls {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  gap: 24px;
+  gap: 16px; /* REDUCED from 24px */
   align-items: end;
-  margin-bottom: 24px;
-  padding: 24px;
+  margin-bottom: 16px; /* REDUCED from 24px */
+  padding: 20px; /* REDUCED from 24px */
   background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(241,245,249,0.8) 100%);
   border-radius: 16px;
   border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.main-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* REDUCED from 24px for more compact layout */
+}
+
+section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 24px; /* REDUCED from 32px */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .file-select-area {
@@ -326,13 +398,13 @@ button:disabled {
 /* Video Section - FULL WIDTH ON MOBILE */
 .video-section {
   margin: 24px 0;
-  padding: 0; /* Remove padding for full width */
+  padding: 24px; /* REDUCED from 32px for compact design */
 }
 
 .video-subtitle-container {
   display: flex;
-  gap: 24px;
-  margin-top: 20px;
+  gap: 20px; /* REDUCED from 24px */
+  margin-top: 16px; /* REDUCED from 20px */
 }
 
 .video-subtitle-container.side {
@@ -365,7 +437,7 @@ button:disabled {
   overflow: hidden;
 }
 
-/* Subtitles Panel */
+/* Subtitles Panel - COMPACT DESIGN */
 .subtitles-panel {
   width: 380px;
   border: 1px solid rgba(148, 163, 184, 0.2);
@@ -375,16 +447,30 @@ button:disabled {
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  max-height: 400px; /* LIMITED HEIGHT FOR DESKTOP */
 }
 
 .video-subtitle-container.bottom .subtitles-panel {
   width: 100%;
-  height: 280px;
+  height: 300px; /* REDUCED HEIGHT */
+  max-height: 300px;
 }
 
 .video-subtitle-container.side .subtitles-panel {
   height: auto;
-  max-height: 600px;
+  max-height: 400px; /* REDUCED FROM 600px */
+}
+
+.subtitles-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.subtitle-items-container {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .subtitles-panel h4 {
@@ -415,7 +501,7 @@ button:disabled {
   border-left: 4px solid #667eea;
 }
 
-/* Subtitle Preview - FIXED Z-INDEX FOR MOBILE */
+/* Subtitle Preview - PERFECT MOBILE POSITIONING */
 .subtitle-container {
   position: absolute;
   top: 0;
@@ -423,25 +509,26 @@ button:disabled {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 20; /* Higher than video controls */
+  z-index: 20;
 }
 
 .subtitle-overlay {
   pointer-events: auto;
   cursor: move;
-  z-index: 25; /* Even higher for interactions */
+  z-index: 25;
   position: absolute;
 }
 
 .subtitle-overlay.mobile-mode {
   cursor: move !important;
-  z-index: 30 !important; /* Highest priority on mobile */
+  z-index: 999 !important; /* Very high for mobile */
   padding: 12px 16px !important;
-  background: rgba(0, 0, 0, 0.8) !important;
+  background: rgba(0, 0, 0, 0.85) !important;
   border-radius: 12px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
   border: 2px solid transparent !important;
   transition: all 0.3s ease !important;
+  backdrop-filter: blur(8px) !important;
 }
 
 .subtitle-overlay.mobile-mode:hover,
@@ -449,6 +536,11 @@ button:disabled {
   background: rgba(0, 0, 0, 0.9) !important;
   border-color: rgba(102, 126, 234, 0.8) !important;
   transform: scale(1.02) !important;
+}
+
+/* Mobile instructions */
+.mobile-instructions {
+  display: none;
 }
 
 /* Collapsible Sections - PREVENT AUTO COLLAPSE */
@@ -510,7 +602,7 @@ button:disabled {
 }
 
 .collapsible-content.expanded {
-  max-height: 2000px; /* Increased for larger content */
+  max-height: 2000px;
   padding: 24px;
 }
 
@@ -814,7 +906,7 @@ input:checked + .slider:before {
 
 /* MOBILE RESPONSIVE STYLES */
 
-/* Tablet styles */
+/* Tablet styles - IMPROVED */
 @media (max-width: 992px) {
   .video-subtitle-container.side {
     flex-direction: column;
@@ -822,7 +914,8 @@ input:checked + .slider:before {
   
   .subtitles-panel {
     width: 100%;
-    height: 300px;
+    height: 280px;
+    max-height: 280px;
   }
   
   .style-grid {
@@ -838,229 +931,424 @@ input:checked + .slider:before {
     width: 100%;
     min-width: auto;
   }
+  
+  /* Compact whisper selector on tablet */
+  .whisper-model-selector {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .whisper-model-selector .control-label {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  
+  .model-description {
+    font-size: 0.85rem;
+    padding: 10px 14px;
+  }
 }
 
-/* Mobile styles */
+/* ========== MOBILE OPTIMIZATIONS ========== */
 @media (max-width: 768px) {
   body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
   
   .App {
-    padding: 16px 8px; /* Reduced side padding for full width */
+    padding: 12px 0; /* Remove side padding for full width */
   }
   
   .header {
-    margin-bottom: 24px;
-    padding: 24px 16px;
-    border-radius: 20px;
+    margin: 0 12px 20px 12px; /* Add side margins only to header */
+    padding: 20px 16px;
+    border-radius: 16px;
   }
   
   h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
   h2 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
   
-  section {
-    padding: 20px 16px; /* Reduced padding */
+  /* Control Panel - keeps margins */
+  .control-panel {
+    margin: 0 12px;
+    padding: 20px 16px;
     border-radius: 16px;
-    margin: 0 -8px; /* Extend to edges */
   }
   
-  /* FULL WIDTH VIDEO ON MOBILE */
+  /* ========== FULL WIDTH VIDEO SECTION ========== */
   .video-section {
-    padding: 0;
-    margin: 16px -8px; /* Extend to screen edges */
+    padding: 0 !important; /* Remove ALL padding */
+    margin: 16px 0 !important; /* No side margins */
+    background: transparent !important; /* Remove background */
+    box-shadow: none !important; /* Remove shadow */
+    border: none !important; /* Remove border */
   }
   
+  /* ========== FULL WIDTH VIDEO CONTAINER ========== */
   .video-preview-container {
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    width: 100vw !important; /* Full viewport width */
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw !important;
+    margin-right: -50vw !important;
   }
   
   .player-wrapper {
-    padding-top: 60%; /* Better aspect ratio for mobile */
-    border-radius: 12px;
-    margin: 0;
+    padding-top: 56.25% !important; /* Maintain 16:9 aspect ratio */
+    border-radius: 0 !important; /* Square corners for full width */
+    margin: 0 !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important; /* Subtle shadow */
+    background: #000 !important; /* Black background to fill container */
+    min-height: 300px !important; /* INCREASED minimum height for mobile */
+    height: auto !important;
+  }
+  
+  /* Calculate proper height based on viewport width - FIXED */
+  @media (max-width: 768px) {
+    .player-wrapper {
+      height: calc(100vw * 9 / 16) !important; /* 16:9 aspect ratio based on viewport width */
+      padding-top: 0 !important; /* Remove padding-top when using calculated height */
+      max-height: 60vh !important; /* Don't exceed 60% of viewport height */
+      min-height: 280px !important; /* Ensure minimum usable height */
+    }
+    
+    /* Ensure video fills container properly */
+    .react-player video {
+      object-fit: cover !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    /* Apply contain mode when selected */
+    .react-player.contain-video video {
+      object-fit: contain !important;
+      background: #000 !important;
+    }
   }
   
   .react-player {
+    border-radius: 0 !important; /* Square corners */
+    background: #000 !important;
+  }
+  
+  /* ========== FORCE VIDEO TO FILL CONTAINER ========== */
+  .react-player video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* Fill entire container */
+    object-position: center !important;
+  }
+  
+  /* Alternative: if cover crops too much, use contain */
+  .react-player.contain-video video {
+    object-fit: contain !important;
+    background: #000 !important;
+  }
+  
+  /* ========== MOBILE INSTRUCTIONS ========== */
+  .mobile-instructions {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 16px 12px 0 12px; /* Add side margins back */
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
     border-radius: 12px;
+    font-size: 0.85rem;
+    color: #1e293b;
+    backdrop-filter: blur(20px);
+    flex-wrap: wrap;
   }
   
-  /* FIXED SUBTITLE POSITIONING ON MOBILE */
-  .subtitle-overlay.mobile-mode {
-    z-index: 100 !important; /* Very high z-index */
-    position: fixed !important; /* Use fixed positioning */
+  .mobile-instructions .emoji {
+    font-size: 1.2rem;
+    flex-shrink: 0;
   }
   
-  /* Ensure video controls don't interfere */
-  .react-player video::-webkit-media-controls-panel {
-    z-index: 50 !important;
+  .mobile-instructions button:hover {
+    background: rgba(102, 126, 234, 1) !important;
+    transform: scale(1.05) !important;
   }
   
+  /* ========== MOBILE LAYOUT ORDER ========== */
+  .video-subtitle-container {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+  
+  /* ========== SUBTITLE CUSTOMIZATION SECTION ========== */
+  .customize-section {
+    margin: 0 12px !important; /* Add side margins back */
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+    /* This section appears BEFORE subtitles list */
+    order: 1;
+  }
+  
+  /* ========== SUBTITLES PANEL - BOTTOM WITH SCROLL ========== */
   .subtitles-panel {
-    height: 240px;
-    border-radius: 12px;
-    margin-top: 16px;
+    width: 100% !important;
+    height: 350px !important; /* Fixed height for scrolling */
+    border-radius: 12px !important;
+    margin: 16px 12px 0 12px !important; /* Add side margins back */
+    /* This section appears LAST */
+    order: 2;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .subtitles-list {
+    overflow-y: auto !important;
+    height: 100% !important;
+  }
+  
+  .subtitle-items-container {
+    max-height: calc(350px - 60px) !important; /* Subtract header height */
+    overflow-y: auto !important;
   }
   
   .subtitle-item {
-    grid-template-columns: 80px 1fr 40px;
-    padding: 12px;
+    grid-template-columns: 70px 1fr 35px !important;
+    padding: 12px !important;
+    font-size: 0.85rem !important;
   }
   
+  .subtitle-header {
+    display: grid !important;
+    grid-template-columns: 70px 1fr 35px !important;
+    padding: 12px 16px !important;
+    background: #f8fafc !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+  }
+  
+  /* ========== PERFECT MOBILE SUBTITLE OVERLAY ========== */
+  .subtitle-overlay.mobile-mode {
+    z-index: 1000 !important; /* Highest possible */
+    position: fixed !important; /* Fixed to viewport */
+    /* Will be positioned via JavaScript */
+  }
+  
+  /* Make sure video controls don't interfere */
+  .react-player video::-webkit-media-controls-panel {
+    z-index: 100 !important;
+  }
+  
+  .react-player video::-webkit-media-controls {
+    z-index: 100 !important;
+  }
+  
+  /* ========== MOBILE CONTROLS ========== */
   .horizontal-controls {
-    padding: 20px 16px;
-    border-radius: 12px;
-    gap: 16px;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    gap: 12px !important;
+    grid-template-columns: 1fr !important;
   }
   
   .action-button {
-    padding: 16px 24px;
-    font-size: 1rem;
-    font-weight: 700;
-    border-radius: 12px;
+    padding: 16px 24px !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    min-width: auto !important;
   }
   
-  /* Collapsible sections - STABILITY FIX */
+  /* ========== COLLAPSIBLE SECTIONS - MOBILE STABLE ========== */
   .collapsible-section {
-    margin-bottom: 16px;
+    margin-bottom: 16px !important;
   }
   
   .collapsible-header {
-    padding: 16px 20px;
-    font-size: 1rem;
-    position: sticky; /* Prevent collapse on scroll */
-    top: 0;
-    z-index: 10;
+    padding: 16px 20px !important;
+    font-size: 1rem !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
   }
   
   .collapsible-content.expanded {
-    max-height: none; /* Remove height limit on mobile */
-    padding: 20px;
+    max-height: none !important; /* Remove height restrictions */
+    padding: 20px !important;
   }
   
-  /* Mobile style grid */
+  /* ========== MOBILE STYLE GRID ========== */
   .style-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 20px;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 16px !important;
   }
   
   .color-selector input[type="color"] {
-    height: 52px;
+    height: 56px !important; /* Larger touch target */
   }
   
   .color-swatch {
-    width: 36px;
-    height: 36px;
+    width: 40px !important;
+    height: 40px !important; /* Larger touch targets */
   }
   
+  /* ========== MOBILE TOGGLES ========== */
   .switch {
-    width: 64px;
-    height: 32px;
+    width: 64px !important;
+    height: 32px !important;
   }
   
   .slider:before {
-    height: 24px;
-    width: 24px;
-    left: 4px;
-    bottom: 4px;
+    height: 24px !important;
+    width: 24px !important;
+    left: 4px !important;
+    bottom: 4px !important;
   }
   
   input:checked + .slider:before {
-    transform: translateX(32px);
+    transform: translateX(32px) !important;
   }
   
+  /* ========== MOBILE FORM ELEMENTS ========== */
   .coordinate-field {
-    width: 80px;
-    padding: 14px 10px;
-    font-size: 1rem;
-    border-radius: 8px;
-    font-weight: 600;
+    width: 80px !important;
+    padding: 14px 10px !important;
+    font-size: 1rem !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
   }
   
   .position-coordinates {
-    gap: 16px;
+    gap: 16px !important;
+    display: flex !important;
+    justify-content: center !important;
   }
   
   .coordinate-input {
-    gap: 8px;
+    gap: 8px !important;
+    display: flex !important;
+    align-items: center !important;
   }
   
   .coordinate-input label {
-    font-weight: 700;
-    color: #1e293b;
-    min-width: 20px;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    min-width: 20px !important;
   }
   
   .custom-position-controls {
-    padding: 16px;
-    margin: 8px 0;
+    padding: 16px !important;
+    margin: 8px 0 !important;
+    background: rgba(102, 126, 234, 0.05) !important;
+    border-radius: 12px !important; 
+    border: 1px solid rgba(102, 126, 234, 0.2) !important;
   }
   
+  /* ========== MOBILE TABS ========== */
   .tab-buttons {
-    border-radius: 8px;
+    border-radius: 8px !important;
   }
   
   .tab-button {
-    padding: 12px 16px;
-    font-size: 0.9rem;
+    padding: 12px 16px !important;
+    font-size: 0.9rem !important;
   }
   
   .model-performance {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
   
   .performance-metric {
-    flex-direction: row;
-    justify-content: space-between;
+    flex-direction: row !important;
+    justify-content: space-between !important;
   }
   
   .performance-bar {
-    width: 60%;
-    margin-left: 12px;
+    width: 60% !important;
+    margin-left: 12px !important;
+  }
+  
+  /* Mobile performance for whisper model */
+  .mobile-performance {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .whisper-model-content {
+    text-align: center;
   }
 }
 
 /* Very small mobile devices */
 @media (max-width: 480px) {
   .App {
-    padding: 12px 4px;
+    padding: 8px 0;
   }
   
-  section {
-    margin: 0 -4px;
+  .header {
+    margin: 0 8px 16px 8px;
     padding: 16px 12px;
   }
   
-  .video-section {
-    margin: 12px -4px;
+  .control-panel {
+    margin: 0 8px;
+    padding: 16px 12px;
+  }
+  
+  .customize-section {
+    margin: 0 8px !important;
+    padding: 16px 12px !important;
+  }
+  
+  .subtitles-panel {
+    margin: 16px 8px 0 8px !important;
   }
   
   h1 {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
   }
   
   .action-button {
-    font-size: 0.95rem;
-    padding: 14px 20px;
+    font-size: 0.95rem !important;
+    padding: 14px 20px !important;
   }
   
   .subtitle-item {
-    grid-template-columns: 70px 1fr 35px;
-    padding: 10px;
+    grid-template-columns: 65px 1fr 30px !important;
+    padding: 10px !important;
+  }
+  
+  .subtitle-header {
+    grid-template-columns: 65px 1fr 30px !important;
+    padding: 10px 12px !important;
   }
   
   .collapsible-header {
-    padding: 14px 16px;
-    font-size: 0.95rem;
+    padding: 14px 16px !important;
+    font-size: 0.95rem !important;
+  }
+  
+  .mobile-instructions {
+    margin: 12px 8px 0 8px !important;
+    padding: 10px 12px !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .coordinate-field {
+    width: 70px !important;
+    padding: 12px 8px !important;
   }
 }
 
@@ -1071,28 +1359,32 @@ input:checked + .slider:before {
   }
   
   .color-swatch {
-    width: 40px;
-    height: 40px;
+    width: 44px !important;
+    height: 44px !important; /* Even larger for touch */
   }
   
   .switch {
-    width: 68px;
-    height: 36px;
+    width: 68px !important;
+    height: 38px !important;
   }
   
   .slider:before {
-    height: 28px;
-    width: 28px;
-    left: 4px;
-    bottom: 4px;
+    height: 30px !important;
+    width: 30px !important;
+    left: 4px !important;
+    bottom: 4px !important;
   }
   
   input:checked + .slider:before {
-    transform: translateX(32px);
+    transform: translateX(30px) !important;
   }
   
   button {
-    min-height: 48px; /* Touch target minimum */
+    min-height: 48px !important; /* Minimum touch target */
+  }
+  
+  .action-button {
+    min-height: 56px !important; /* Larger touch target for main actions */
   }
 }
 

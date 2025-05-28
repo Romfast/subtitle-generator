@@ -12,6 +12,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [touchStartPosition, setTouchStartPosition] = useState({ x: 0, y: 0 });
   const [videoRect, setVideoRect] = useState(null);
+  const [dragStartTime, setDragStartTime] = useState(0);
   const subtitleRef = useRef(null);
   const containerRef = useRef(null);
   const editTextareaRef = useRef(null);
@@ -32,50 +33,104 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   }, []);
   
-  // Monitorizează dimensiunile și poziția video-ului
+  // Monitorizează dimensiunile și poziția video-ului - FIX COMPLET MOBIL
   useEffect(() => {
     const updateVideoInfo = () => {
       if (containerRef.current) {
         const videoElement = containerRef.current.querySelector('video');
         if (videoElement) {
-          const dimensions = getVideoActualDimensions(videoElement);
-          setActualVideoSize(dimensions);
+          const rect = videoElement.getBoundingClientRect();
           
-          // Pe mobil, calculăm poziția exactă a video-ului pe ecran
+          let actualVideoRect = rect;
+          
           if (isMobileDevice) {
-            const rect = videoElement.getBoundingClientRect();
-            setVideoRect(rect);
+            // Pe mobil, calculăm dimensiunile corecte bazate pe viewport
+            const viewportWidth = window.innerWidth;
+            const aspectRatio = 16 / 9;
+            const calculatedHeight = viewportWidth / aspectRatio;
+            
+            // Folosim cea mai mică valoare pentru a nu depăși limitele
+            const maxHeight = window.innerHeight * 0.6; // max 60vh
+            const finalHeight = Math.min(calculatedHeight, maxHeight, rect.height || calculatedHeight);
+            
+            actualVideoRect = {
+              left: 0,
+              top: rect.top,
+              width: viewportWidth,
+              height: finalHeight,
+              right: viewportWidth,
+              bottom: rect.top + finalHeight
+            };
           }
           
-          console.log('Video info updated:', { dimensions, isMobile: isMobileDevice });
+          setVideoRect(actualVideoRect);
+          setActualVideoSize({ 
+            width: actualVideoRect.width, 
+            height: actualVideoRect.height 
+          });
+          
+          console.log('Video info updated:', { 
+            originalRect: rect,
+            actualVideoRect,
+            isMobile: isMobileDevice,
+            viewport: { width: window.innerWidth, height: window.innerHeight }
+          });
         }
       }
     };
     
     updateVideoInfo();
     
-    // Update mai frecvent pe mobil
-    const interval = setInterval(updateVideoInfo, isMobileDevice ? 500 : 2000);
-    window.addEventListener('resize', updateVideoInfo);
-    window.addEventListener('scroll', updateVideoInfo);
+    // Update frecvent pe mobil
+    const interval = setInterval(updateVideoInfo, isMobileDevice ? 300 : 2000);
+    const events = ['resize', 'scroll', 'orientationchange', 'load'];
+    
+    events.forEach(event => {
+      window.addEventListener(event, updateVideoInfo, { passive: true });
+    });
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('resize', updateVideoInfo);
-      window.removeEventListener('scroll', updateVideoInfo);
+      events.forEach(event => {
+        window.removeEventListener(event, updateVideoInfo);
+      });
     };
   }, [isMobileDevice]);
   
-  // Calculează mărimea fontului pentru previzualizare
+  // Calculează mărimea fontului pentru previzualizare - optimizată pentru mobil REACTIVE
   const getPreviewFontSize = () => {
     const baseFontSize = subtitleStyle.fontSize || 24;
     const previewWidth = containerRef.current ? 
       containerRef.current.querySelector('video')?.clientWidth || 640 : 640;
     
-    // Pe mobil, mărește ușor fontul pentru lizibilitate
-    const mobileBonus = isMobileDevice ? 4 : 0;
+    // Pe mobil, mărește fontul pentru lizibilitate și adaptează la viewport
+    let mobileBonus = 0;
+    if (isMobileDevice) {
+      const viewportWidth = window.innerWidth;
+      if (viewportWidth < 480) {
+        mobileBonus = 8; // Pentru telefoane foarte mici
+      } else if (viewportWidth < 768) {
+        mobileBonus = 6; // Pentru telefoane obișnuite
+      } else {
+        mobileBonus = 4; // Pentru tablete
+      }
+    }
+    
     const calculatedSize = calculatePreviewFontSize(baseFontSize, previewWidth, actualVideoSize.width) + mobileBonus;
-    return Math.max(16, calculatedSize);
+    const minSize = isMobileDevice ? 20 : 16; // Mărime minimă mai mare pe mobil
+    const finalSize = Math.max(minSize, calculatedSize);
+    
+    console.log('Font size calculation:', {
+      baseFontSize,
+      previewWidth,
+      actualVideoWidth: actualVideoSize.width,
+      mobileBonus,
+      calculatedSize,
+      finalSize,
+      isMobile: isMobileDevice
+    });
+    
+    return finalSize;
   };
   
   // Formatează textul subtitrării
@@ -142,35 +197,65 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     }
   }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines, subtitleStyle.useKaraoke]);
   
-  // Re-formatează textul când se schimbă stilul
+  // Re-formatează textul când se schimbă stilul - EXTENDED
   useEffect(() => {
     if (currentSubtitle) {
       const formattedResult = formatSubtitleText(currentSubtitle.text);
       setFormattedDisplay(formattedResult);
+      
+      // Force re-render când se schimbă stilul
+      console.log('Subtitle style changed, re-rendering with:', {
+        fontSize: subtitleStyle.fontSize,
+        fontFamily: subtitleStyle.fontFamily,
+        fontColor: subtitleStyle.fontColor,
+        allCaps: subtitleStyle.allCaps
+      });
     }
-  }, [subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines]);
+  }, [
+    currentSubtitle,
+    subtitleStyle.allCaps, 
+    subtitleStyle.removePunctuation, 
+    subtitleStyle.maxWordsPerLine, 
+    subtitleStyle.maxLines,
+    subtitleStyle.fontSize,        // ADDED
+    subtitleStyle.fontFamily,      // ADDED  
+    subtitleStyle.fontColor,       // ADDED
+    subtitleStyle.borderColor,     // ADDED
+    subtitleStyle.borderWidth,     // ADDED
+    subtitleStyle.useCustomPosition, // ADDED
+    subtitleStyle.customX,         // ADDED
+    subtitleStyle.customY          // ADDED
+  ]);
   
-  // Calculează poziția pentru mobile (fixed positioning)
+  // Calculează poziția pentru mobile (fixed positioning) - IMPROVED RANGE
   const getMobilePosition = (customX, customY) => {
     if (!videoRect || !isMobileDevice) return { x: customX, y: customY };
     
     // Convertim procentajele în coordonate absolute pe ecran
-    const x = videoRect.left + (videoRect.width * customX / 100);
+    // Pe mobil, video-ul ocupă toată lățimea ecranului
+    const x = (window.innerWidth * customX / 100);
     const y = videoRect.top + (videoRect.height * customY / 100);
     
+    // Margini de siguranță reduse pentru mai multă libertate
+    const margin = 10;
+    const maxX = window.innerWidth - margin;
+    const maxY = window.innerHeight - margin;
+    
     return { 
-      x: Math.max(20, Math.min(x, window.innerWidth - 20)), 
-      y: Math.max(40, Math.min(y, window.innerHeight - 60))
+      x: Math.max(margin, Math.min(x, maxX)), 
+      y: Math.max(videoRect.top + margin, Math.min(y, videoRect.bottom - margin))
     };
   };
   
-  // Convertește coordonatele absolute înapoi în procente
+  // Convertește coordonatele absolute înapoi în procente - IMPROVED RANGE
   const convertToPercentage = (absoluteX, absoluteY) => {
     if (!videoRect || !isMobileDevice) return { x: 50, y: 90 };
     
-    const x = ((absoluteX - videoRect.left) / videoRect.width) * 100;
+    // Pe mobil, calculăm bazat pe lățimea completă a ecranului
+    const x = (absoluteX / window.innerWidth) * 100;
     const y = ((absoluteY - videoRect.top) / videoRect.height) * 100;
     
+    // Permitem întreaga gamă de valori
     return {
       x: Math.max(0, Math.min(100, x)),
       y: Math.max(0, Math.min(100, y))
@@ -201,7 +286,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             className={`subtitle-word ${isCurrentWord ? 'highlighted' : ''}`}
             style={{
               color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
-              fontWeight: isCurrentWord ? 'bold' : 'normal',
+              fontWeight: isCurrentWord ? 'bold' : (isMobileDevice ? '600' : 'normal'),
               fontSize: `${previewFontSize}px`,
               textShadow: subtitleStyle.borderWidth > 0 ? 
                 `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
@@ -210,7 +295,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
                  ${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor}` 
                 : 'none',
               display: 'inline-block',
-              padding: '0 2px',
+              padding: isMobileDevice ? '0 3px' : '0 2px',
               transform: isCurrentWord ? 'scale(1.05)' : 'scale(1)',
               transition: 'color 0.2s, transform 0.2s'
             }}
@@ -229,22 +314,32 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       }
       
       return (
-        <div key={`line-${lineIndex}`} className="subtitle-line">
+        <div key={`line-${lineIndex}`} className="subtitle-line" style={{
+          lineHeight: isMobileDevice ? '1.4' : '1.3'
+        }}>
           {lineWithSpaces}
         </div>
       );
     });
   };
   
-  // Touch events pentru mobil
+  // Touch events pentru mobil - îmbunătățite
   const handleTouchStart = (e) => {
     if (isEditing) return;
     
     const touch = e.touches[0];
     setTouchStartPosition({ x: touch.clientX, y: touch.clientY });
+    setDragStartTime(Date.now());
     setIsDragging(true);
+    
+    // Previne scrolling-ul paginii
     e.preventDefault();
     e.stopPropagation();
+    
+    // Adăugă feedback haptic pe dispozitivele compatibile
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   };
   
   const handleTouchMove = (e) => {
@@ -252,6 +347,17 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     
     const touch = e.touches[0];
     const percentage = convertToPercentage(touch.clientX, touch.clientY);
+    
+    // Debug pentru mobil
+    console.log('Touch move:', {
+      touchX: touch.clientX,
+      touchY: touch.clientY,
+      percentageX: percentage.x,
+      percentageY: percentage.y,
+      videoRect,
+      screenWidth: window.innerWidth
+    });
+    
     updatePosition(percentage.x, percentage.y, true);
     
     e.preventDefault();
@@ -264,8 +370,17 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     const touch = e.changedTouches[0];
     const deltaX = Math.abs(touch.clientX - touchStartPosition.x);
     const deltaY = Math.abs(touch.clientY - touchStartPosition.y);
+    const dragDuration = Date.now() - dragStartTime;
     
-    // Nu permitem editarea pe mobil prin tap
+    // Detectăm dacă a fost o mișcare de drag sau un tap
+    const wasSwipe = deltaX > 10 || deltaY > 10;
+    const wasLongPress = dragDuration > 300;
+    
+    // Feedback haptic la sfârșitul drag-ului
+    if (wasSwipe && navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+    
     setIsDragging(false);
     e.preventDefault();
     e.stopPropagation();
@@ -383,14 +498,14 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   // Nu afișa nimic dacă nu există subtitrare activă
   if (!currentSubtitle) return null;
   
-  // Calculăm poziția finală
+  // Calculăm poziția finală - optimizată pentru mobil
   let finalStyle = {};
   
   if (isMobileDevice && videoRect) {
     // Pe mobil folosim fixed positioning pentru a fi deasupra controalelor video
     const mobilePos = getMobilePosition(
       subtitleStyle.customX || 50, 
-      subtitleStyle.customY || 85 // Default mai sus pe mobil
+      subtitleStyle.customY || 80 // Default mai sus pe mobil pentru a evita controalele
     );
     
     finalStyle = {
@@ -439,22 +554,28 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         className={`subtitle-overlay ${isDragging ? 'dragging' : ''} ${isMobileDevice ? 'mobile-mode' : ''}`}
         style={{
           ...finalStyle,
-          maxWidth: `${subtitleStyle.maxWidth || 50}%`,
+          maxWidth: isMobileDevice ? '90%' : `${subtitleStyle.maxWidth || 50}%`,
           minWidth: isMobileDevice ? '120px' : 'auto',
           width: 'auto',
           textAlign: 'center',
-          backgroundColor: isMobileDevice ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.7)',
-          padding: isMobileDevice ? '12px 16px' : '8px 12px',
-          borderRadius: isMobileDevice ? '12px' : '6px',
+          backgroundColor: isMobileDevice ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.7)',
+          padding: isMobileDevice ? '16px 20px' : '8px 12px',
+          borderRadius: isMobileDevice ? '16px' : '6px',
           cursor: isEditing ? 'text' : 'move',
           wordBreak: 'break-word',
-          minHeight: isMobileDevice ? '48px' : 'auto',
+          minHeight: isMobileDevice ? '52px' : 'auto',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: isMobileDevice ? '0 4px 20px rgba(0, 0, 0, 0.5)' : '0 2px 8px rgba(0, 0, 0, 0.3)',
-          border: isDragging && isMobileDevice ? '2px solid rgba(102, 126, 234, 0.8)' : 'none',
-          transition: isDragging ? 'none' : 'all 0.3s ease'
+          boxShadow: isMobileDevice ? '0 8px 32px rgba(0, 0, 0, 0.6)' : '0 2px 8px rgba(0, 0, 0, 0.3)',
+          border: isDragging && isMobileDevice ? '3px solid rgba(102, 126, 234, 0.8)' : 'none',
+          transition: isDragging ? 'none' : 'all 0.3s ease',
+          backdropFilter: isMobileDevice ? 'blur(12px)' : 'blur(4px)',
+          // Prevent user selection on mobile
+          userSelect: isMobileDevice ? 'none' : 'auto',
+          WebkitUserSelect: isMobileDevice ? 'none' : 'auto',
+          // Optimize for touch
+          touchAction: isMobileDevice ? 'none' : 'auto'
         }}
         onMouseDown={!isMobileDevice ? handleMouseDown : undefined}
         onClick={(!isMobileDevice && !isEditing) ? handleSubtitleClick : undefined}
@@ -497,38 +618,64 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
               fontFamily: subtitleStyle.fontFamily,
               fontSize: `${previewFontSize}px`,
               color: subtitleStyle.fontColor,
-              lineHeight: isMobileDevice ? '1.4' : '1.3',
+              lineHeight: isMobileDevice ? '1.5' : '1.3',
               textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none',
               maxWidth: '100%',
               textAlign: 'center',
-              fontWeight: isMobileDevice ? '600' : '500'
+              fontWeight: isMobileDevice ? '600' : '500',
+              textShadow: isMobileDevice ? 
+                `2px 2px 4px rgba(0, 0, 0, 0.8)` : 
+                `1px 1px 2px rgba(0, 0, 0, 0.5)`
             }}
           >
             {renderLines()}
           </div>
         )}
         
-        {/* Indicator pentru mobil */}
+        {/* Indicator pentru mobil - îmbunătățit */}
         {isMobileDevice && !isEditing && (
           <div style={{
             position: 'absolute',
-            top: '-10px',
-            right: '-10px',
-            width: '20px',
-            height: '20px',
-            backgroundColor: 'rgba(102, 126, 234, 0.9)',
+            top: '-12px',
+            right: '-12px',
+            width: '24px',
+            height: '24px',
+            backgroundColor: isDragging ? 'rgba(16, 185, 129, 0.9)' : 'rgba(102, 126, 234, 0.9)',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'white',
             pointerEvents: 'none',
             opacity: isDragging ? 1 : 0.8,
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-            transition: 'opacity 0.3s ease'
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+            transition: 'all 0.3s ease',
+            border: '2px solid rgba(255, 255, 255, 0.2)'
           }}>
-            ⤢
+            {isDragging ? '✓' : '⤢'}
+          </div>
+        )}
+        
+        {/* Indicator de drag activ pe mobil */}
+        {isMobileDevice && isDragging && (
+          <div style={{
+            position: 'absolute',
+            bottom: '-32px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(16, 185, 129, 0.9)',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '600',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            Poziționare...
           </div>
         )}
       </div>

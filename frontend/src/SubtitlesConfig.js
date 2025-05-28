@@ -5,31 +5,30 @@ const predefinedColors = {
   text: [
     { name: 'Alb', value: '#FFFFFF' },
     { name: 'Galben', value: '#FFFF00' },
-    { name: 'Verde deschis', value: '#00FF00' },
-    { name: 'Albastru deschis', value: '#00FFFF' },
+    { name: 'Verde', value: '#00FF00' },
+    { name: 'Cyan', value: '#00FFFF' },
     { name: 'Roz', value: '#FF00FF' },
     { name: 'Roșu', value: '#FF0000' },
     { name: 'Portocaliu', value: '#FFA500' },
   ],
   border: [
     { name: 'Negru', value: '#000000' },
-    { name: 'Gri închis', value: '#333333' },
-    { name: 'Albastru închis', value: '#000080' },
-    { name: 'Verde închis', value: '#006400' },
+    { name: 'Gri', value: '#333333' },
+    { name: 'Albastru', value: '#000080' },
+    { name: 'Verde', value: '#006400' },
     { name: 'Maro', value: '#8B4513' },
-    { name: 'Transparent', value: '#00000000' },
   ],
   highlight: [
     { name: 'Galben', value: '#FFFF00' },
     { name: 'Roșu', value: '#FF0000' },
-    { name: 'Verde neon', value: '#39FF14' },
-    { name: 'Albastru neon', value: '#00BFFF' },
+    { name: 'Verde', value: '#39FF14' },
+    { name: 'Albastru', value: '#00BFFF' },
     { name: 'Portocaliu', value: '#FF6600' },
     { name: 'Roz', value: '#FF69B4' },
   ]
 };
 
-const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
+const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) => {
   const [activeTab, setActiveTab] = useState('general');
   const [useCustomPosition, setUseCustomPosition] = useState(subtitleStyle.useCustomPosition || false);
   const [isMobile, setIsMobile] = useState(false);
@@ -96,6 +95,26 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
 
   // Componentă pentru selectorul de culori predefinite
   const PredefinedColorSelector = ({ colorType, currentColor, colorName }) => {
+    if (compact) {
+      // Versiune compactă - doar 3-4 culori principale
+      const limitedColors = predefinedColors[colorType].slice(0, compact ? 4 : 7);
+      return (
+        <div className="predefined-colors compact">
+          <div className="color-swatches compact">
+            {limitedColors.map((color, index) => (
+              <div 
+                key={index}
+                className={`color-swatch compact ${currentColor === color.value ? 'selected' : ''}`}
+                style={{ backgroundColor: color.value }}
+                title={color.name}
+                onClick={() => handlePredefinedColorSelect(colorName, color.value)}
+              ></div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="predefined-colors">
         <div className="color-swatches">
@@ -115,7 +134,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
 
   // Componenta pentru controale într-o grilă responsivă
   const ResponsiveStyleGrid = ({ children }) => (
-    <div className={`style-grid ${isMobile ? 'mobile-grid' : ''}`}>
+    <div className={`style-grid ${isMobile ? 'mobile-grid' : ''} ${compact ? 'compact-grid' : ''}`}>
       {children}
     </div>
   );
@@ -123,26 +142,26 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
   // Componentă pentru tab-uri mobile-friendly
   const MobileTabs = () => (
     <div className="style-tabs">
-      <div className={`tab-buttons ${isMobile ? 'mobile-tabs' : ''}`}>
+      <div className={`tab-buttons ${isMobile ? 'mobile-tabs' : ''} ${compact ? 'compact-tabs' : ''}`}>
         <button 
           className={`tab-button ${activeTab === 'general' ? 'active' : ''}`}
           onClick={() => setActiveTab('general')}
         >
-          {isMobile ? '🎨 Stil' : 'Stil general'}
+          {compact ? 'Stil' : (isMobile ? '🎨 Stil' : 'Stil general')}
         </button>
         <button 
           className={`tab-button ${activeTab === 'highlight' ? 'active' : ''}`}
           onClick={() => setActiveTab('highlight')}
         >
-          {isMobile ? '✨ Evidențiere' : 'Evidențiere cuvinte'}
+          {compact ? 'Karaoke' : (isMobile ? '✨ Karaoke' : 'Karaoke')}
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="subtitle-style-controls">
-      <h3>Stil subtitrare</h3>
+    <div className={`subtitle-style-controls ${compact ? 'compact' : ''}`}>
+      {!compact && <h3>Stil subtitrare</h3>}
       
       <MobileTabs />
       
@@ -156,19 +175,23 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
               onChange={handleStyleChange}
             >
               <option value="Arial">Arial</option>
-              <option value="Bebas Neue">Bebas Neue (gros)</option>
-              <option value="Montserrat">Montserrat (rotund)</option>
-              <option value="Quicksand">Quicksand (rotund)</option>
-              <option value="Comfortaa">Comfortaa (rotund)</option>
-              <option value="Sans">Sans</option>
-              <option value="Serif">Serif</option>
-              <option value="Monospace">Monospace</option>
-              <option value="Verdana">Verdana</option>
+              <option value="Bebas Neue">Bebas Neue</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Quicksand">Quicksand</option>
+              {!compact && (
+                <>
+                  <option value="Comfortaa">Comfortaa</option>
+                  <option value="Sans">Sans</option>
+                  <option value="Serif">Serif</option>
+                  <option value="Monospace">Monospace</option>
+                  <option value="Verdana">Verdana</option>
+                </>
+              )}
             </select>
           </div>
           
           <div className="style-item">
-            <label>Mărime font:</label>
+            <label>Mărime:</label>
             <div className="range-input-container">
               <input 
                 type="range" 
@@ -184,7 +207,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           </div>
           
           <div className="style-item">
-            <label>Culoare text:</label>
+            <label>Culoare:</label>
             <div className="color-selector">
               <input 
                 type="color" 
@@ -202,7 +225,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           </div>
           
           <div className="style-item">
-            <label>Culoare contur:</label>
+            <label>Contur:</label>
             <div className="color-selector">
               <input 
                 type="color" 
@@ -220,7 +243,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           </div>
           
           <div className="style-item">
-            <label>Grosime contur:</label>
+            <label>Grosime:</label>
             <div className="range-input-container">
               <input 
                 type="range" 
@@ -248,30 +271,32 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 <span className="slider round"></span>
               </label>
               <span className="toggle-label">
-                {subtitleStyle.allCaps ? 'ACTIVAT' : 'Dezactivat'}
+                {subtitleStyle.allCaps ? 'DA' : 'Nu'}
               </span>
             </div>
           </div>
           
-          <div className="style-item">
-            <label>Eliminare punctuație:</label>
-            <div className="toggle-switch">
-              <label className="switch">
-                <input 
-                  type="checkbox" 
-                  checked={subtitleStyle.removePunctuation || false} 
-                  onChange={() => handleToggleChange('removePunctuation')}
-                />
-                <span className="slider round"></span>
-              </label>
-              <span className="toggle-label">
-                {subtitleStyle.removePunctuation ? 'Activat' : 'Dezactivat'}
-              </span>
+          {!compact && (
+            <div className="style-item">
+              <label>Eliminare punctuație:</label>
+              <div className="toggle-switch">
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={subtitleStyle.removePunctuation || false} 
+                    onChange={() => handleToggleChange('removePunctuation')}
+                  />
+                  <span className="slider round"></span>
+                </label>
+                <span className="toggle-label">
+                  {subtitleStyle.removePunctuation ? 'DA' : 'Nu'}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
           
           <div className="style-item position-selector">
-            <label>Poziționare:</label>
+            <label>Poziție:</label>
             <div className="position-options">
               <div className="position-preset">
                 <select 
@@ -280,13 +305,17 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                   onChange={handleStyleChange}
                   disabled={useCustomPosition}
                 >
-                  <option value="bottom">Jos (centrat)</option>
-                  <option value="top">Sus (centrat)</option>
+                  <option value="bottom">Jos</option>
+                  <option value="top">Sus</option>
                   <option value="middle">Centru</option>
-                  <option value="top-left">Sus-Stânga</option>
-                  <option value="top-right">Sus-Dreapta</option>
-                  <option value="bottom-left">Jos-Stânga</option>
-                  <option value="bottom-right">Jos-Dreapta</option>
+                  {!compact && (
+                    <>
+                      <option value="top-left">Sus-Stânga</option>
+                      <option value="top-right">Sus-Dreapta</option>
+                      <option value="bottom-left">Jos-Stânga</option>
+                      <option value="bottom-right">Jos-Dreapta</option>
+                    </>
+                  )}
                 </select>
               </div>
               
@@ -299,9 +328,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                   />
                   <span className="slider round"></span>
                 </label>
-                <span className="toggle-label">
-                  {isMobile ? 'Manual' : 'Poziție manuală'}
-                </span>
+                <span className="toggle-label">Manual</span>
               </div>
             </div>
           </div>
@@ -337,56 +364,64 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                   <span>%</span>
                 </div>
               </div>
-              <p className="help-text">
-                {isMobile 
-                  ? 'Atingeți și trageți subtitrarea în previzualizare pentru poziționare.' 
-                  : 'Trageți direct subtitrarea în previzualizare pentru poziționare.'
-                }
-              </p>
+              {!compact && (
+                <p className="help-text">
+                  {isMobile 
+                    ? 'Drag subtitrarea în video pentru poziționare.' 
+                    : 'Drag subtitrarea în video pentru poziționare.'
+                  }
+                </p>
+              )}
             </div>
           )}
           
           <div className="style-item">
-            <label>Număr maxim de linii:</label>
+            <label>Linii max:</label>
             <select 
               name="maxLines" 
               value={subtitleStyle.maxLines || 2} 
               onChange={handleStyleChange}
             >
-              <option value={1}>1 linie</option>
-              <option value={2}>2 linii</option>
-              <option value={3}>3 linii</option>
-              <option value={4}>4 linii</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              {!compact && (
+                <>
+                  <option value={3}>3</option>
+                  <option value={4}>4</option>
+                </>
+              )}
             </select>
           </div>
           
-          <div className="style-item">
-            <label>Lățime maximă (% din video):</label>
-            <div className="range-input-container">
-              <input 
-                type="range" 
-                name="maxWidth" 
-                min="30" 
-                max="70" 
-                value={subtitleStyle.maxWidth || 50} 
-                onChange={handleStyleChange}
-                className="range-input"
-              />
-              <span className="range-value">{subtitleStyle.maxWidth || 50}%</span>
+          {!compact && (
+            <div className="style-item">
+              <label>Lățime max (%):</label>
+              <div className="range-input-container">
+                <input 
+                  type="range" 
+                  name="maxWidth" 
+                  min="30" 
+                  max="70" 
+                  value={subtitleStyle.maxWidth || 50} 
+                  onChange={handleStyleChange}
+                  className="range-input"
+                />
+                <span className="range-value">{subtitleStyle.maxWidth || 50}%</span>
+              </div>
             </div>
-          </div>
+          )}
           
           <div className="style-item">
-            <label>Cuvinte maxime per linie:</label>
+            <label>Cuvinte/linie:</label>
             <select 
               name="maxWordsPerLine" 
               value={subtitleStyle.maxWordsPerLine || 4} 
               onChange={handleStyleChange}
             >
-              <option value={1}>1 cuvânt</option>
-              <option value={2}>2 cuvinte</option>
-              <option value={3}>3 cuvinte</option>
-              <option value={4}>4 cuvinte</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
             </select>
           </div>
         </ResponsiveStyleGrid>
@@ -395,7 +430,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
       {activeTab === 'highlight' && (
         <ResponsiveStyleGrid>
           <div className="style-item">
-            <label>Culoare cuvânt curent:</label>
+            <label>Culoare evidențiere:</label>
             <div className="color-selector">
               <input 
                 type="color" 
@@ -413,7 +448,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           </div>
           
           <div className="style-item">
-            <label>Culoare contur cuvânt curent:</label>
+            <label>Contur evidențiere:</label>
             <div className="color-selector">
               <input 
                 type="color" 
@@ -431,7 +466,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           </div>
           
           <div className="style-item karaoke-toggle">
-            <label>Activare evidențiere cuvânt curent:</label>
+            <label>Evidențiere cuvânt:</label>
             <div className="toggle-switch">
               <label className="switch">
                 <input 
@@ -442,117 +477,21 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 <span className="slider round"></span>
               </label>
               <span className="toggle-label">
-                {subtitleStyle.useKaraoke === true ? 'Activat' : 'Dezactivat'}
+                {subtitleStyle.useKaraoke === true ? 'DA' : 'Nu'}
               </span>
             </div>
-            <p className="help-text">
-              {isMobile 
-                ? 'Evidențiază cuvintele pe măsură ce sunt pronunțate'
-                : 'Când este activat, cuvintele sunt evidențiate pe măsură ce sunt pronunțate'
-              }
-            </p>
-          </div>
-          
-          <div className="style-info">
-            <p>
-              {isMobile 
-                ? 'Efectul de evidențiere se numește "karaoke" și afișează fiecare cuvânt cu culoarea de evidențiere.'
-                : 'Efectul de evidențiere cuvânt cu cuvânt este cunoscut și sub numele de "karaoke". Fiecare cuvânt va fi afișat cu culoarea și stilul de evidențiere pe măsură ce avansează timpul în videoclip.'
-              }
-            </p>
+            {!compact && (
+              <p className="help-text">
+                Evidențiază cuvintele pe măsură ce sunt pronunțate
+              </p>
+            )}
           </div>
         </ResponsiveStyleGrid>
       )}
       
-      <div className="style-preview">
-        <h4>Previzualizare stil:</h4>
-        <div 
-          className="subtitle-preview-box"
-          style={{ backgroundColor: '#333' }}
-        >
-          <div 
-            className="subtitle-preview-text"
-            style={{
-              fontFamily: subtitleStyle.fontFamily,
-              fontSize: isMobile ? `${Math.max(14, subtitleStyle.fontSize * 0.7)}px` : `${subtitleStyle.fontSize}px`,
-              color: subtitleStyle.fontColor,
-              textShadow: subtitleStyle.borderWidth > 0 ? 
-                `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${subtitleStyle.borderColor},
-                 ${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${subtitleStyle.borderColor},
-                -${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${subtitleStyle.borderColor},
-                 ${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${subtitleStyle.borderColor}` 
-                : 'none',
-              position: 'absolute',
-              textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none',
-              ...(useCustomPosition 
-                ? {
-                    left: `${subtitleStyle.customX || 50}%`,
-                    top: `${subtitleStyle.customY || 90}%`,
-                    transform: 'translate(-50%, -50%)'
-                  } 
-                : {
-                    top: subtitleStyle.position.includes('top') ? '10%' : 
-                         subtitleStyle.position.includes('middle') ? '50%' : 
-                         '85%',
-                    left: subtitleStyle.position.includes('left') ? '10%' : 
-                          subtitleStyle.position.includes('right') ? '90%' : 
-                          '50%',
-                    transform: `translate(${subtitleStyle.position.includes('left') ? '0' : 
-                                          subtitleStyle.position.includes('right') ? '-100%' : 
-                                          '-50%'}, -50%)`
-                  }),
-              maxWidth: `${subtitleStyle.maxWidth || 70}%`
-            }}
-          >
-            <span style={{
-              fontFamily: subtitleStyle.fontFamily,
-              color: subtitleStyle.fontColor
-            }}>Exemplu de </span>
-            <span style={{
-              color: subtitleStyle.currentWordColor || '#FFFF00',
-              textShadow: subtitleStyle.borderWidth > 0 ? 
-                `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${subtitleStyle.currentWordBorderColor || '#000000'},
-                 ${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${subtitleStyle.currentWordBorderColor || '#000000'},
-                -${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${subtitleStyle.currentWordBorderColor || '#000000'},
-                 ${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${subtitleStyle.currentWordBorderColor || '#000000'}` 
-                : 'none',
-              fontWeight: 'bold',
-              transform: 'scale(1.05)',
-              display: 'inline-block'
-            }}>
-              text
-            </span>
-            <span> pentru subtitrare</span>
-          </div>
-        </div>
-      </div>
+      {/* REMOVED STYLE PREVIEW - No longer needed since effects are visible directly */}
     </div>
   );
 };
-
-// Funcție utilă pentru a calcula culoarea contrastantă pentru text
-function getContrastColor(hexColor) {
-  // Verificăm dacă e un format hex valid
-  if (!hexColor || hexColor === '') return '#FFFFFF';
-  
-  // Eliminăm # dacă există
-  hexColor = hexColor.replace('#', '');
-  
-  // Păstrăm doar componenta RGB
-  if (hexColor.length === 3) {
-    hexColor = hexColor[0] + hexColor[0] + hexColor[1] + hexColor[1] + hexColor[2] + hexColor[2];
-  }
-  
-  // Calculăm luminozitatea
-  const r = parseInt(hexColor.substr(0, 2), 16);
-  const g = parseInt(hexColor.substr(2, 2), 16);
-  const b = parseInt(hexColor.substr(4, 2), 16);
-  
-  // Folosim formula de luminozitate perceptuală
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // Alegem alb sau negru în funcție de luminozitate
-  return luminance > 0.5 ? '#000000' : '#FFFFFF';
-}
 
 export default SubtitlesConfig;

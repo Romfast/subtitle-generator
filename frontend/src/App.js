@@ -51,8 +51,9 @@ function App() {
   const [whisperSelectorExpanded, setWhisperSelectorExpanded] = useState(true);
   const [expandedSections, setExpandedSections] = useState({
     whisper: true,
-    settings: false
+    settings: false // Configurările sunt inițial colapsate pe ambele platforme
   });
+  const [videoFitMode, setVideoFitMode] = useState('cover'); // 'cover' sau 'contain'
   
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 24,
@@ -91,6 +92,12 @@ function App() {
         setLayoutMode('bottom');
         // Pe mobil, setările sunt inițial colapsate pentru a economisi spațiu
         setSettingsExpanded(false);
+        // Pe mobil, Whisper selector rămâne expandat pentru acces ușor
+        setExpandedSections(prev => ({
+          ...prev,
+          whisper: true,
+          settings: false
+        }));
       }
     };
     
@@ -119,27 +126,23 @@ function App() {
         setAvailableModels([
           { 
             value: 'base', 
-            name: 'Base (rapid, mai puțin precis)', 
-            size: '39 MB',
-            description: 'Cel mai rapid model, potrivit pentru teste rapide'
+            name: 'Base', 
+            size: '39MB'
           },
           { 
             value: 'small', 
-            name: 'Small (echilibru bun)', 
-            size: '244 MB',
-            description: 'Recomandat: echilibru optim între viteză și precizie'
+            name: 'Small', 
+            size: '244MB'
           },
           { 
             value: 'medium', 
-            name: 'Medium (precizie bună)', 
-            size: '769 MB',
-            description: 'Precizie îmbunătățită, timpul de procesare mai mare'
+            name: 'Medium', 
+            size: '769MB'
           },
           { 
             value: 'large', 
-            name: 'Large (cea mai bună precizie)', 
-            size: '1550 MB',
-            description: 'Cea mai bună precizie, procesare foarte lentă'
+            name: 'Large', 
+            size: '1.5GB'
           }
         ]);
       }
@@ -530,142 +533,40 @@ function App() {
           <h2>Acțiuni</h2>
           
           <div className="control-panel-content">
-            {/* Selector pentru modelul Whisper - colapsabil pe mobil */}
-            {isMobile ? (
-              <CollapsibleSection 
-                title={`Model Whisper: ${whisperModel.toUpperCase()}`}
-                sectionKey="whisper"
-                defaultExpanded={true}
-              >
-                <div className="whisper-model-content">
-                  <label className="control-label">
-                    Model Whisper pentru transcriere:
-                    <span className={`model-indicator ${whisperModel}`}>
-                      {whisperModel.toUpperCase()}
-                    </span>
-                  </label>
-                  <select 
-                    value={whisperModel} 
-                    onChange={(e) => handleModelChange(e.target.value)}
-                    className={`model-select ${modelLoading ? 'model-loading' : ''}`}
-                    disabled={isProcessing || modelLoading}
-                  >
-                    {availableModels.map(model => (
-                      <option key={model.value} value={model.value}>
-                        {model.name} - {model.size}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  {getCurrentModelDescription() && (
-                    <p className="model-description">
-                      {getCurrentModelDescription()}
-                    </p>
-                  )}
-                  
-                  {/* Performance indicators pe mobil - simplificat */}
-                  <div className="model-performance mobile-performance">
-                    <div className="performance-metric">
-                      <span>Viteză</span>
-                      <div className="performance-bar">
-                        <div 
-                          className="performance-fill speed" 
-                          style={{ 
-                            width: whisperModel === 'base' ? '100%' : 
-                                   whisperModel === 'small' ? '80%' : 
-                                   whisperModel === 'medium' ? '50%' : '25%' 
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="performance-metric">
-                      <span>Precizie</span>
-                      <div className="performance-bar">
-                        <div 
-                          className="performance-fill accuracy" 
-                          style={{ 
-                            width: whisperModel === 'base' ? '70%' : 
-                                   whisperModel === 'small' ? '85%' : 
-                                   whisperModel === 'medium' ? '95%' : '100%' 
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CollapsibleSection>
-            ) : (
-              // Pe desktop, afișează normal
-              <div className="whisper-model-selector">
-                <label className="control-label">
-                  Model Whisper pentru transcriere:
-                  <span className={`model-indicator ${whisperModel}`}>
-                    {whisperModel.toUpperCase()}
-                  </span>
+            {/* Selector pentru modelul Whisper - ULTRA COMPACT */}
+            <div className="whisper-model-selector ultra-compact">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
+                  Model:
                 </label>
                 <select 
                   value={whisperModel} 
                   onChange={(e) => handleModelChange(e.target.value)}
-                  className={`model-select ${modelLoading ? 'model-loading' : ''}`}
+                  className="model-select ultra-compact"
                   disabled={isProcessing || modelLoading}
+                  style={{ 
+                    padding: '8px 12px', 
+                    fontSize: '0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    background: 'white',
+                    minWidth: '120px'
+                  }}
                 >
                   {availableModels.map(model => (
                     <option key={model.value} value={model.value}>
-                      {model.name} - {model.size}
+                      {model.name} ({model.size})
                     </option>
                   ))}
                 </select>
-                
-                {getCurrentModelDescription() && (
-                  <p className="model-description">
-                    {getCurrentModelDescription()}
-                  </p>
-                )}
-                
-                {/* Indicatori de performanță vizuali */}
-                <div className="model-performance">
-                  <div className="performance-metric">
-                    <span>Viteză</span>
-                    <div className="performance-bar">
-                      <div 
-                        className="performance-fill speed" 
-                        style={{ 
-                          width: whisperModel === 'base' ? '100%' : 
-                                 whisperModel === 'small' ? '80%' : 
-                                 whisperModel === 'medium' ? '50%' : '25%' 
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="performance-metric">
-                    <span>Precizie</span>
-                    <div className="performance-bar">
-                      <div 
-                        className="performance-fill accuracy" 
-                        style={{ 
-                          width: whisperModel === 'base' ? '70%' : 
-                                 whisperModel === 'small' ? '85%' : 
-                                 whisperModel === 'medium' ? '95%' : '100%' 
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="performance-metric">
-                    <span>Mărime</span>
-                    <div className="performance-bar">
-                      <div 
-                        className="performance-fill size" 
-                        style={{ 
-                          width: whisperModel === 'base' ? '25%' : 
-                                 whisperModel === 'small' ? '40%' : 
-                                 whisperModel === 'medium' ? '70%' : '100%' 
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+                <span className={`model-indicator compact ${whisperModel}`} style={{
+                  fontSize: '0.7rem',
+                  padding: '4px 8px'
+                }}>
+                  {whisperModel.toUpperCase()}
+                </span>
               </div>
-            )}
+            </div>
 
             <div className="horizontal-controls">
               <div className="file-select-area">
@@ -741,6 +642,7 @@ function App() {
             )}
             
             <div className={`video-subtitle-container ${layoutMode}`}>
+              {/* ========== VIDEO PREVIEW - PRIMUL ELEMENT ========== */}
               <div className="video-preview-container">
                 <div className="player-wrapper" ref={playerContainerRef}>
                   <ReactPlayer 
@@ -749,7 +651,7 @@ function App() {
                     controls 
                     width="100%" 
                     height="100%" 
-                    className="react-player"
+                    className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
                     playing={playing}
                     onProgress={handleProgress}
                     onPause={() => setPlaying(false)}
@@ -767,101 +669,115 @@ function App() {
                     />
                   )}
                 </div>
-                
-                {/* Instrucțiuni pentru mobil */}
-                {isMobile && subtitles.length > 0 && (
-                  <div className="mobile-instructions">
-                    <span className="emoji">💡</span>
-                    <div>
-                      <strong>Mobil:</strong> Atingeți și trageți subtitrarea pentru a o poziționa. 
-                      Pentru editare, folosiți lista de mai jos.
-                    </div>
-                  </div>
-                )}
               </div>
               
-              {subtitles.length > 0 && (
-                <div className="subtitles-panel">
-                  <h4>Subtitrări {isMobile && '(atingeți pentru editare)'}</h4>
-                  <div className="subtitles-list">
-                    <div className="subtitle-header">
-                      <span className="subtitle-time">Timp</span>
-                      <span className="subtitle-text">Text</span>
-                      <span className="subtitle-duration">Dur.</span>
-                    </div>
-                    
-                    <div className="subtitle-items-container">
-                      {subtitles.map((subtitle, index) => (
-                        <EditableSubtitleItem
-                          key={index}
-                          subtitle={subtitle}
-                          index={index}
-                          formatTime={formatTime}
-                          updateSubtitle={updateSubtitle}
-                          seekToTime={seekToTime}
-                          isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
-                          subtitleStyle={subtitleStyle}
-                        />
-                      ))}
-                    </div>
-                  </div>
+              {/* ========== INSTRUCTIUNI MOBILE - ULTRA COMPACT ========== */}
+              {isMobile && subtitles.length > 0 && (
+                <div className="mobile-instructions compact">
+                  <span className="emoji">💡</span>
+                  <span style={{ fontSize: '0.8rem' }}>Drag subtitrarea pentru poziționare</span>
+                  <button
+                    onClick={() => {
+                      const newMode = videoFitMode === 'cover' ? 'contain' : 'cover';
+                      setVideoFitMode(newMode);
+                      // Force update video player
+                      if (videoPlayerRef.current) {
+                        const videoEl = videoPlayerRef.current.getInternalPlayer();
+                        if (videoEl && videoEl.style) {
+                          videoEl.style.objectFit = newMode;
+                        }
+                      }
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '0.7rem',
+                      background: 'rgba(102, 126, 234, 0.8)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: '600'
+                    }}
+                    title={videoFitMode === 'cover' ? 'Arată tot video-ul' : 'Umple ecranul'}
+                  >
+                    {videoFitMode === 'cover' ? '📐' : '📱'}
+                  </button>
                 </div>
               )}
             </div>
           </section>
         )}
 
+        {/* ========== CONFIGURARI SUBTITLES - COLAPSABILE COMPACT ========== */}
         {subtitles.length > 0 && (
-          <section className="customize-section">
-            {isMobile ? (
-              // Pe mobil, setările sunt colapsabile
-              <CollapsibleSection 
-                title="Personalizare subtitrări"
-                sectionKey="settings"
-                defaultExpanded={false}
-              >
-                <SubtitlesConfig 
-                  subtitleStyle={subtitleStyle}
-                  handleStyleChange={handleStyleChange}
-                />
-              </CollapsibleSection>
-            ) : (
-              // Pe desktop, afișează normal
-              <>
-                <h2>Personalizare subtitrări</h2>
-                <SubtitlesConfig 
-                  subtitleStyle={subtitleStyle}
-                  handleStyleChange={handleStyleChange}
-                />
-              </>
-            )}
+          <section className="customize-section ultra-compact">
+            <CollapsibleSection 
+              title="🎨 Configurări"
+              sectionKey="settings"
+              defaultExpanded={false}
+            >
+              <SubtitlesConfig 
+                subtitleStyle={subtitleStyle}
+                handleStyleChange={handleStyleChange}
+                compact={true}
+              />
+            </CollapsibleSection>
           </section>
         )}
 
-        {uploadStatus && (
-          <div className={`status-message ${error ? 'error' : ''}`}>
-            {uploadStatus}
+        {/* ========== SUBTITLES PANEL ========== */}
+        {subtitles.length > 0 && (
+          <div className="subtitles-panel">
+            <h4>
+              Subtitrări ({subtitles.length})
+            </h4>
+            <div className="subtitles-list">
+              <div className="subtitle-header">
+                <span className="subtitle-time">Timp</span>
+                <span className="subtitle-text">Text</span>
+                <span className="subtitle-duration">Dur.</span>
+              </div>
+              
+              <div className="subtitle-items-container">
+                {subtitles.map((subtitle, index) => (
+                  <EditableSubtitleItem
+                    key={index}
+                    subtitle={subtitle}
+                    index={index}
+                    formatTime={formatTime}
+                    updateSubtitle={updateSubtitle}
+                    seekToTime={seekToTime}
+                    isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
+                    subtitleStyle={subtitleStyle}
+                    compact={true}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         )}
-        
-        {error && (
-          <div className="error-message">
-            {error}
+
+        {/* ========== STATUS MESSAGES - MOVED TO BOTTOM ========== */}
+        <div className="bottom-status">
+          {uploadStatus && (
+            <div className={`status-message compact ${error ? 'error' : ''}`}>
+              {uploadStatus}
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-message compact">
+              {error}
+            </div>
+          )}
+          
+          <div className="api-status compact">
+            API: {apiStatus.replace('Status API: ', '')}
+            {availableModels.length > 0 && (
+              <span> | Model: <strong>{whisperModel.toUpperCase()}</strong></span>
+            )}
+            {isMobile && <span> | 📱</span>}
           </div>
-        )}
-        
-        <div className="api-status">
-          Status API: {apiStatus}
-          {availableModels.length > 0 && (
-            <span className="model-status">
-              {' | '}Model curent: <strong>{whisperModel.toUpperCase()}</strong>
-            </span>
-          )}
-          {isMobile && (
-            <span style={{ display: 'block', marginTop: '5px', fontSize: '0.8rem' }}>
-              📱 Mod mobil activ
-            </span>
-          )}
         </div>
         
         {(isProcessing || modelLoading) && (
