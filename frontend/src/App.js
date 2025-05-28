@@ -212,15 +212,7 @@ function App() {
         style: subtitleStyle  // Trimitem stilul complet
       });
 
-      // Adăugăm o întârziere mai mare la fiecare subtitrare pentru a îmbunătăți sincronizarea
-      // 500ms în loc de 50ms
-      const adjustedSubtitles = response.data.subtitles.map(subtitle => ({
-        ...subtitle,
-        start: subtitle.start + 0.5, // Adăugăm 500ms întârziere pentru o mai bună sincronizare
-        end: subtitle.end + 0.5 // Ajustăm și timpul de sfârșit
-      }));
-
-      setSubtitles(adjustedSubtitles);
+      setSubtitles(response.data.subtitles);
       setUploadStatus('Subtitrări generate cu succes!');
       
       // Verificăm progresul pe server dacă primim un task_id

@@ -115,9 +115,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         outline_width=outline_width
     )
     
-    # Adăugăm o întârziere pentru sincronizare
-    sync_delay = 0.5  # 500ms întârziere
-    
+  
     # Creăm fișierul ASS
     with open(output_path, 'w', encoding='utf-8') as ass_file:
         ass_file.write(ass_header)
@@ -125,8 +123,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         # Adăugăm evenimentele de dialog pentru fiecare subtitrare
         for sub in subtitles:
             # Aplicăm întârzierea pentru sincronizare
-            start_time = sub['start'] + sync_delay
-            end_time = sub['end'] + sync_delay
+            start_time = sub['start']
+            end_time = sub['end']
             
             start_ts = format_ass_timestamp(start_time)
             end_ts = format_ass_timestamp(end_time)
@@ -223,9 +221,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
         
-        # Adăugăm o întârziere pentru sincronizare
-        sync_delay = 0.5  # 500ms întârziere
-        
         # Verificăm dacă trebuie să folosim poziționare personalizată
         position_tag = ""
         if use_custom_position:
@@ -242,8 +237,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             text = text.replace('\n', '\\N')
             
             # Aplicăm întârzierea pentru sincronizare
-            start_time = sub['start'] + sync_delay
-            end_time = sub['end'] + sync_delay
+            start_time = sub['start']
+            end_time = sub['end']
             
             # Formatăm timpii
             start = format_ass_timestamp(start_time)
@@ -371,17 +366,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
-        
-        # Introducem o întârziere universală pentru a îmbunătăți sincronizarea
-        sync_delay = 0.5  # 500ms întârziere
-        
+               
         for sub in subtitles:
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
             
             # Formatare timpi pentru subtitrarea completă cu întârziere pentru sincronizare
-            start_time = sub['start'] + sync_delay
-            end_time = sub['end'] + sync_delay
+            start_time = sub['start']
+            end_time = sub['end']
             
             fmt_start = format_ass_timestamp(start_time)
             fmt_end = format_ass_timestamp(end_time)

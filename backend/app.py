@@ -458,19 +458,7 @@ def create_video_with_subtitles():
         
         # Folosim un fișier ASS cu karaoke pentru a evidenția cuvântul curent
         ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
-        
-        # Adăugăm o ușoară întârziere pentru a compensa desincronizarea
-        sync_delay = 0.5  # 500ms întârziere
-        
-        # Ajustăm timpii subtitrărilor pentru sincronizare mai bună
-        synced_subtitles = []
-        for sub in formatted_subtitles:
-            synced_subtitles.append({
-                'start': sub['start'] + sync_delay,
-                'end': sub['end'] + sync_delay,
-                'text': sub['text']
-            })
-        
+                
         # Alegem metoda potrivită în funcție de poziție și compatibilitate
         if use_custom_position:
             # Folosim metoda word_by_word pentru poziționare personalizată
@@ -493,7 +481,7 @@ def create_video_with_subtitles():
                         'removePunctuation': style.get('removePunctuation', False),
                         'textAlign': 2  # Centrat pentru poziție personalizată
                     },
-                    synced_subtitles  # Folosim subtitrările sincronizate
+                    formatted_subtitles  # Folosim subtitrările sincronizate
                 )
             else:
                 # Dacă nu folosim karaoke, creăm un fișier ASS simplu cu poziție personalizată
@@ -512,7 +500,7 @@ def create_video_with_subtitles():
                         'allCaps': style.get('allCaps', False),
                         'removePunctuation': style.get('removePunctuation', False)
                     },
-                    synced_subtitles
+                    formatted_subtitles
                 )
         else:
             # Poziționare standard
@@ -533,7 +521,7 @@ def create_video_with_subtitles():
                         'allCaps': style.get('allCaps', False),
                         'removePunctuation': style.get('removePunctuation', False)
                     },
-                    synced_subtitles
+                    formatted_subtitles
                 )
             else:
                 # Poziționare standard fără karaoke
@@ -551,7 +539,7 @@ def create_video_with_subtitles():
                         'allCaps': style.get('allCaps', False),
                         'removePunctuation': style.get('removePunctuation', False)
                     },
-                    synced_subtitles
+                    formatted_subtitles
                 )
         
         # Log pentru debugging

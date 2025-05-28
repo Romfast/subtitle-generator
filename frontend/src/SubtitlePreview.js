@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { calculatePreviewFontSize, getVideoActualDimensions } from './fontSizeUtils';
 
 const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition, updateSubtitle }) => {
   const [currentSubtitle, setCurrentSubtitle] = useState(null);
@@ -7,9 +8,47 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   const [editText, setEditText] = useState('');
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [formattedDisplay, setFormattedDisplay] = useState({ lines: [], allWords: [] });
+  const [actualVideoSize, setActualVideoSize] = useState({ width: 1280, height: 720 });
   const subtitleRef = useRef(null);
   const containerRef = useRef(null);
   const editTextareaRef = useRef(null);
+  
+  // Monitorizează dimensiunile video-ului pentru calculul consistent al mărimii fontului
+  useEffect(() => {
+    const updateVideoSize = () => {
+      if (containerRef.current) {
+        const videoElement = containerRef.current.querySelector('video');
+        if (videoElement) {
+          const dimensions = getVideoActualDimensions(videoElement);
+          setActualVideoSize(dimensions);
+          console.log('Video dimensions updated:', dimensions);
+        }
+      }
+    };
+    
+    // Actualizează dimensiunile la încărcarea video-ului și la resize
+    updateVideoSize();
+    window.addEventListener('resize', updateVideoSize);
+    
+    // Verifică periodic dacă video-ul s-a încărcat
+    const checkVideoInterval = setInterval(updateVideoSize, 1000);
+    
+    return () => {
+      window.removeEventListener('resize', updateVideoSize);
+      clearInterval(checkVideoInterval);
+    };
+  }, []);
+  
+  // Calculează mărimea fontului pentru previzualizare care să corespundă cu video-ul final
+  const getPreviewFontSize = () => {
+    const baseFontSize = subtitleStyle.fontSize || 24;
+    const previewWidth = containerRef.current ? 
+      containerRef.current.querySelector('video')?.clientWidth || 640 : 640;
+    
+    const calculatedSize = calculatePreviewFontSize(baseFontSize, previewWidth, actualVideoSize.width);
+    console.log(`Preview font size: base=${baseFontSize}, preview_width=${previewWidth}, video_width=${actualVideoSize.width}, result=${calculatedSize}`);
+    return calculatedSize;
+  };
   
   // Formatează textul subtitrării în funcție de numărul maxim de linii și cuvinte per linie
   const formatSubtitleText = (text) => {
@@ -34,8 +73,6 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     const maxWordsPerLine = parseInt(subtitleStyle.maxWordsPerLine || 3, 10); 
     const maxLines = parseInt(subtitleStyle.maxLines || 1, 10);
     
-    console.log(`Limiting to ${maxWordsPerLine} words per line and ${maxLines} lines`);
-    
     // Distribuim cuvintele pe linii
     const lines = [];
     
@@ -54,24 +91,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       }
     }
     
-    // Adăugăm o verificare pentru a ne asigura că lungimea cuvintelor nu depășește lățimea maximă
-    const truncateIfNeeded = (line, maxChars = 25) => {
-      if (line.length <= maxChars) return line;
-      return line.substring(0, maxChars - 3) + '...';
-    };
-    
-    // Aplicăm truncherea dacă e necesar
-    const truncatedLines = lines.map(line => truncateIfNeeded(line, 30));
-    
-    console.log("Formatted subtitle:", {
-      original: text,
-      maxWordsPerLine,
-      maxLines,
-      lines: truncatedLines,
-      wordCount: allWords.length
-    });
-    
-    return { lines: truncatedLines, allWords };
+    return { lines, allWords };
   };
   
   // Evidențiază cuvântul curent în funcție de timpul de redare
@@ -123,6 +143,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   const renderLines = () => {
     if (!currentSubtitle || formattedDisplay.lines.length === 0) return null;
     
+    // Calculăm mărimea fontului pentru previzualizare
+    const previewFontSize = getPreviewFontSize();
+    
     // Afișează fiecare linie, respectând limitele de cuvinte pe linie
     return formattedDisplay.lines.map((line, lineIndex) => {
       // Împărțim linia în cuvinte individuale
@@ -137,7 +160,6 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       // Construim JSX pentru fiecare cuvânt din această linie
       const wordElements = lineWords.map((word, wordIndex) => {
         // Verificăm dacă evidențierea cuvintelor este activată
-        // Dacă nu este activată, ignorăm complet logica de evidențiere
         const isCurrentWord = subtitleStyle.useKaraoke === true && 
                          (globalWordIndex + wordIndex) === currentWordIndex;
         
@@ -148,6 +170,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             style={{
               color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
               fontWeight: isCurrentWord ? 'bold' : 'normal',
+              fontSize: `${previewFontSize}px`, // Folosim mărimea calculată pentru consistență
               textShadow: subtitleStyle.borderWidth > 0 ? 
                 `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
                  ${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
@@ -185,44 +208,33 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   
   // Funcție pentru a începe drag fără a necesita checkbox
   const handleMouseDown = (e) => {
-    // Dacă suntem în modul editare, nu permitem drag
     if (isEditing) return;
     
-    // Verificăm dacă click-ul a fost cu butonul drept sau a fost dublu-click
     if (e.button === 2 || e.detail === 2) {
       e.preventDefault();
       handleSubtitleClick();
       return;
     }
     
-    // Începem procesul de drag direct
     setIsDragging(true);
-    
-    // Prevenim comportamentul implicit
     e.preventDefault();
   };
   
   const handleMouseMove = (e) => {
     if (!isDragging || !containerRef.current) return;
     
-    // Calculăm noua poziție procentuală bazată pe poziția mouse-ului relativ la container
     const container = containerRef.current.getBoundingClientRect();
-    
-    // Obținem dimensiunile efective ale player-ului video
     const videoElement = containerRef.current.querySelector('video');
     const videoBounds = videoElement ? videoElement.getBoundingClientRect() : container;
     
-    // Calculăm offseturile pentru a ține cont de marginile dintre container și video
     const videoOffsetX = videoBounds.left - container.left;
     const videoOffsetY = videoBounds.top - container.top;
     const videoWidth = videoBounds.width;
     const videoHeight = videoBounds.height;
     
-    // Obținem poziția mouse-ului relativă la container
     const mouseX = e.clientX - container.left;
     const mouseY = e.clientY - container.top;
     
-    // Verificăm dacă suntem în interiorul video-ului
     const isInsideVideo = 
       mouseX >= videoOffsetX && 
       mouseX <= videoOffsetX + videoWidth &&
@@ -230,15 +242,12 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       mouseY <= videoOffsetY + videoHeight;
     
     if (isInsideVideo) {
-      // Calculăm procentele în funcție de dimensiunile video-ului
       const x = ((mouseX - videoOffsetX) / videoWidth) * 100;
       const y = ((mouseY - videoOffsetY) / videoHeight) * 100;
       
-      // Limităm coordonatele între 0 și 100 pentru a rămâne în cadrul video-ului
       const boundedX = Math.min(Math.max(0, x), 100);
       const boundedY = Math.min(Math.max(0, y), 100);
       
-      // Actualizăm poziția în starea globală și setăm useCustomPosition la true
       updatePosition(boundedX, boundedY, true);
     }
   };
@@ -252,7 +261,6 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     if (!currentSubtitle || isDragging) return;
     
     setIsEditing(true);
-    // Folosim textul curent al subtitrării, nu cel formatat
     setEditText(currentSubtitle.text);
   };
   
@@ -265,13 +273,11 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   const handleSaveEdit = () => {
     if (!currentSubtitle) return;
     
-    // Găsim indexul subtitrării curente în lista completă
     const currentIndex = subtitles.findIndex(
       sub => sub.start === currentSubtitle.start && sub.end === currentSubtitle.end
     );
     
     if (currentIndex !== -1 && editText !== currentSubtitle.text) {
-      // Actualizăm textul subtitrării
       updateSubtitle(currentIndex, editText);
     }
     
@@ -334,6 +340,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
                               '-50%'}, -50%)`
       };
   
+  // Calculăm mărimea fontului pentru previzualizare
+  const previewFontSize = getPreviewFontSize();
+  
   return (
     <div 
       className="subtitle-container"
@@ -345,15 +354,14 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         style={{
           position: 'absolute',
           ...positionStyle,
-          maxWidth: `${subtitleStyle.maxWidth || 50}%`, // Limitează la 50% din lățimea video
-          width: 'auto', // Permite redimensionare automată
+          maxWidth: `${subtitleStyle.maxWidth || 50}%`,
+          width: 'auto',
           textAlign: 'center',
           zIndex: 10,
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           padding: '5px 10px',
           borderRadius: '4px',
           cursor: isEditing ? 'text' : 'move',
-          // Adăugăm word-break pentru a gestiona cuvintele lungi
           wordBreak: 'break-word'
         }}
         onMouseDown={handleMouseDown}
@@ -371,7 +379,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
               className="subtitle-edit-textarea"
               style={{
                 fontFamily: subtitleStyle.fontFamily,
-                fontSize: `${subtitleStyle.fontSize}px`,
+                fontSize: `${previewFontSize}px`, // Folosim mărimea calculată și pentru editare
                 width: '100%',
                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
                 color: subtitleStyle.fontColor,
@@ -391,11 +399,10 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
           <div
             style={{
               fontFamily: subtitleStyle.fontFamily,
-              fontSize: `${subtitleStyle.fontSize}px`,
+              fontSize: `${previewFontSize}px`, // Folosim mărimea calculată pentru consistență
               color: subtitleStyle.fontColor,
               lineHeight: '1.2',
               textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none',
-              // Limitare la 50% din lățimea video
               maxWidth: '100%'
             }}
           >
