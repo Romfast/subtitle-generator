@@ -28,7 +28,7 @@ services:
       - REACT_APP_API_URL=/api
     restart: unless-stopped
 
-  # Backend service
+  # Backend service - OPTIMIZAT pentru selector dinamic de modele Whisper
   backend:
     build: 
       context: ./backend
@@ -38,18 +38,40 @@ services:
       - ./shared:/shared
       - uploaded_videos:/app/uploads
       - processed_videos:/app/processed
-      - whisper_models:/root/.cache/whisper
+      - whisper_models:/root/.cache/whisper  # Cache persistent pentru modele
     environment:
+      # Model inițial la pornire - utilizatorul poate schimba prin interfață
       - WHISPER_MODEL=small
+      # Configurare pentru modele multiple
       - MAX_UPLOAD_SIZE=3000MB
       - FLASK_ENV=development
       - FLASK_DEBUG=1
       - CORS_ORIGINS=*
+      # Setări pentru gestionarea memoriei cu modele multiple
+      - PYTHONUNBUFFERED=1
+      - MALLOC_ARENA_MAX=2
     ports:
       - "5000:5000"  # Expunem portul pentru debugging
+    # Configurare memorie pentru modele mari
+    deploy:
+      resources:
+        limits:
+          # Limitare memorie pentru a preveni crash-urile cu modele mari
+          memory: 4G
+        reservations:
+          memory: 1G
     restart: unless-stopped
+    # Setări pentru debugging și monitorizare
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/test"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   uploaded_videos:
   processed_videos:
+  # Volume persistent pentru cache-ul modelelor Whisper
+  # Evită descărcarea repetată a modelelor la restart
   whisper_models:

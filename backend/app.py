@@ -5,6 +5,8 @@ import uuid
 import subprocess
 import tempfile
 import re
+import threading
+import gc
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -33,10 +35,83 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# Load Whisper model
-model_size = os.environ.get('WHISPER_MODEL', 'base')
-print(f"Loading Whisper model: {model_size}")
-model = whisper.load_model(model_size)
+# Variabile globale pentru gestionarea modelelor Whisper
+current_model = None
+current_model_name = None
+model_lock = threading.Lock()
+
+# Dicționar cu informații despre modelele Whisper disponibile
+AVAILABLE_MODELS = {
+    'base': {
+        'name': 'Base (rapid, mai puțin precis)',
+        'size': '39 MB',
+        'description': 'Cel mai rapid model, potrivit pentru teste rapide și demo-uri'
+    },
+    'small': {
+        'name': 'Small (echilibru bun)',
+        'size': '244 MB', 
+        'description': 'Recomandat: echilibru optim între viteză și precizie'
+    },
+    'medium': {
+        'name': 'Medium (precizie bună)',
+        'size': '769 MB',
+        'description': 'Precizie îmbunătățită, timpul de procesare mai mare'
+    },
+    'large': {
+        'name': 'Large (cea mai bună precizie)',
+        'size': '1550 MB',
+        'description': 'Cea mai bună precizie, procesare foarte lentă'
+    }
+}
+
+def load_whisper_model(model_size):
+    """Încarcă un model Whisper specific, cu gestionarea memoriei."""
+    global current_model, current_model_name
+    
+    with model_lock:
+        # Dacă modelul curent este deja cel dorit, nu facem nimic
+        if current_model_name == model_size and current_model is not None:
+            print(f"Model {model_size} already loaded")
+            return current_model
+        
+        # Eliberăm memoria pentru modelul anterior
+        if current_model is not None:
+            print(f"Unloading previous model: {current_model_name}")
+            del current_model
+            gc.collect()  # Forțează garbage collection
+            time.sleep(1)  # Dăm timp pentru eliberarea memoriei
+        
+        print(f"Loading Whisper model: {model_size}")
+        try:
+            current_model = whisper.load_model(model_size)
+            current_model_name = model_size
+            print(f"Successfully loaded model: {model_size}")
+            return current_model
+        except Exception as e:
+            print(f"Error loading model {model_size}: {str(e)}")
+            # Fallback la modelul base dacă nu se poate încărca cel dorit
+            if model_size != 'base':
+                print("Falling back to base model")
+                try:
+                    current_model = whisper.load_model('base')
+                    current_model_name = 'base'
+                    return current_model
+                except Exception as fallback_error:
+                    print(f"Failed to load fallback model: {fallback_error}")
+                    raise e
+            else:
+                raise e
+
+# Inițializare model la pornirea aplicației
+initial_model_size = os.environ.get('WHISPER_MODEL', 'small')
+print(f"Initializing with model: {initial_model_size}")
+try:
+    current_model = load_whisper_model(initial_model_size)
+    print(f"Application started with model: {current_model_name}")
+except Exception as e:
+    print(f"Failed to initialize Whisper model: {e}")
+    current_model = None
+    current_model_name = None
 
 # Dicționar global pentru a stoca progresul activităților
 processing_status = {}
@@ -57,6 +132,45 @@ def update_task_status(task_id, status, progress, message=""):
         'timestamp': time.time()
     }
     print(f"Task {task_id}: {status} - {progress}% - {message}")
+
+@app.route('/api/available-models', methods=['GET'])
+def get_available_models():
+    """Returnează lista modelelor Whisper disponibile și modelul curent."""
+    models_list = []
+    for model_key, model_info in AVAILABLE_MODELS.items():
+        models_list.append({
+            'value': model_key,
+            'name': model_info['name'],
+            'size': model_info['size'],
+            'description': model_info['description']
+        })
+    
+    return jsonify({
+        'models': models_list,
+        'current_model': current_model_name or 'none'
+    }), 200
+
+@app.route('/api/change-model', methods=['POST'])
+def change_whisper_model():
+    """Schimbă modelul Whisper curent."""
+    data = request.json
+    new_model = data.get('model', 'small')
+    
+    if new_model not in AVAILABLE_MODELS:
+        return jsonify({'error': f'Model "{new_model}" not available'}), 400
+    
+    try:
+        print(f"Request to change model to: {new_model}")
+        model = load_whisper_model(new_model)
+        
+        return jsonify({
+            'message': f'Model changed to {new_model}',
+            'current_model': current_model_name,
+            'model_info': AVAILABLE_MODELS[new_model]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Failed to load model {new_model}: {str(e)}'}), 500
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -201,9 +315,9 @@ def upload_file():
 def generate_subtitles():
     data = request.json
     filename = data.get('filename')
-    
-    # Obținem stilul din request (dacă există)
     style = data.get('style', {})
+    requested_model = data.get('model', current_model_name)  # Model solicitat din frontend
+    
     max_words_per_line = style.get('maxWordsPerLine', 4)
     max_lines = style.get('maxLines', 1)
     
@@ -222,6 +336,22 @@ def generate_subtitles():
         return jsonify({'error': 'File not found', 'task_id': task_id}), 404
     
     try:
+        # Verificăm dacă trebuie să schimbăm modelul
+        model_to_use = current_model
+        if requested_model and requested_model != current_model_name:
+            update_task_status(task_id, "processing", 5, f"Încărcare model {requested_model.upper()}")
+            try:
+                model_to_use = load_whisper_model(requested_model)
+                print(f"Switched to model: {requested_model} for this transcription")
+            except Exception as e:
+                print(f"Failed to switch to {requested_model}, using current model {current_model_name}: {str(e)}")
+                model_to_use = current_model
+        
+        # Verificăm dacă avem un model disponibil
+        if model_to_use is None:
+            update_task_status(task_id, "error", 0, "Nu s-a putut încărca modelul Whisper")
+            return jsonify({'error': 'No Whisper model available', 'task_id': task_id}), 500
+        
         # Extract audio from video
         update_task_status(task_id, "processing", 10, "Extragere audio din video")
         audio_path = os.path.join(tempfile.gettempdir(), f"{os.path.splitext(filename)[0]}.wav")
@@ -235,15 +365,14 @@ def generate_subtitles():
             update_task_status(task_id, "error", 10, f"Eroare la extragerea audio: {str(e)}")
             return jsonify({'error': f'Failed to extract audio: {str(e)}', 'task_id': task_id}), 500
         
-        update_task_status(task_id, "processing", 30, "Audio extras. Începere transcriere...")
+        update_task_status(task_id, "processing", 30, f"Audio extras. Transcriere cu model {current_model_name.upper()}...")
         
-        # Transcribe audio
-        print(f"Transcribing audio: {audio_path}")
+        # Transcribe audio cu modelul curent
+        print(f"Transcribing audio: {audio_path} with model: {current_model_name}")
         
-        # Simulăm progresul pentru că Whisper nu oferă un callback de progres
-        update_task_status(task_id, "transcribing", 40, "Procesare audio...")
+        update_task_status(task_id, "transcribing", 40, f"Procesare audio cu {current_model_name.upper()}...")
         
-        result = model.transcribe(
+        result = model_to_use.transcribe(
             audio_path, 
             language='ro', 
             fp16=False, 
@@ -309,12 +438,13 @@ def generate_subtitles():
         if os.path.exists(audio_path):
             os.remove(audio_path)
         
-        update_task_status(task_id, "completed", 100, "Subtitrări generate cu succes")
+        update_task_status(task_id, "completed", 100, f"Subtitrări generate cu succes folosind {current_model_name.upper()}")
         
         return jsonify({
             'message': 'Subtitles generated successfully',
             'subtitle_path': subtitle_path,
-            'subtitles': formatted_subtitles,  # Returnăm subtitrările formatate
+            'subtitles': formatted_subtitles,
+            'model_used': current_model_name,
             'task_id': task_id
         }), 200
     
@@ -458,7 +588,10 @@ def create_video_with_subtitles():
         
         # Folosim un fișier ASS cu karaoke pentru a evidenția cuvântul curent
         ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
-                
+        
+        # Folosim direct subtitrările formatate, fără întârziere suplimentară
+        print("Using original subtitle timings without additional delay")
+        
         # Alegem metoda potrivită în funcție de poziție și compatibilitate
         if use_custom_position:
             # Folosim metoda word_by_word pentru poziționare personalizată
@@ -468,7 +601,7 @@ def create_video_with_subtitles():
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,
+                        'fontSize': font_size,  # Folosim mărimea pre-calculată
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -481,7 +614,7 @@ def create_video_with_subtitles():
                         'removePunctuation': style.get('removePunctuation', False),
                         'textAlign': 2  # Centrat pentru poziție personalizată
                     },
-                    formatted_subtitles  # Folosim subtitrările sincronizate
+                    formatted_subtitles  # Folosim subtitrările fără întârziere suplimentară
                 )
             else:
                 # Dacă nu folosim karaoke, creăm un fișier ASS simplu cu poziție personalizată
@@ -490,7 +623,7 @@ def create_video_with_subtitles():
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,
+                        'fontSize': font_size,  # Folosim mărimea pre-calculată
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -511,7 +644,7 @@ def create_video_with_subtitles():
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,
+                        'fontSize': font_size,  # Folosim mărimea pre-calculată
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -531,7 +664,7 @@ def create_video_with_subtitles():
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,
+                        'fontSize': font_size,  # Folosim mărimea pre-calculată
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -651,9 +784,13 @@ def test_connection():
         'message': 'Backend API este funcțional',
         'upload_folder': UPLOAD_FOLDER,
         'processed_folder': PROCESSED_FOLDER,
+        'current_whisper_model': current_model_name,
+        'available_models': list(AVAILABLE_MODELS.keys()),
         'version': '1.0'
     }), 200
 
 if __name__ == '__main__':
     print("Starting Flask server on port 5000...")
+    print(f"Whisper model loaded: {current_model_name}")
+    print(f"Available models: {list(AVAILABLE_MODELS.keys())}")
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)

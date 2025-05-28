@@ -1,4 +1,7 @@
+# backend/custom_position.py
 # Funcții pentru procesarea subtitrărilor cu poziție personalizată
+# VERSIUNEA COMPLETĂ cu eliminarea întârzierii duble și suport pentru toate modelele Whisper
+
 import re
 
 def hex_to_ass_color(hex_color):
@@ -52,6 +55,7 @@ def format_ass_timestamp(seconds):
 def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS (Advanced SubStation Alpha) pentru subtitrări cu poziționare personalizată.
+    VERSIUNEA FĂRĂ ÎNTÂRZIERE DUBLĂ - folosește timpii originali din subtitrări.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -86,13 +90,10 @@ Style: CurrentWord,{font_family},{font_size},&H{current_word_color},&H{secondary
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
-    # Extragem parametrii de stil
+    # Extragem parametrii de stil - folosim mărimea fontului deja calculată în app.py
     font_family = style.get('fontFamily', 'Arial')
-    # Ajustăm dimensiunea fontului în funcție de rezoluția video
-    base_font_size = style.get('fontSize', 24)
-    # Nu reducem fontul prea mult - folosim minim 18px pentru lizibilitate
-    font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
-    print(f"ASS font size calculation: base={base_font_size}, adjusted={font_size}")
+    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py conform dimensiunilor video
+    print(f"ASS: Using pre-calculated font size: {font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
@@ -115,16 +116,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         outline_width=outline_width
     )
     
-  
     # Creăm fișierul ASS
     with open(output_path, 'w', encoding='utf-8') as ass_file:
         ass_file.write(ass_header)
         
+        # !! FIX: ELIMINĂM ÎNTÂRZIEREA DUBLĂ !!
+        # Folosim timpii originali din subtitrări, fără să adăugăm sync_delay
+        print(f"Creating ASS file with {len(subtitles)} subtitles using original timings")
+        
         # Adăugăm evenimentele de dialog pentru fiecare subtitrare
-        for sub in subtitles:
-            # Aplicăm întârzierea pentru sincronizare
-            start_time = sub['start']
-            end_time = sub['end']
+        for i, sub in enumerate(subtitles):
+            # Folosim timpii originali - NU mai adăugăm întârziere
+            start_time = sub['start']  # ÎNAINTE era: sub['start'] + sync_delay
+            end_time = sub['end']      # ÎNAINTE era: sub['end'] + sync_delay
             
             start_ts = format_ass_timestamp(start_time)
             end_ts = format_ass_timestamp(end_time)
@@ -139,13 +143,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Scriem linia de dialog
             dialog_line = f"Dialogue: 0,{start_ts},{end_ts},Default,,0,0,0,,{position_tag}{text}\n"
             ass_file.write(dialog_line)
+            
+            # Log pentru debugging la primele câteva subtitrări
+            if i < 3:
+                print(f"Subtitle {i+1}: {start_ts} -> {end_ts} | {text[:30]}...")
     
+    print(f"ASS file created successfully: {output_path}")
     return output_path
 
 def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS cu efect de karaoke îmbunătățit pentru a evidenția cuvintele
     pe măsură ce sunt pronunțate, cu o estimare mai precisă a duratei fiecărui cuvânt.
+    VERSIUNEA FĂRĂ ÎNTÂRZIERE DUBLĂ - folosește timpii originali din subtitrări.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -173,13 +183,10 @@ Style: Default,{font_family},{font_size},&H{font_color},&H{highlight_color},&H{b
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
-    # Parametri de stil
+    # Parametri de stil - folosim mărimea fontului deja calculată în app.py
     font_family = style.get('fontFamily', 'Arial')
-    # Ajustăm dimensiunea fontului în funcție de rezoluția video
-    base_font_size = style.get('fontSize', 24)
-    # Nu reducem fontul prea mult - folosim minim 18px pentru lizibilitate
-    font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
-    print(f"Karaoke ASS font size calculation: base={base_font_size}, adjusted={font_size}")
+    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py
+    print(f"Karaoke ASS: Using pre-calculated font size: {font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]  # Fără &H prefix
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
@@ -221,6 +228,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
         
+        # !! FIX: ELIMINĂM ÎNTÂRZIEREA DUBLĂ !!
+        # Nu mai adăugăm sync_delay - folosim timpii originali
+        print(f"Creating Karaoke ASS file with {len(subtitles)} subtitles using original timings")
+        
         # Verificăm dacă trebuie să folosim poziționare personalizată
         position_tag = ""
         if use_custom_position:
@@ -231,14 +242,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             position_tag = f"{{\\pos({x_pos},{y_pos})}}"
         
         # Adăugăm linii de dialog pentru fiecare subtitrare
-        for sub in subtitles:
+        for i, sub in enumerate(subtitles):
             # Procesăm textul conform stilului
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
             
-            # Aplicăm întârzierea pentru sincronizare
-            start_time = sub['start']
-            end_time = sub['end']
+            # Folosim timpii originali - NU mai adăugăm întârziere
+            start_time = sub['start']  # ÎNAINTE era: sub['start'] + sync_delay
+            end_time = sub['end']      # ÎNAINTE era: sub['end'] + sync_delay
             
             # Formatăm timpii
             start = format_ass_timestamp(start_time)
@@ -257,7 +268,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             total_chars = sum(len(word) for word in words)
             
             # 2. Calculăm durata în centisecunde pentru fiecare caracter
-            # Adăugăm un minim de 10 centisecunde pentru fiecare cuvânt pentru a gestiona cuvintele scurte
+            # Adăugăm un minim de 30 centisecunde pentru fiecare cuvânt pentru a gestiona cuvintele scurte
             char_durations = []
             for word in words:
                 # Durata proporțională cu lungimea cuvântului
@@ -275,21 +286,27 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Implementare karaoke folosind tag-ul \k cu durate îmbunătățite
             karaoke_text = position_tag  # Adăugăm tag-ul de poziție înainte de text
             
-            for i, word in enumerate(words):
-                karaoke_text += f"{{\\k{adjusted_durations[i]}}}{word} "
+            for j, word in enumerate(words):
+                karaoke_text += f"{{\\k{adjusted_durations[j]}}}{word} "
             
             # Eliminăm ultimul spațiu
             karaoke_text = karaoke_text.rstrip()
             
             # Scriem linia de dialog cu efect de karaoke
             f.write(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{karaoke_text}\n")
+            
+            # Log pentru debugging la primele câteva subtitrări
+            if i < 3:
+                print(f"Karaoke subtitle {i+1}: {start} -> {end} | {len(words)} words | {text[:30]}...")
     
+    print(f"Karaoke ASS file created successfully: {output_path}")
     return output_path
 
 def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     """
     Alternativă îmbunătățită pentru efectul de karaoke care folosește multiple linii de dialog
     cu timpi calculați mai precis pentru a evidenția fiecare cuvânt în parte.
+    VERSIUNEA FĂRĂ ÎNTÂRZIERE DUBLĂ - folosește timpii originali din subtitrări.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -317,13 +334,10 @@ Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_colo
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
-    # Parametri
+    # Parametri de stil - folosim mărimea fontului deja calculată în app.py
     font_family = style.get('fontFamily', 'Arial')
-    # Ajustăm dimensiunea fontului în funcție de rezoluția video
-    base_font_size = style.get('fontSize', 24)
-    # Nu reducem fontul prea mult - folosim minim 18px pentru lizibilitate
-    font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
-    print(f"Word-by-word ASS font size calculation: base={base_font_size}, adjusted={font_size}")
+    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py
+    print(f"Word-by-word ASS: Using pre-calculated font size: {font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
@@ -366,14 +380,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
-               
-        for sub in subtitles:
+        
+        # !! FIX: ELIMINĂM ÎNTÂRZIEREA DUBLĂ !!
+        # Nu mai adăugăm sync_delay - folosim timpii originali
+        print(f"Creating Word-by-word ASS file with {len(subtitles)} subtitles using original timings")
+        
+        total_highlighted_words = 0
+        
+        for i, sub in enumerate(subtitles):
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
             
-            # Formatare timpi pentru subtitrarea completă cu întârziere pentru sincronizare
-            start_time = sub['start']
-            end_time = sub['end']
+            # Folosim timpii originali - NU mai adăugăm întârziere
+            start_time = sub['start']  # ÎNAINTE era: sub['start'] + sync_delay
+            end_time = sub['end']      # ÎNAINTE era: sub['end'] + sync_delay
             
             fmt_start = format_ass_timestamp(start_time)
             fmt_end = format_ass_timestamp(end_time)
@@ -387,22 +407,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 y_pos = custom_y / 100 * 720
                 position_tag = f"{{\\pos({x_pos},{y_pos})}}"
             
-            # Adăugăm întregul text cu stilul normal
+            # Adăugăm întregul text cu stilul normal (Layer 0)
             f.write(f"Dialogue: 0,{fmt_start},{fmt_end},Default,,0,0,0,,{position_tag}{text}\n")
             
-            # Împărțim textul în cuvinte
+            # Împărțim textul în cuvinte pentru evidențiere individuală
             words = text.split()
             if not words:
                 continue
                 
             # Calculăm durata totală
             duration = end_time - start_time
+            total_chars = sum(len(word) for word in words)
             
             # Îmbunătățim estimarea duratei cuvintelor bazat pe lungimea lor
             # Și factori lingvistici (cuvinte mai lungi durează mai mult)
-            total_chars = sum(len(word) for word in words)
-            
-            # Stabilim durate minime și maxime pentru cuvinte (în secunde)
             min_word_duration = 0.2  # Minim 200ms per cuvânt
             word_durations = []
             
@@ -426,16 +444,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Calculăm timpii pentru fiecare cuvânt
             word_start_times = [start_time]
-            for i in range(len(words) - 1):
-                word_start_times.append(word_start_times[-1] + word_durations[i])
+            for j in range(len(words) - 1):
+                word_start_times.append(word_start_times[-1] + word_durations[j])
             
-            word_end_times = [word_start_times[i] + word_durations[i] for i in range(len(words))]
+            word_end_times = [word_start_times[j] + word_durations[j] for j in range(len(words))]
             
             # Adăugăm fiecare cuvânt evidențiat cu timpi îmbunătățiți
-            for i, word in enumerate(words):
-                # Formatăm timpii
-                fmt_word_start = format_ass_timestamp(word_start_times[i])
-                fmt_word_end = format_ass_timestamp(word_end_times[i])
+            for j, word in enumerate(words):
+                # Formatăm timpii pentru cuvântul curent
+                fmt_word_start = format_ass_timestamp(word_start_times[j])
+                fmt_word_end = format_ass_timestamp(word_end_times[j])
                 
                 # Afișăm fiecare cuvânt individual cu stil evidențiat
                 # Folosind tag-ul de culoare și poziționare dacă e necesar
@@ -443,5 +461,64 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 
                 # Layer 1 pentru a fi deasupra textului normal
                 f.write(f"Dialogue: 1,{fmt_word_start},{fmt_word_end},Default,,0,0,0,,{highlighted_word}\n")
+                total_highlighted_words += 1
+            
+            # Log pentru debugging la primele câteva subtitrări
+            if i < 3:
+                print(f"Word-by-word subtitle {i+1}: {fmt_start} -> {fmt_end} | {len(words)} words | {text[:30]}...")
+        
+        print(f"Total highlighted words created: {total_highlighted_words}")
     
+    print(f"Word-by-word ASS file created successfully: {output_path}")
     return output_path
+
+# Funcții de utilitate pentru debugging și testare
+def validate_ass_timestamps(subtitles):
+    """
+    Validează că timpii subtitrărilor sunt în ordine cronologică
+    și nu se suprapun în mod necorespunzător.
+    """
+    print("Validating subtitle timestamps...")
+    
+    for i, sub in enumerate(subtitles):
+        # Verificăm că start < end
+        if sub['start'] >= sub['end']:
+            print(f"WARNING: Subtitle {i+1} has invalid timing: start={sub['start']}, end={sub['end']}")
+        
+        # Verificăm suprapunerea cu subtitrarea următoare
+        if i < len(subtitles) - 1:
+            next_sub = subtitles[i + 1]
+            if sub['end'] > next_sub['start']:
+                overlap = sub['end'] - next_sub['start']
+                print(f"INFO: Subtitle {i+1} overlaps with {i+2} by {overlap:.2f}s")
+    
+    print(f"Timestamp validation complete for {len(subtitles)} subtitles")
+
+def get_subtitle_statistics(subtitles):
+    """
+    Returnează statistici despre subtitrări pentru debugging.
+    """
+    if not subtitles:
+        return "No subtitles to analyze"
+    
+    total_duration = sum(sub['end'] - sub['start'] for sub in subtitles)
+    avg_duration = total_duration / len(subtitles)
+    
+    word_counts = [len(sub['text'].split()) for sub in subtitles]
+    avg_words = sum(word_counts) / len(word_counts)
+    
+    char_counts = [len(sub['text']) for sub in subtitles]
+    avg_chars = sum(char_counts) / len(char_counts)
+    
+    stats = f"""
+Subtitle Statistics:
+- Total subtitles: {len(subtitles)}
+- Total duration: {total_duration:.2f}s
+- Average duration per subtitle: {avg_duration:.2f}s
+- Average words per subtitle: {avg_words:.1f}
+- Average characters per subtitle: {avg_chars:.1f}
+- Shortest subtitle: {min(sub['end'] - sub['start'] for sub in subtitles):.2f}s
+- Longest subtitle: {max(sub['end'] - sub['start'] for sub in subtitles):.2f}s
+"""
+    
+    return stats

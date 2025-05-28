@@ -11,6 +11,8 @@ import './ProgressBar.css';
 // Backend API base URL
 const API_URL = process.env.REACT_APP_API_URL || '/api';
 
+const [loadingModel, setLoadingModel] = useState(''); // Modelul care se încarcă
+
 // Configurare axios
 axios.defaults.timeout = 3600000; // 1 oră pentru încărcări mari
 
@@ -25,6 +27,11 @@ function App() {
   const [outputVideo, setOutputVideo] = useState('');
   const [apiStatus, setApiStatus] = useState('Verificare conexiune...');
   const [layoutMode, setLayoutMode] = useState('side'); // 'side' sau 'bottom'
+  
+  // Stări pentru model Whisper
+  const [whisperModel, setWhisperModel] = useState('small');
+  const [availableModels, setAvailableModels] = useState([]);
+  const [modelLoading, setModelLoading] = useState(false);
   
   // Stări pentru videoplayer și subtitrări
   const [currentTime, setCurrentTime] = useState(0);
@@ -65,7 +72,7 @@ function App() {
   const videoPlayerRef = useRef();
   const playerContainerRef = useRef();
 
-  // Verificare conexiune API la încărcarea componentei
+  // Verificare conexiune API și încărcarea modelelor disponibile
   useEffect(() => {
     const testApiConnection = async () => {
       try {
@@ -80,7 +87,46 @@ function App() {
       }
     };
 
+    const fetchAvailableModels = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/available-models`);
+        setAvailableModels(response.data.models);
+        setWhisperModel(response.data.current_model);
+        console.log('Available models:', response.data);
+      } catch (err) {
+        console.error('Error fetching available models:', err);
+        // Setăm modele default dacă API-ul nu răspunde
+        setAvailableModels([
+          { 
+            value: 'base', 
+            name: 'Base (rapid, mai puțin precis)', 
+            size: '39 MB',
+            description: 'Cel mai rapid model, potrivit pentru teste rapide'
+          },
+          { 
+            value: 'small', 
+            name: 'Small (echilibru bun)', 
+            size: '244 MB',
+            description: 'Recomandat: echilibru optim între viteză și precizie'
+          },
+          { 
+            value: 'medium', 
+            name: 'Medium (precizie bună)', 
+            size: '769 MB',
+            description: 'Precizie îmbunătățită, timpul de procesare mai mare'
+          },
+          { 
+            value: 'large', 
+            name: 'Large (cea mai bună precizie)', 
+            size: '1550 MB',
+            description: 'Cea mai bună precizie, procesare foarte lentă'
+          }
+        ]);
+      }
+    };
+
     testApiConnection();
+    fetchAvailableModels();
     
     // Detectăm lățimea ecranului și setăm layout-ul implicit
     const handleResize = () => {
@@ -98,6 +144,24 @@ function App() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Funcție pentru schimbarea modelului Whisper
+  const handleModelChange = async (newModel) => {
+    if (newModel === whisperModel || isProcessing) return;
+    
+    setModelLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/change-model`, { model: newModel });
+      setWhisperModel(newModel);
+      setUploadStatus(`Model schimbat la ${newModel.toUpperCase()} cu succes!`);
+      console.log('Model changed:', response.data);
+    } catch (err) {
+      console.error('Error changing model:', err);
+      setError(`Eroare la schimbarea modelului: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setModelLoading(false);
+    }
+  };
   
   // Funcție pentru monitorizarea progresului unei activități
   const pollTaskProgress = async (taskId, setProgressFunc, taskType, completionCallback = null) => {
@@ -200,27 +264,31 @@ function App() {
     }
 
     setError('');
-    setUploadStatus('Se generează subtitrările... Acest proces poate dura câteva minute.');
+    setUploadStatus(`Se generează subtitrările cu modelul ${whisperModel.toUpperCase()}... Acest proces poate dura câteva minute.`);
     setIsProcessing(true);
     setTranscribeProgress(0);
 
     try {
       // Trimitem și stilul actual pentru a fi folosit la generarea subtitrărilor
-      // Acest lucru permite aplicarea parametrilor de maxLines și maxWordsPerLine chiar la generare
+      // Include și modelul Whisper selectat
       const response = await axios.post(`${API_URL}/generate-subtitles`, {
         filename: uploadedFileName,
-        style: subtitleStyle  // Trimitem stilul complet
+        style: subtitleStyle,
+        model: whisperModel  // Adăugăm modelul selectat
       });
 
+      // Folosim direct subtitrările din răspuns, fără modificări de timing
       setSubtitles(response.data.subtitles);
-      setUploadStatus('Subtitrări generate cu succes!');
+      
+      const modelUsed = response.data.model_used || whisperModel;
+      setUploadStatus(`Subtitrări generate cu succes folosind modelul ${modelUsed.toUpperCase()}!`);
       
       // Verificăm progresul pe server dacă primim un task_id
       if (response.data.task_id) {
         setTranscribeTaskId(response.data.task_id);
         pollTaskProgress(response.data.task_id, setTranscribeProgress, 'transcribe');
       } else {
-        setTranscribeProgress(100); // Dacă nu avem task_id, presupunem că s-a terminat
+        setTranscribeProgress(100);
       }
     } catch (err) {
       console.error('Error generating subtitles:', err);
@@ -389,6 +457,12 @@ function App() {
     setCurrentTime(state.playedSeconds);
   };
 
+  // Obține descrierea modelului curent
+  const getCurrentModelDescription = () => {
+    const currentModel = availableModels.find(model => model.value === whisperModel);
+    return currentModel ? currentModel.description : '';
+  };
+
   return (
     <div className="App">
       <header className="header">
@@ -400,6 +474,77 @@ function App() {
           <h2>Acțiuni</h2>
           
           <div className="control-panel-content">
+            {/* Selector pentru modelul Whisper */}
+            <div className="whisper-model-selector">
+              <label className="control-label">
+                Model Whisper pentru transcriere:
+                <span className={`model-indicator ${whisperModel}`}>
+                  {whisperModel.toUpperCase()}
+                </span>
+              </label>
+              <select 
+                value={whisperModel} 
+                onChange={(e) => handleModelChange(e.target.value)}
+                className={`model-select ${modelLoading ? 'model-loading' : ''}`}
+                disabled={isProcessing || modelLoading}
+              >
+                {availableModels.map(model => (
+                  <option key={model.value} value={model.value}>
+                    {model.name} - {model.size}
+                  </option>
+                ))}
+              </select>
+              
+              {getCurrentModelDescription() && (
+                <p className="model-description">
+                  {getCurrentModelDescription()}
+                </p>
+              )}
+              
+              {/* Indicatori de performanță vizuali */}
+              <div className="model-performance">
+                <div className="performance-metric">
+                  <span>Viteză</span>
+                  <div className="performance-bar">
+                    <div 
+                      className="performance-fill speed" 
+                      style={{ 
+                        width: whisperModel === 'base' ? '100%' : 
+                               whisperModel === 'small' ? '80%' : 
+                               whisperModel === 'medium' ? '50%' : '25%' 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="performance-metric">
+                  <span>Precizie</span>
+                  <div className="performance-bar">
+                    <div 
+                      className="performance-fill accuracy" 
+                      style={{ 
+                        width: whisperModel === 'base' ? '70%' : 
+                               whisperModel === 'small' ? '85%' : 
+                               whisperModel === 'medium' ? '95%' : '100%' 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="performance-metric">
+                  <span>Mărime</span>
+                  <div className="performance-bar">
+                    <div 
+                      className="performance-fill size" 
+                      style={{ 
+                        width: whisperModel === 'base' ? '25%' : 
+                               whisperModel === 'small' ? '40%' : 
+                               whisperModel === 'medium' ? '70%' : '100%' 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="horizontal-controls">
               <div className="file-select-area">
                 <label className="control-label">1. Selectați video:</label>
@@ -414,10 +559,10 @@ function App() {
               
               <button 
                 onClick={generateSubtitles} 
-                disabled={!uploadedFileName || isProcessing}
+                disabled={!uploadedFileName || isProcessing || modelLoading}
                 className="action-button generate-button"
               >
-                2. Generează Subtitrări
+                2. Generează Subtitrări ({whisperModel.toUpperCase()})
               </button>
               
               <button 
@@ -443,7 +588,7 @@ function App() {
             {transcribeProgress > 0 && transcribeProgress < 100 && (
               <ProgressBar 
                 progress={transcribeProgress} 
-                label="Progres generare subtitrări" 
+                label={`Progres generare subtitrări (${whisperModel.toUpperCase()})`}
                 status={progressStatus || "Se procesează audio..."}
               />
             )}
@@ -556,12 +701,22 @@ function App() {
         
         <div className="api-status">
           Status API: {apiStatus}
+          {availableModels.length > 0 && (
+            <span className="model-status">
+              {' | '}Model curent: <strong>{whisperModel.toUpperCase()}</strong>
+            </span>
+          )}
         </div>
         
-        {isProcessing && (
+        {(isProcessing || modelLoading) && (
           <div className="processing-overlay">
             <div className="processing-spinner"></div>
-            <p>Se procesează... Vă rugăm să așteptați.</p>
+            <p>
+              {modelLoading 
+                ? `Se încarcă modelul ${loadingModel.toUpperCase()}...` // ← Folosim loadingModel
+                : 'Se procesează... Vă rugăm să așteptați.'
+              }
+            </p>
           </div>
         )}
       </div>

@@ -107,6 +107,155 @@ button:disabled {
   gap: 20px;
 }
 
+/* Stiluri pentru selectorul de model Whisper */
+.whisper-model-selector {
+  margin-bottom: 20px;
+  padding: 18px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.whisper-model-selector .control-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.1rem;
+}
+
+.model-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #ced4da;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.model-select:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+  transform: translateY(-1px);
+}
+
+.model-select:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.model-select.model-loading {
+  animation: modelLoading 1.5s infinite;
+}
+
+.model-description {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #495057;
+  font-style: italic;
+  padding: 10px 12px;
+  background-color: #e7f3ff;
+  border-left: 4px solid #4a90e2;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.4;
+}
+
+/* Indicator de model activ */
+.model-indicator {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Stiluri pentru diferitele modele */
+.model-indicator.base {
+  background-color: #17a2b8; /* Cyan pentru base */
+}
+
+.model-indicator.small {
+  background-color: #28a745; /* Verde pentru small */
+}
+
+.model-indicator.medium {
+  background-color: #ffc107; /* Galben pentru medium */
+  color: #212529;
+}
+
+.model-indicator.large {
+  background-color: #dc3545; /* Roșu pentru large */
+}
+
+/* Animație pentru schimbarea modelului */
+@keyframes modelLoading {
+  0% { opacity: 0.6; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.6; transform: scale(0.98); }
+}
+
+/* Indicatori de performanță vizuali */
+.model-performance {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  gap: 15px;
+}
+
+.performance-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.performance-metric span {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.performance-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.performance-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.performance-fill.speed {
+  background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.performance-fill.accuracy {
+  background: linear-gradient(90deg, #007bff, #6610f2);
+}
+
+.performance-fill.size {
+  background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
 /* Layout orizontal pentru controale */
 .horizontal-controls {
   display: flex;
@@ -163,6 +312,23 @@ button:disabled {
 
 .generate-button {
   background-color: #16a085;
+  position: relative;
+  overflow: hidden;
+}
+
+.generate-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.generate-button:hover::after {
+  left: 100%;
 }
 
 .create-button {
@@ -740,12 +906,17 @@ input:checked + .slider:before {
 /* API Status */
 .api-status {
   margin-top: 10px;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 4px;
   background-color: #e2e3e5;
   color: #383d41;
   font-size: 0.85rem;
   text-align: center;
+}
+
+.model-status {
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 /* Responsive Adjustments */
@@ -771,6 +942,14 @@ input:checked + .slider:before {
   .button-group {
     width: 100%;
   }
+
+  .whisper-model-selector {
+    padding: 15px;
+  }
+
+  .model-performance {
+    gap: 10px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -786,6 +965,7 @@ input:checked + .slider:before {
   
   .action-button {
     width: 100%;
+    min-width: auto;
   }
   
   .subtitle-item,
@@ -801,6 +981,25 @@ input:checked + .slider:before {
   .App {
     padding: 10px;
   }
+
+  .whisper-model-selector {
+    padding: 12px;
+  }
+
+  .model-performance {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .performance-metric {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .performance-bar {
+    width: 60%;
+    margin-left: 10px;
+  }
 }
 
 /* Helpers */
@@ -815,7 +1014,6 @@ input:checked + .slider:before {
 .text-gray-600 {
   color: #718096;
 }
-
 
 /* Stiluri pentru culorile predefinite */
 .predefined-colors {
@@ -924,4 +1122,54 @@ select[name="fontFamily"] option[value="Comfortaa"] {
 
 .font-comfortaa {
   font-family: 'Comfortaa', sans-serif;
+}
+
+/* Tooltip pentru informații despre model */
+.model-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  margin-left: 5px;
+}
+
+.model-tooltip::before {
+  content: '?';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #4a90e2;
+  color: white;
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 16px;
+  font-weight: bold;
+}
+
+.model-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 1000;
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.model-tooltip:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  z-index: 1000;
 }
