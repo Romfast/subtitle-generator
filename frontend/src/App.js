@@ -46,9 +46,13 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // Stări pentru secțiuni colapsabile pe mobil
+  // Stări pentru secțiuni colapsabile pe mobil - stabilizate
   const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [whisperSelectorExpanded, setWhisperSelectorExpanded] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({
+    whisper: true,
+    settings: false
+  });
   
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 24,
@@ -476,26 +480,39 @@ function App() {
     return currentModel ? currentModel.description : '';
   };
 
-  // Componente pentru secțiuni colapsabile pe mobil
-  const CollapsibleSection = ({ title, isExpanded, onToggle, children }) => (
-    <div className="collapsible-section">
-      <button 
-        className="collapsible-header"
-        onClick={onToggle}
-        type="button"
-      >
-        <span>{title}</span>
-        <span className={`collapsible-arrow ${isExpanded ? 'expanded' : ''}`}>
-          ▼
-        </span>
-      </button>
-      <div className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
-        <div style={{ padding: '15px' }}>
-          {children}
+  // Componente pentru secțiuni colapsabile pe mobil - stabilizate
+  const CollapsibleSection = ({ title, sectionKey, children, defaultExpanded = false }) => {
+    const [isExpanded, setIsExpanded] = useState(expandedSections[sectionKey] ?? defaultExpanded);
+    
+    const toggleExpanded = () => {
+      const newState = !isExpanded;
+      setIsExpanded(newState);
+      setExpandedSections(prev => ({
+        ...prev,
+        [sectionKey]: newState
+      }));
+    };
+    
+    return (
+      <div className="collapsible-section">
+        <button 
+          className="collapsible-header"
+          onClick={toggleExpanded}
+          type="button"
+        >
+          <span>{title}</span>
+          <span className={`collapsible-arrow ${isExpanded ? 'expanded' : ''}`}>
+            ▼
+          </span>
+        </button>
+        <div className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+          <div style={{ padding: isExpanded ? '20px' : '0 20px' }}>
+            {children}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="App">
@@ -517,8 +534,8 @@ function App() {
             {isMobile ? (
               <CollapsibleSection 
                 title={`Model Whisper: ${whisperModel.toUpperCase()}`}
-                isExpanded={whisperSelectorExpanded}
-                onToggle={() => setWhisperSelectorExpanded(!whisperSelectorExpanded)}
+                sectionKey="whisper"
+                defaultExpanded={true}
               >
                 <div className="whisper-model-content">
                   <label className="control-label">
@@ -545,6 +562,36 @@ function App() {
                       {getCurrentModelDescription()}
                     </p>
                   )}
+                  
+                  {/* Performance indicators pe mobil - simplificat */}
+                  <div className="model-performance mobile-performance">
+                    <div className="performance-metric">
+                      <span>Viteză</span>
+                      <div className="performance-bar">
+                        <div 
+                          className="performance-fill speed" 
+                          style={{ 
+                            width: whisperModel === 'base' ? '100%' : 
+                                   whisperModel === 'small' ? '80%' : 
+                                   whisperModel === 'medium' ? '50%' : '25%' 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="performance-metric">
+                      <span>Precizie</span>
+                      <div className="performance-bar">
+                        <div 
+                          className="performance-fill accuracy" 
+                          style={{ 
+                            width: whisperModel === 'base' ? '70%' : 
+                                   whisperModel === 'small' ? '85%' : 
+                                   whisperModel === 'medium' ? '95%' : '100%' 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CollapsibleSection>
             ) : (
@@ -723,16 +770,12 @@ function App() {
                 
                 {/* Instrucțiuni pentru mobil */}
                 {isMobile && subtitles.length > 0 && (
-                  <div style={{
-                    marginTop: '10px',
-                    padding: '10px',
-                    backgroundColor: '#e7f3ff',
-                    borderRadius: '6px',
-                    fontSize: '0.9rem',
-                    color: '#0066cc'
-                  }}>
-                    💡 <strong>Mobil:</strong> Atingeți și trageți subtitrarea pentru a o poziționa. 
-                    Pentru editare, folosiți lista de mai jos.
+                  <div className="mobile-instructions">
+                    <span className="emoji">💡</span>
+                    <div>
+                      <strong>Mobil:</strong> Atingeți și trageți subtitrarea pentru a o poziționa. 
+                      Pentru editare, folosiți lista de mai jos.
+                    </div>
                   </div>
                 )}
               </div>
@@ -774,8 +817,8 @@ function App() {
               // Pe mobil, setările sunt colapsabile
               <CollapsibleSection 
                 title="Personalizare subtitrări"
-                isExpanded={settingsExpanded}
-                onToggle={() => setSettingsExpanded(!settingsExpanded)}
+                sectionKey="settings"
+                defaultExpanded={false}
               >
                 <SubtitlesConfig 
                   subtitleStyle={subtitleStyle}

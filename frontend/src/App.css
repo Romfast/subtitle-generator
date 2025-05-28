@@ -1,4 +1,4 @@
-/* Base Styles */
+/* Base Styles - Modern Design */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,94 +6,158 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
   line-height: 1.6;
-  color: #333;
-  background-color: #f8f9fa;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
 }
 
 .App {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  min-height: 100vh;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 30px;
-  padding: 20px 0;
-  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 40px;
+  padding: 30px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 h1, h2, h3, h4 {
-  margin-bottom: 15px;
-  color: #2c3e50;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 h1 {
-  font-size: 2.2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 h2 {
-  font-size: 1.8rem;
-  margin-top: 20px;
+  font-size: 1.75rem;
+  margin-top: 24px;
 }
 
 h3 {
   font-size: 1.4rem;
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 .main-container {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 24px;
 }
 
 section {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Buttons */
+section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* Modern Buttons */
 button {
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 4px;
-  background-color: #4a6fa5;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
 }
 
 button:hover:not(:disabled) {
-  background-color: #345a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
+}
+
+button:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 button:disabled {
-  background-color: #cccccc;
+  background: #e5e7eb;
+  color: #9ca3af;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .action-button {
-  padding: 10px 20px;
-  font-size: 1rem;
-  background-color: #2980b9;
-  min-width: 180px;
-  white-space: nowrap;
-  height: 44px;
+  padding: 16px 32px;
+  font-size: 1.1rem;
+  min-width: 200px;
+  border-radius: 16px;
+  font-weight: 700;
+}
+
+.generate-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.generate-button:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.6);
+}
+
+.create-button {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+}
+
+.create-button:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.6);
 }
 
 .download-button {
-  background-color: #27ae60;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
 }
 
-.download-button:hover {
-  background-color: #219653;
+.download-button:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.6);
 }
 
 /* Control Panel */
@@ -104,270 +168,171 @@ button:disabled {
 .control-panel-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
-/* Stiluri pentru selectorul de model Whisper */
+/* Modern Whisper Model Selector */
 .whisper-model-selector {
-  margin-bottom: 20px;
-  padding: 18px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  border: 1px solid #dee2e6;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 .whisper-model-selector .control-label {
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: 1.1rem;
+  gap: 12px;
+  font-size: 1.15rem;
 }
 
 .model-select {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #ced4da;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   font-size: 1rem;
-  background-color: white;
+  background: white;
   transition: all 0.3s ease;
   font-family: inherit;
+  font-weight: 500;
 }
 
 .model-select:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
-  transform: translateY(-1px);
-}
-
-.model-select:disabled {
-  background-color: #f8f9fa;
-  color: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.model-select.model-loading {
-  animation: modelLoading 1.5s infinite;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: none;
 }
 
 .model-description {
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 0.9rem;
-  color: #495057;
-  font-style: italic;
-  padding: 10px 12px;
-  background-color: #e7f3ff;
-  border-left: 4px solid #4a90e2;
-  border-radius: 0 6px 6px 0;
-  line-height: 1.4;
+  color: #64748b;
+  padding: 12px 16px;
+  background: rgba(102, 126, 234, 0.05);
+  border-left: 4px solid #667eea;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
 }
 
-/* Indicator de model activ */
 .model-indicator {
   display: inline-block;
-  padding: 4px 8px;
-  background-color: #28a745;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: bold;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
-/* Stiluri pentru diferitele modele */
-.model-indicator.base {
-  background-color: #17a2b8; /* Cyan pentru base */
-}
-
-.model-indicator.small {
-  background-color: #28a745; /* Verde pentru small */
-}
-
-.model-indicator.medium {
-  background-color: #ffc107; /* Galben pentru medium */
-  color: #212529;
-}
-
-.model-indicator.large {
-  background-color: #dc3545; /* Roșu pentru large */
-}
-
-/* Animație pentru schimbarea modelului */
-@keyframes modelLoading {
-  0% { opacity: 0.6; transform: scale(0.98); }
-  50% { opacity: 1; transform: scale(1.02); }
-  100% { opacity: 0.6; transform: scale(0.98); }
-}
-
-/* Indicatori de performanță vizuali */
+/* Performance indicators */
 .model-performance {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 16px;
 }
 
 .performance-metric {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
+  gap: 8px;
 }
 
 .performance-metric span {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-bottom: 4px;
-  font-weight: 500;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
 }
 
 .performance-bar {
   width: 100%;
-  height: 6px;
-  background-color: #e9ecef;
-  border-radius: 3px;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
 }
 
 .performance-fill {
   height: 100%;
-  border-radius: 3px;
-  transition: width 0.4s ease;
+  border-radius: 4px;
+  transition: width 0.6s ease;
 }
 
 .performance-fill.speed {
-  background: linear-gradient(90deg, #28a745, #20c997);
+  background: linear-gradient(90deg, #10b981, #34d399);
 }
 
 .performance-fill.accuracy {
-  background: linear-gradient(90deg, #007bff, #6610f2);
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
 }
 
 .performance-fill.size {
-  background: linear-gradient(90deg, #ffc107, #fd7e14);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
-/* Layout orizontal pentru controale */
+/* Layout controls */
 .horizontal-controls {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(241,245,249,0.8) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .file-select-area {
-  flex: 1;
-  min-width: 250px;
+  min-width: 0;
 }
 
 .control-label {
   font-weight: 600;
   display: block;
   margin-bottom: 8px;
-  color: #2c3e50;
+  color: #1e293b;
   text-align: left;
+  font-size: 0.95rem;
 }
 
 .file-input {
   width: 100%;
-  padding: 10px;
-  border: 1px dashed #ccc;
-  border-radius: 4px;
+  padding: 16px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: white;
+  font-family: inherit;
+  transition: all 0.3s ease;
 }
 
-.all-buttons-container {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  flex-wrap: wrap;
-  margin-top: 10px;
+.file-input:hover {
+  border-color: #667eea;
+  background: #f8fafc;
 }
 
-.button-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.button-group-label {
-  font-size: 1.1rem;
-  margin-bottom: 8px;
-  color: #2c3e50;
-}
-
-.upload-button {
-  background-color: #2980b9;
-}
-
-.generate-button {
-  background-color: #16a085;
-  position: relative;
-  overflow: hidden;
-}
-
-.generate-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
-}
-
-.generate-button:hover::after {
-  left: 100%;
-}
-
-.create-button {
-  background-color: #9b59b6;
-}
-
-.download-button {
-  background-color: #27ae60;
-}
-
-.progress-indicators {
-  margin-top: 20px;
-}
-
-/* Layout Toggle Button */
-.layout-controls {
-  margin-bottom: 15px;
-  text-align: right;
-}
-
-.layout-toggle-button {
-  background-color: #6c757d;
-  font-size: 0.85rem;
-  padding: 6px 12px;
-}
-
-.layout-toggle-button:hover {
-  background-color: #5a6268;
-}
-
-/* Video Section with Responsive Layout */
+/* Video Section - FULL WIDTH ON MOBILE */
 .video-section {
-  margin: 20px 0;
+  margin: 24px 0;
+  padding: 0; /* Remove padding for full width */
 }
 
 .video-subtitle-container {
   display: flex;
-  gap: 20px;
-  margin-top: 15px;
+  gap: 24px;
+  margin-top: 20px;
 }
 
 .video-subtitle-container.side {
@@ -380,170 +345,77 @@ button:disabled {
 
 .video-preview-container {
   flex: 1;
-  min-width: 0; /* Necesar pentru ca flexbox să se comporte corect */
+  min-width: 0;
+  position: relative;
 }
 
 .player-wrapper {
   position: relative;
   padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .react-player {
   position: absolute;
   top: 0;
   left: 0;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 /* Subtitles Panel */
 .subtitles-panel {
-  width: 350px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  background-color: #f9f9f9;
+  width: 380px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .video-subtitle-container.bottom .subtitles-panel {
   width: 100%;
-  height: 250px;
+  height: 280px;
 }
 
 .video-subtitle-container.side .subtitles-panel {
   height: auto;
-  max-height: 500px;
+  max-height: 600px;
 }
 
 .subtitles-panel h4 {
-  padding: 10px;
+  padding: 16px 20px;
   margin: 0;
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   text-align: center;
-}
-
-.subtitles-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.subtitle-header {
-  display: grid;
-  grid-template-columns: 120px 1fr 50px;
-  padding: 10px;
-  background-color: #e9ecef;
-  font-weight: bold;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.subtitle-items-container {
-  overflow-y: auto;
-  flex: 1;
+  font-weight: 700;
+  border-radius: 16px 16px 0 0;
 }
 
 .subtitle-item {
   display: grid;
-  grid-template-columns: 120px 1fr 50px;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
+  grid-template-columns: 120px 1fr 60px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   align-items: center;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .subtitle-item:hover {
-  background-color: #f0f8ff;
+  background: rgba(102, 126, 234, 0.05);
 }
 
 .subtitle-item.active {
-  background-color: #e3f2fd;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-left: 4px solid #667eea;
 }
 
-.subtitle-time {
-  cursor: pointer;
-  color: #2980b9;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.subtitle-time:hover {
-  text-decoration: underline;
-}
-
-.subtitle-text {
-  padding: 0 10px;
-  word-break: break-word;
-}
-
-.subtitle-text.current {
-  font-weight: 500;
-  background-color: rgba(255, 248, 107, 0.2);
-  border-radius: 3px;
-}
-
-.subtitle-text.editable {
-  cursor: pointer;
-  position: relative;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.subtitle-text.editable:hover {
-  background-color: #f0f8ff;
-  border-radius: 4px;
-}
-
-.subtitle-content {
-  position: relative;
-  width: 100%;
-}
-
-.subtitle-formatted-text {
-  font-family: inherit;
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.edit-hint {
-  position: absolute;
-  top: 0;
-  right: 0;
-  font-size: 0.7rem;
-  color: #888;
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 2px 4px;
-  border-radius: 2px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.subtitle-text.editable:hover .edit-hint {
-  opacity: 1;
-}
-
-.subtitle-textarea {
-  width: 100%;
-  min-height: 60px;
-  padding: 8px;
-  border: 1px solid #4a90e2;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  resize: vertical;
-}
-
-.subtitle-duration {
-  text-align: right;
-  color: #777;
-  font-size: 0.9rem;
-}
-
-/* Subtitle Preview */
+/* Subtitle Preview - FIXED Z-INDEX FOR MOBILE */
 .subtitle-container {
   position: absolute;
   top: 0;
@@ -551,98 +423,53 @@ button:disabled {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 10;
+  z-index: 20; /* Higher than video controls */
 }
 
 .subtitle-overlay {
   pointer-events: auto;
-  cursor: move; /* Indică faptul că poate fi tras direct */
-}
-
-.subtitle-overlay.dragging {
-  opacity: 0.8;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  cursor: move;
+  z-index: 25; /* Even higher for interactions */
+  position: absolute;
 }
 
 .subtitle-overlay.mobile-mode {
   cursor: move !important;
+  z-index: 30 !important; /* Highest priority on mobile */
+  padding: 12px 16px !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  border: 2px solid transparent !important;
+  transition: all 0.3s ease !important;
 }
 
-.subtitle-overlay.mobile-mode:hover {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  border: 2px dashed rgba(255, 255, 255, 0.5);
+.subtitle-overlay.mobile-mode:hover,
+.subtitle-overlay.mobile-mode.dragging {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(102, 126, 234, 0.8) !important;
+  transform: scale(1.02) !important;
 }
 
-.subtitle-edit-overlay {
-  width: 100%;
-  pointer-events: auto;
-}
-
-.subtitle-edit-textarea {
-  width: 100%;
-  padding: 5px;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: inherit;
-  margin-bottom: 5px;
-}
-
-.edit-instructions {
-  font-size: 0.8rem;
-  color: #ddd;
-  text-align: center;
-  margin-top: 5px;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 3px;
-  border-radius: 3px;
-}
-
-/* Subtitle line and word styling */
-.subtitle-line {
-  line-height: 1.4;
-  margin-bottom: 2px;
-}
-
-.subtitle-word {
-  display: inline-block;
-  margin: 0 1px;
-  padding: 0 1px;
-  border-radius: 2px;
-  transition: color 0.2s, transform 0.2s, background-color 0.2s;
-}
-
-.subtitle-word.highlighted {
-  transform: scale(1.05);
-  font-weight: bold;
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
-/* Subtitle Customization */
-.customize-section {
-  margin: 20px 0;
-}
-
-.subtitle-style-controls {
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #f5f7fa;
-  border-radius: 6px;
-}
-
-/* Colapsible section pentru mobil */
+/* Collapsible Sections - PREVENT AUTO COLLAPSE */
 .collapsible-section {
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  margin-bottom: 15px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  margin-bottom: 20px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.collapsible-section:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .collapsible-header {
-  background-color: #f8f9fa;
-  padding: 15px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 20px 24px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -651,17 +478,20 @@ button:disabled {
   width: 100%;
   text-align: left;
   font-size: 1.1rem;
-  font-weight: 600;
-  color: #2c3e50;
+  font-weight: 700;
+  color: #1e293b;
+  transition: all 0.3s ease;
 }
 
 .collapsible-header:hover {
-  background-color: #e9ecef;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
 }
 
 .collapsible-arrow {
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
   font-size: 1.2rem;
+  color: #667eea;
+  font-weight: bold;
 }
 
 .collapsible-arrow.expanded {
@@ -670,116 +500,132 @@ button:disabled {
 
 .collapsible-content {
   overflow: hidden;
-  transition: max-height 0.3s ease-out;
+  transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+  background: white;
 }
 
 .collapsible-content.collapsed {
   max-height: 0;
+  padding: 0 24px;
 }
 
 .collapsible-content.expanded {
-  max-height: 1000px;
+  max-height: 2000px; /* Increased for larger content */
+  padding: 24px;
+}
+
+/* Subtitle Customization */
+.subtitle-style-controls {
+  margin-bottom: 24px;
 }
 
 .style-tabs {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .tab-buttons {
   display: flex;
-  border-bottom: 1px solid #dee2e6;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
 }
 
 .tab-button {
-  padding: 8px 16px;
-  background-color: transparent;
-  color: #6c757d;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
-  margin-right: 5px;
-  font-weight: 500;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  flex: 1;
+  padding: 12px 20px;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
 }
 
 .tab-button:hover {
-  background-color: rgba(0, 123, 255, 0.05);
-  color: #495057;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
 }
 
 .tab-button.active {
-  color: #495057;
-  background-color: #fff;
-  border-color: #dee2e6;
-  border-bottom-color: transparent;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .style-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #fff;
-  border-radius: 0 0 6px 6px;
-  border: 1px solid #dee2e6;
-  border-top: none;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .style-item {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
 .style-item label {
-  font-weight: 500;
-  margin-bottom: 5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1e293b;
+  font-size: 0.9rem;
 }
 
-.style-item input, .style-item select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.style-item input, 
+.style-item select {
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: white;
 }
 
-/* Color selector with preview */
+.style-item input:focus, 
+.style-item select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+/* Color selector */
 .color-selector {
   width: 100%;
 }
 
 .color-selector input[type="color"] {
   width: 100%;
-  height: 40px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  height: 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.color-preview {
-  flex: 1;
-  min-height: 40px;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  font-weight: 500;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+.color-selector input[type="color"]:hover {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
-/* Toggle switches */
+/* Toggle switches - Modern */
 .toggle-switch {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .switch {
   position: relative;
   display: inline-block;
-  width: 48px;
-  height: 24px;
+  width: 56px;
+  height: 28px;
 }
 
 .switch input {
@@ -795,165 +641,138 @@ button:disabled {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
+  background: #cbd5e1;
+  transition: 0.4s;
+  border-radius: 28px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 input:checked + .slider:before {
-  transform: translateX(24px);
-}
-
-.slider.round {
-  border-radius: 24px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
+  transform: translateX(28px);
 }
 
 .toggle-label {
-  font-size: 0.85rem;
-  color: #555;
-}
-
-/* Poziționare manuală */
-.position-options {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.position-preset {
-  flex: 1;
-}
-
-/* Controale pentru poziție manuală */
-.custom-position-controls {
-  padding: 10px;
-  background-color: #e9f0f7;
-  border-radius: 6px;
-  border: 1px dashed #aad4f5;
-}
-
-.position-coordinates {
-  display: flex;
-  gap: 20px;
-  margin-top: 5px;
-}
-
-.position-coordinates div {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.position-coordinates input {
-  width: 60px;
-  text-align: center;
-}
-
-.help-text {
-  font-size: 0.8rem;
-  color: #666;
-  margin-top: 8px;
-  font-style: italic;
-}
-
-.style-info {
-  grid-column: 1 / -1;
-  background-color: #f8f9fa;
-  padding: 10px;
-  border-radius: 4px;
-  margin-top: 10px;
   font-size: 0.9rem;
-  color: #495057;
-  border-left: 3px solid #2980b9;
+  color: #64748b;
+  font-weight: 500;
 }
 
-/* Preview section */
-.subtitle-preview-box {
-  height: 100px;
-  position: relative;
+/* Range inputs */
+.range-input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.range-input {
+  flex: 1;
+  height: 8px;
+  background: #e2e8f0;
+  outline: none;
   border-radius: 4px;
-  overflow: hidden;
+  cursor: pointer;
 }
 
-.subtitle-preview-text {
-  position: absolute;
-  padding: 5px 10px;
-  max-width: 90%;
-  text-align: center;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 3px;
+.range-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
 }
 
-/* Status Messages */
+.range-value {
+  min-width: 50px;
+  text-align: right;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+/* Status Messages - Modern */
 .status-message {
-  margin-top: 20px;
-  padding: 10px;
-  border-radius: 4px;
-  background-color: #d4edda;
-  color: #155724;
+  margin-top: 24px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
   text-align: center;
+  border: 1px solid #86efac;
+  font-weight: 500;
 }
 
 .error-message {
-  margin-top: 20px;
-  padding: 10px;
-  border-radius: 4px;
-  background-color: #f8d7da;
-  color: #721c24;
+  margin-top: 24px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  color: #991b1b;
   text-align: center;
+  border: 1px solid #fca5a5;
+  font-weight: 500;
 }
 
-.status-message.error {
-  background-color: #f8d7da;
-  color: #721c24;
+/* API Status */
+.api-status {
+  margin-top: 20px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  color: #64748b;
+  font-size: 0.85rem;
+  text-align: center;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-/* Processing Overlay */
+/* Progress indicators */
+.progress-indicators {
+  margin-top: 24px;
+}
+
+/* Processing overlay */
 .processing-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
   color: white;
 }
 
 .processing-spinner {
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #667eea;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 2s linear infinite;
-  margin-bottom: 20px;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
 }
 
 @keyframes spin {
@@ -961,245 +780,41 @@ input:checked + .slider:before {
   100% { transform: rotate(360deg); }
 }
 
-/* API Status */
-.api-status {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  background-color: #e2e3e5;
-  color: #383d41;
-  font-size: 0.85rem;
-  text-align: center;
-}
-
-.model-status {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-/* Stiluri pentru culorile predefinite */
+/* Color swatches */
 .predefined-colors {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .color-swatches {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin: 5px 0;
+  gap: 8px;
+  margin: 8px 0;
 }
 
 .color-swatch {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   cursor: pointer;
-  border: 1px solid #ccc;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
 }
 
 .color-swatch:hover {
   transform: scale(1.15);
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .color-swatch.selected {
-  border: 2px solid #2196F3;
+  border: 3px solid #667eea;
   transform: scale(1.1);
-  box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
 }
 
-/* Stiluri mobile pentru controale */
-.mobile-grid {
-  grid-template-columns: 1fr !important;
-  gap: 18px;
-}
+/* MOBILE RESPONSIVE STYLES */
 
-.mobile-tabs .tab-button {
-  flex: 1;
-  text-align: center;
-  font-size: 0.95rem;
-  padding: 10px 8px;
-}
-
-.range-input-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.range-input {
-  flex: 1;
-  height: 6px;
-  background: #ddd;
-  outline: none;
-  border-radius: 3px;
-}
-
-.range-value {
-  min-width: 45px;
-  text-align: right;
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-.color-input {
-  width: 100%;
-  height: 45px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.coordinate-input {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex: 1;
-}
-
-.coordinate-field {
-  width: 70px;
-  text-align: center;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.karaoke-toggle {
-  grid-column: 1 / -1;
-}
-
-/* Adăugați acest cod în App.css pentru a importa fonturile */
-
-/* Importări de fonturi de la Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&display=swap');
-
-/* Stilizare pentru previzualizarea fonturilor în meniul dropdown */
-select[name="fontFamily"] option {
-  padding: 5px;
-}
-
-select[name="fontFamily"] option[value="Bebas Neue"] {
-  font-family: 'Bebas Neue', sans-serif;
-  font-weight: bold;
-}
-
-select[name="fontFamily"] option[value="Montserrat"] {
-  font-family: 'Montserrat', sans-serif;
-}
-
-select[name="fontFamily"] option[value="Quicksand"] {
-  font-family: 'Quicksand', sans-serif;
-}
-
-select[name="fontFamily"] option[value="Comfortaa"] {
-  font-family: 'Comfortaa', sans-serif;
-}
-
-/* Adaugă clasa pentru a ilustra fonturile în previzualizare */
-.font-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 5px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-.font-sample {
-  display: flex;
-  align-items: center;
-  padding: 5px 10px;
-  background-color: white;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.font-name {
-  font-size: 0.8rem;
-  color: #666;
-  margin-right: 10px;
-}
-
-.font-example {
-  font-size: 1.1rem;
-}
-
-.font-bebas {
-  font-family: 'Bebas Neue', sans-serif;
-  font-weight: bold;
-}
-
-.font-montserrat {
-  font-family: 'Montserrat', sans-serif;
-}
-
-.font-quicksand {
-  font-family: 'Quicksand', sans-serif;
-}
-
-.font-comfortaa {
-  font-family: 'Comfortaa', sans-serif;
-}
-
-/* Tooltip pentru informații despre model */
-.model-tooltip {
-  position: relative;
-  display: inline-block;
-  cursor: help;
-  margin-left: 5px;
-}
-
-.model-tooltip::before {
-  content: '?';
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: #4a90e2;
-  color: white;
-  text-align: center;
-  font-size: 0.7rem;
-  line-height: 16px;
-  font-weight: bold;
-}
-
-.model-tooltip:hover::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #333;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  white-space: nowrap;
-  z-index: 1000;
-  font-size: 0.8rem;
-  margin-bottom: 5px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.model-tooltip:hover::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #333;
-  z-index: 1000;
-}
-
-/* ÎMBUNĂTĂȚIRI MOBILE RESPONSIVE */
-
-/* Responsive Adjustments pentru tablet și mobil */
+/* Tablet styles */
 @media (max-width: 992px) {
   .video-subtitle-container.side {
     flex-direction: column;
@@ -1207,300 +822,140 @@ select[name="fontFamily"] option[value="Comfortaa"] {
   
   .subtitles-panel {
     width: 100%;
-    height: 250px;
+    height: 300px;
   }
   
   .style-grid {
     grid-template-columns: 1fr;
   }
   
-  .all-buttons-container {
-    flex-direction: column;
-    gap: 20px;
+  .horizontal-controls {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   
-  .button-group {
+  .action-button {
     width: 100%;
-  }
-
-  .whisper-model-selector {
-    padding: 15px;
-  }
-
-  .model-performance {
-    gap: 10px;
+    min-width: auto;
   }
 }
 
-/* Optimizări speciale pentru dispozitive mobile mici */
+/* Mobile styles */
 @media (max-width: 768px) {
-  /* Layout general */
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
   .App {
-    padding: 10px;
+    padding: 16px 8px; /* Reduced side padding for full width */
   }
   
   .header {
-    margin-bottom: 20px;
-    padding: 15px 0;
+    margin-bottom: 24px;
+    padding: 24px 16px;
+    border-radius: 20px;
   }
   
   h1 {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
   
   h2 {
     font-size: 1.5rem;
   }
   
-  /* Video mai mare pe mobil */
-  .video-section {
-    margin: 15px 0;
+  section {
+    padding: 20px 16px; /* Reduced padding */
+    border-radius: 16px;
+    margin: 0 -8px; /* Extend to edges */
   }
   
-  .player-wrapper {
-    padding-top: 62.5%; /* Aspect ratio puțin mai înalt pentru mobil */
+  /* FULL WIDTH VIDEO ON MOBILE */
+  .video-section {
+    padding: 0;
+    margin: 16px -8px; /* Extend to screen edges */
   }
   
   .video-preview-container {
     width: 100%;
-  }
-  
-  /* Panoul de subtitrări mai compact */
-  .subtitles-panel {
-    height: 200px;
-  }
-  
-  .subtitle-item,
-  .subtitle-header {
-    grid-template-columns: 80px 1fr 35px;
-    padding: 8px;
-  }
-  
-  .subtitle-time {
-    font-size: 0.8rem;
-  }
-  
-  .subtitle-duration {
-    font-size: 0.8rem;
-  }
-  
-  /* Controale orizontale devin verticale pe mobil */
-  .horizontal-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 15px;
-  }
-  
-  .file-select-area {
-    width: 100%;
-  }
-  
-  .action-button {
-    width: 100%;
-    min-width: auto;
-    padding: 12px 20px;
-    font-size: 1.1rem;
-    height: 48px; /* Mai înalt pentru touch */
-  }
-  
-  /* Setări colapsabile pe mobil */
-  .subtitle-style-controls {
+    margin: 0;
     padding: 0;
-    background-color: transparent;
   }
   
-  .style-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 15px;
+  .player-wrapper {
+    padding-top: 60%; /* Better aspect ratio for mobile */
+    border-radius: 12px;
+    margin: 0;
   }
   
-  .style-item input, 
-  .style-item select {
-    padding: 12px; /* Mai mari pentru touch */
-    font-size: 1rem;
+  .react-player {
+    border-radius: 12px;
   }
   
-  /* Tab buttons mai mari pe mobil */
-  .tab-button {
-    padding: 12px 16px;
-    font-size: 1rem;
+  /* FIXED SUBTITLE POSITIONING ON MOBILE */
+  .subtitle-overlay.mobile-mode {
+    z-index: 100 !important; /* Very high z-index */
+    position: fixed !important; /* Use fixed positioning */
   }
   
-  /* Toggle switches mai mari */
-  .switch {
-    width: 60px;
-    height: 30px;
+  /* Ensure video controls don't interfere */
+  .react-player video::-webkit-media-controls-panel {
+    z-index: 50 !important;
   }
   
-  .switch input:checked + .slider:before {
-    transform: translateX(30px);
+  .subtitles-panel {
+    height: 240px;
+    border-radius: 12px;
+    margin-top: 16px;
   }
   
-  .slider:before {
-    height: 22px;
-    width: 22px;
-    left: 4px;
-    bottom: 4px;
-  }
-  
-  /* Color selector mai mare */
-  .color-selector input[type="color"] {
-    height: 50px;
-  }
-  
-  .color-swatch {
-    width: 32px;
-    height: 32px;
-  }
-  
-  /* Range inputs mai mari pentru touch */
-  .range-input {
-    height: 8px;
-  }
-  
-  .range-value {
-    font-size: 1rem;
-    min-width: 50px;
-  }
-  
-  .coordinate-field {
-    width: 80px;
-    padding: 12px 8px;
-    font-size: 1rem;
-  }
-  
-  /* Tab buttons responsive */
-  .mobile-tabs {
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  .mobile-tabs .tab-button {
-    min-width: 120px;
-    margin-right: 5px;
-  }
-  
-  /* Status messages */
-  .status-message,
-  .error-message {
-    padding: 15px 10px;
-    font-size: 1rem;
-  }
-  
-  /* Whisper model selector optimizat pentru mobil */
-  .whisper-model-selector {
+  .subtitle-item {
+    grid-template-columns: 80px 1fr 40px;
     padding: 12px;
   }
-
-  .model-performance {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .performance-metric {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .performance-bar {
-    width: 60%;
-    margin-left: 10px;
-  }
   
-  /* Butonul de layout toggle */
-  .layout-toggle-button {
-    padding: 10px 15px;
-    font-size: 1rem;
-  }
-  
-  /* Position coordinates mai mari pentru touch */
-  .position-coordinates input {
-    width: 80px;
-    padding: 10px;
-  }
-  
-  /* Subtitle preview mai mare pe mobil */
-  .subtitle-overlay {
-    min-height: 44px; /* Touch target minim */
-    padding: 8px 12px !important;
-    font-size: 1.1em !important;
-  }
-  
-  /* Hide layout controls pe mobil foarte mic */
-  .layout-controls {
-    text-align: center;
-    margin-bottom: 10px;
-  }
-}
-
-/* Optimizări pentru dispozitive foarte mici */
-@media (max-width: 480px) {
-  .App {
-    padding: 5px;
-  }
-  
-  h1 {
-    font-size: 1.6rem;
-  }
-  
-  section {
-    padding: 15px;
+  .horizontal-controls {
+    padding: 20px 16px;
+    border-radius: 12px;
+    gap: 16px;
   }
   
   .action-button {
+    padding: 16px 24px;
     font-size: 1rem;
-    height: 44px;
+    font-weight: 700;
+    border-radius: 12px;
   }
   
-  .subtitle-item,
-  .subtitle-header {
-    grid-template-columns: 70px 1fr 30px;
-    padding: 6px;
+  /* Collapsible sections - STABILITY FIX */
+  .collapsible-section {
+    margin-bottom: 16px;
   }
   
-  .subtitles-panel {
-    height: 180px;
+  .collapsible-header {
+    padding: 16px 20px;
+    font-size: 1rem;
+    position: sticky; /* Prevent collapse on scroll */
+    top: 0;
+    z-index: 10;
   }
   
-  /* Performance bars pe o singură coloană */
-  .model-performance {
-    gap: 6px;
+  .collapsible-content.expanded {
+    max-height: none; /* Remove height limit on mobile */
+    padding: 20px;
   }
   
-  .performance-metric span {
-    font-size: 0.7rem;
+  /* Mobile style grid */
+  .style-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
   }
   
-  /* Subtitrări mai mari pe ecrane foarte mici pentru lizibilitate */
-  .subtitle-overlay {
-    padding: 10px 15px !important;
-    font-size: 1.2em !important;
-    line-height: 1.3;
-  }
-}
-
-/* Helpers */
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-gray-600 {
-  color: #718096;
-}
-
-/* Touch device specific improvements */
-@media (hover: none) and (pointer: coarse) {
-  /* Pentru dispozitive touch */
-  .subtitle-overlay {
-    cursor: move !important;
+  .color-selector input[type="color"] {
+    height: 52px;
   }
   
-  /* Mărește zona de touch pentru controale mici */
   .color-swatch {
     width: 36px;
     height: 36px;
@@ -1508,17 +963,142 @@ select[name="fontFamily"] option[value="Comfortaa"] {
   
   .switch {
     width: 64px;
-    height: 34px;
+    height: 32px;
   }
   
   .slider:before {
-    height: 26px;
-    width: 26px;
+    height: 24px;
+    width: 24px;
     left: 4px;
     bottom: 4px;
   }
   
   input:checked + .slider:before {
-    transform: translateX(30px);
+    transform: translateX(32px);
+  }
+  
+  .coordinate-field {
+    width: 80px;
+    padding: 14px 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  
+  .position-coordinates {
+    gap: 16px;
+  }
+  
+  .coordinate-input {
+    gap: 8px;
+  }
+  
+  .coordinate-input label {
+    font-weight: 700;
+    color: #1e293b;
+    min-width: 20px;
+  }
+  
+  .custom-position-controls {
+    padding: 16px;
+    margin: 8px 0;
+  }
+  
+  .tab-buttons {
+    border-radius: 8px;
+  }
+  
+  .tab-button {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .model-performance {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .performance-metric {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .performance-bar {
+    width: 60%;
+    margin-left: 12px;
   }
 }
+
+/* Very small mobile devices */
+@media (max-width: 480px) {
+  .App {
+    padding: 12px 4px;
+  }
+  
+  section {
+    margin: 0 -4px;
+    padding: 16px 12px;
+  }
+  
+  .video-section {
+    margin: 12px -4px;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  .action-button {
+    font-size: 0.95rem;
+    padding: 14px 20px;
+  }
+  
+  .subtitle-item {
+    grid-template-columns: 70px 1fr 35px;
+    padding: 10px;
+  }
+  
+  .collapsible-header {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .subtitle-overlay {
+    cursor: move !important;
+  }
+  
+  .color-swatch {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .switch {
+    width: 68px;
+    height: 36px;
+  }
+  
+  .slider:before {
+    height: 28px;
+    width: 28px;
+    left: 4px;
+    bottom: 4px;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(32px);
+  }
+  
+  button {
+    min-height: 48px; /* Touch target minimum */
+  }
+}
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&display=swap');

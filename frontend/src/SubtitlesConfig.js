@@ -128,13 +128,13 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
           className={`tab-button ${activeTab === 'general' ? 'active' : ''}`}
           onClick={() => setActiveTab('general')}
         >
-          {isMobile ? 'Stil' : 'Stil general'}
+          {isMobile ? '🎨 Stil' : 'Stil general'}
         </button>
         <button 
           className={`tab-button ${activeTab === 'highlight' ? 'active' : ''}`}
           onClick={() => setActiveTab('highlight')}
         >
-          {isMobile ? 'Evidențiere' : 'Evidențiere cuvinte'}
+          {isMobile ? '✨ Evidențiere' : 'Evidențiere cuvinte'}
         </button>
       </div>
     </div>
