@@ -90,7 +90,6 @@ def hex_to_ass_color(hex_color):
     
     return '&H00FFFFFF'  # Default to white if invalid
 
-# Funcția adjust_font_size_for_video corectată
 def adjust_font_size_for_video(base_size, video_width=1280, reference_width=1920):
     """
     Ajustează dimensiunea fontului proporțional cu lățimea video-ului,
@@ -417,7 +416,7 @@ def create_video_with_subtitles():
                                      f"Creare fișier subtitrări: {i}/{len(subtitles)}")
         
         # Extract style parameters
-        font_family = style.get('fontFamily', 'Sans')
+        font_family = style.get('fontFamily', 'Arial')
         base_font_size = style.get('fontSize', 24)
         # Ajustăm dimensiunea fontului pentru video
         font_size = adjust_font_size_for_video(base_font_size, video_width, 1920)

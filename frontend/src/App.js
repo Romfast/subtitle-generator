@@ -45,7 +45,7 @@ function App() {
     backgroundColor: '#000000',
     opacity: 80,
     position: 'bottom', // 'bottom', 'top', 'middle', 'top-left', 'top-right', 'bottom-left', 'bottom-right'
-    fontFamily: 'Sans',
+    fontFamily: 'Bebas Neue', // Font default
     borderColor: '#000000',
     borderWidth: 2,
     maxLines: 1,  // Inițializat cu 1 linie
@@ -56,7 +56,7 @@ function App() {
     customY: 90,  // Poziția Y procentuală (0-100)
     currentWordColor: '#FFFF00', // Culoare cuvânt curent (galben default)
     currentWordBorderColor: '#000000', // Culoare contur cuvânt curent
-    allCaps: false, // Opțiune pentru ALL CAPS
+    allCaps: true, // Opțiune pentru ALL CAPS
     removePunctuation: false, // Opțiune pentru eliminarea punctuației
     useKaraoke: false // Modificat din true în false pentru a dezactiva implicit evidențierea cuvântului curent
   });

@@ -815,3 +815,113 @@ input:checked + .slider:before {
 .text-gray-600 {
   color: #718096;
 }
+
+
+/* Stiluri pentru culorile predefinite */
+.predefined-colors {
+  margin-top: 10px;
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 5px 0;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.color-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.color-swatch.selected {
+  border: 2px solid #2196F3;
+  transform: scale(1.1);
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+}
+
+/* Adăugați acest cod în App.css pentru a importa fonturile */
+
+/* Importări de fonturi de la Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&display=swap');
+
+/* Stilizare pentru previzualizarea fonturilor în meniul dropdown */
+select[name="fontFamily"] option {
+  padding: 5px;
+}
+
+select[name="fontFamily"] option[value="Bebas Neue"] {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: bold;
+}
+
+select[name="fontFamily"] option[value="Montserrat"] {
+  font-family: 'Montserrat', sans-serif;
+}
+
+select[name="fontFamily"] option[value="Quicksand"] {
+  font-family: 'Quicksand', sans-serif;
+}
+
+select[name="fontFamily"] option[value="Comfortaa"] {
+  font-family: 'Comfortaa', sans-serif;
+}
+
+/* Adaugă clasa pentru a ilustra fonturile în previzualizare */
+.font-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 5px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.font-sample {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.font-name {
+  font-size: 0.8rem;
+  color: #666;
+  margin-right: 10px;
+}
+
+.font-example {
+  font-size: 1.1rem;
+}
+
+.font-bebas {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: bold;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-quicksand {
+  font-family: 'Quicksand', sans-serif;
+}
+
+.font-comfortaa {
+  font-family: 'Comfortaa', sans-serif;
+}

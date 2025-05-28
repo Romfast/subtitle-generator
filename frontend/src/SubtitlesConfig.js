@@ -1,5 +1,34 @@
 import React, { useState } from 'react';
 
+// Adăugăm o listă de culori predefinite
+const predefinedColors = {
+  text: [
+    { name: 'Alb', value: '#FFFFFF' },
+    { name: 'Galben', value: '#FFFF00' },
+    { name: 'Verde deschis', value: '#00FF00' },
+    { name: 'Albastru deschis', value: '#00FFFF' },
+    { name: 'Roz', value: '#FF00FF' },
+    { name: 'Roșu', value: '#FF0000' },
+    { name: 'Portocaliu', value: '#FFA500' },
+  ],
+  border: [
+    { name: 'Negru', value: '#000000' },
+    { name: 'Gri închis', value: '#333333' },
+    { name: 'Albastru închis', value: '#000080' },
+    { name: 'Verde închis', value: '#006400' },
+    { name: 'Maro', value: '#8B4513' },
+    { name: 'Transparent', value: '#00000000' },
+  ],
+  highlight: [
+    { name: 'Galben', value: '#FFFF00' },
+    { name: 'Roșu', value: '#FF0000' },
+    { name: 'Verde neon', value: '#39FF14' },
+    { name: 'Albastru neon', value: '#00BFFF' },
+    { name: 'Portocaliu', value: '#FF6600' },
+    { name: 'Roz', value: '#FF69B4' },
+  ]
+};
+
 const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
   const [activeTab, setActiveTab] = useState('general');
   const [useCustomPosition, setUseCustomPosition] = useState(subtitleStyle.useCustomPosition || false);
@@ -40,6 +69,35 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
     });
   };
 
+  // Handler pentru selectarea unei culori predefinite
+  const handlePredefinedColorSelect = (name, colorValue) => {
+    handleStyleChange({
+      target: {
+        name,
+        value: colorValue
+      }
+    });
+  };
+
+  // Componentă pentru selectorul de culori predefinite
+  const PredefinedColorSelector = ({ colorType, currentColor, colorName }) => {
+    return (
+      <div className="predefined-colors">
+        <div className="color-swatches">
+          {predefinedColors[colorType].map((color, index) => (
+            <div 
+              key={index}
+              className={`color-swatch ${currentColor === color.value ? 'selected' : ''}`}
+              style={{ backgroundColor: color.value }}
+              title={color.name}
+              onClick={() => handlePredefinedColorSelect(colorName, color.value)}
+            ></div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="subtitle-style-controls">
       <h3>Stil subtitrare</h3>
@@ -70,10 +128,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
               value={subtitleStyle.fontFamily} 
               onChange={handleStyleChange}
             >
+              <option value="Arial">Arial</option>
+              <option value="Bebas Neue">Bebas Neue (gros)</option>
+              <option value="Montserrat">Montserrat (rotund)</option>
+              <option value="Quicksand">Quicksand (rotund)</option>
+              <option value="Comfortaa">Comfortaa (rotund)</option>
               <option value="Sans">Sans</option>
               <option value="Serif">Serif</option>
               <option value="Monospace">Monospace</option>
-              <option value="Arial">Arial</option>
               <option value="Verdana">Verdana</option>
             </select>
           </div>
@@ -101,6 +163,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 onChange={handleStyleChange}
                 style={{ width: '100%', height: '40px' }}
               />
+              <PredefinedColorSelector 
+                colorType="text" 
+                currentColor={subtitleStyle.fontColor} 
+                colorName="fontColor" 
+              />
             </div>
           </div>
           
@@ -113,6 +180,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 value={subtitleStyle.borderColor} 
                 onChange={handleStyleChange}
                 style={{ width: '100%', height: '40px' }}
+              />
+              <PredefinedColorSelector 
+                colorType="border" 
+                currentColor={subtitleStyle.borderColor} 
+                colorName="borderColor" 
               />
             </div>
           </div>
@@ -287,6 +359,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 onChange={handleStyleChange}
                 style={{ width: '100%', height: '40px' }}
               />
+              <PredefinedColorSelector 
+                colorType="highlight" 
+                currentColor={subtitleStyle.currentWordColor} 
+                colorName="currentWordColor" 
+              />
             </div>
           </div>
           
@@ -299,12 +376,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange }) => {
                 value={subtitleStyle.currentWordBorderColor || '#000000'} 
                 onChange={handleStyleChange}
               />
-              <div className="color-preview" style={{
-                backgroundColor: subtitleStyle.currentWordBorderColor || '#000000',
-                color: getContrastColor(subtitleStyle.currentWordBorderColor || '#000000')
-              }}>
-                Contur
-              </div>
+              <PredefinedColorSelector 
+                colorType="border" 
+                currentColor={subtitleStyle.currentWordBorderColor} 
+                colorName="currentWordBorderColor" 
+              />
             </div>
           </div>
           

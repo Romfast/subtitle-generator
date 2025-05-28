@@ -90,9 +90,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     font_family = style.get('fontFamily', 'Arial')
     # Ajustăm dimensiunea fontului în funcție de rezoluția video
     base_font_size = style.get('fontSize', 24)
-    # Dimensiunea fontului ar trebui să fie aproximativ 2.5% din înălțimea video pentru 24px
-    # la o rezoluție de 720p
+    # Nu reducem fontul prea mult - folosim minim 18px pentru lizibilitate
     font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
+    print(f"ASS font size calculation: base={base_font_size}, adjusted={font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
@@ -179,9 +179,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     font_family = style.get('fontFamily', 'Arial')
     # Ajustăm dimensiunea fontului în funcție de rezoluția video
     base_font_size = style.get('fontSize', 24)
-    # Dimensiunea fontului ar trebui să fie aproximativ 2.5% din înălțimea video pentru 24px
-    # la o rezoluție de 720p
+    # Nu reducem fontul prea mult - folosim minim 18px pentru lizibilitate
     font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
+    print(f"Karaoke ASS font size calculation: base={base_font_size}, adjusted={font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]  # Fără &H prefix
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
@@ -326,9 +326,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     font_family = style.get('fontFamily', 'Arial')
     # Ajustăm dimensiunea fontului în funcție de rezoluția video
     base_font_size = style.get('fontSize', 24)
-    # Dimensiunea fontului ar trebui să fie aproximativ 2.5% din înălțimea video pentru 24px
-    # la o rezoluție de 720p
+    # Nu reducem fontul prea mult - folosim minim 18px pentru lizibilitate
     font_size = max(18, int(base_font_size * 0.9))  # Reducem doar cu 10% maximum
+    print(f"Word-by-word ASS font size calculation: base={base_font_size}, adjusted={font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
