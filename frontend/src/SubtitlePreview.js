@@ -167,7 +167,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     return { lines, allWords };
   };
   
-  // Evidențiază cuvântul curent
+  // Evidențiază cuvântul curent cu timing PRECIS
   useEffect(() => {
     const activeSubtitle = subtitles.find(
       sub => currentTime >= sub.start && currentTime <= sub.end
@@ -182,17 +182,50 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         setFormattedDisplay(formattedResult);
       }
     } else if (activeSubtitle && formattedDisplay.allWords.length > 0 && subtitleStyle.useKaraoke === true) {
-      const duration = activeSubtitle.end - activeSubtitle.start;
-      const relativeTime = currentTime - activeSubtitle.start;
-      const wordDuration = duration / formattedDisplay.allWords.length;
-      
-      const wordIndex = Math.min(
-        Math.floor(relativeTime / wordDuration),
-        formattedDisplay.allWords.length - 1
-      );
-      
-      if (wordIndex !== currentWordIndex && wordIndex >= 0) {
-        setCurrentWordIndex(wordIndex);
+      // FOLOSIM TIMING PRECIS DE LA WHISPER dacă este disponibil
+      if (activeSubtitle.words && activeSubtitle.words.length > 0) {
+        // Găsim cuvântul curent bazat pe timing-ul real
+        let foundWordIndex = -1;
+        for (let i = 0; i < activeSubtitle.words.length; i++) {
+          const wordTiming = activeSubtitle.words[i];
+          if (currentTime >= wordTiming.start && currentTime <= wordTiming.end) {
+            foundWordIndex = i;
+            break;
+          }
+        }
+        
+        // Dacă nu găsim cuvântul exact, folosim cel mai apropiat
+        if (foundWordIndex === -1) {
+          for (let i = 0; i < activeSubtitle.words.length; i++) {
+            const wordTiming = activeSubtitle.words[i];
+            if (currentTime < wordTiming.start) {
+              foundWordIndex = Math.max(0, i - 1);
+              break;
+            } else if (i === activeSubtitle.words.length - 1) {
+              foundWordIndex = i;
+            }
+          }
+        }
+        
+        if (foundWordIndex !== -1 && foundWordIndex !== currentWordIndex) {
+          setCurrentWordIndex(foundWordIndex);
+          console.log(`Precise word timing: word ${foundWordIndex + 1}/${activeSubtitle.words.length} at ${currentTime.toFixed(2)}s`);
+        }
+      } else {
+        // Fallback la estimare dacă nu avem timing word-level
+        const duration = activeSubtitle.end - activeSubtitle.start;
+        const relativeTime = currentTime - activeSubtitle.start;
+        const wordDuration = duration / formattedDisplay.allWords.length;
+        
+        const wordIndex = Math.min(
+          Math.floor(relativeTime / wordDuration),
+          formattedDisplay.allWords.length - 1
+        );
+        
+        if (wordIndex !== currentWordIndex && wordIndex >= 0) {
+          setCurrentWordIndex(wordIndex);
+          console.log(`Estimated word timing: word ${wordIndex + 1}/${formattedDisplay.allWords.length} at ${currentTime.toFixed(2)}s`);
+        }
       }
     }
   }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines, subtitleStyle.useKaraoke]);
@@ -271,7 +304,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   };
   
-  // Renderează liniile cu cuvinte
+  // Renderează liniile cu cuvinte - ÎMBUNĂTĂȚIT PENTRU EVIDENȚIERE SUBTILĂ
   const renderLines = () => {
     if (!currentSubtitle || formattedDisplay.lines.length === 0) return null;
     
@@ -295,7 +328,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             className={`subtitle-word ${isCurrentWord ? 'highlighted' : ''}`}
             style={{
               color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
-              fontWeight: isCurrentWord ? 'bold' : (isMobileDevice ? '600' : 'normal'),
+              fontWeight: 'bold', // TOATE CUVINTELE BOLD pentru fonturile groase
               fontSize: `${previewFontSize}px`,
               textShadow: subtitleStyle.borderWidth > 0 ? 
                 `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
@@ -305,8 +338,14 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
                 : 'none',
               display: 'inline-block',
               padding: isMobileDevice ? '0 3px' : '0 2px',
-              transform: isCurrentWord ? 'scale(1.05)' : 'scale(1)',
-              transition: 'color 0.2s, transform 0.2s'
+              // EVIDENȚIERE SUBTILĂ - doar culoarea se schimbă, nu scaling-ul
+              transform: 'scale(1)', // Fără scaling pentru aspect mai curat
+              transition: 'color 0.3s ease, text-shadow 0.3s ease', // Tranziții mai lente și mai naturale
+              // Adăugăm o evidențiere subtilă prin background pentru cuvântul curent
+              backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              borderRadius: isCurrentWord ? '3px' : '0',
+              // Opțional: puțin blur pentru celelalte cuvinte când evidențiem unul
+              filter: subtitleStyle.useKaraoke === true && !isCurrentWord ? 'opacity(0.7)' : 'none'
             }}
           >
             {word}
@@ -657,7 +696,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
               textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none',
               maxWidth: '100%',
               textAlign: 'center',
-              fontWeight: isMobileDevice ? '600' : '500',
+              fontWeight: 'bold', // TOATE FONTURILE BOLD în previzualizare pentru consistență
               textShadow: isMobileDevice ? 
                 `2px 2px 4px rgba(0, 0, 0, 0.8)` : 
                 `1px 1px 2px rgba(0, 0, 0, 0.5)`

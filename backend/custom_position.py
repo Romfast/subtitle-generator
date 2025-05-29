@@ -1,6 +1,7 @@
 # backend/custom_position.py
 # Funcții pentru procesarea subtitrărilor cu poziție personalizată
 # VERSIUNEA COMPLETĂ FIX pentru poziționare corectă pe desktop și mobile
+# PLUS funcționalitate precisă pentru evidențierea cuvântului curent
 
 import re
 
@@ -124,7 +125,7 @@ def calculate_ass_margins_from_position(position, useCustomPosition=False, custo
 def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS (Advanced SubStation Alpha) pentru subtitrări cu poziționare personalizată.
-    VERSIUNEA COMPLETĂ FIX - poziționare corectă pe toate platformele.
+    VERSIUNEA COMPLETĂ FIX - poziționare corectă pe toate platformele + FONTURILE BOLD.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -149,7 +150,7 @@ def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
     margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
     
-    # Header ASS complet
+    # Header ASS complet cu BOLD=1 pentru fonturile groase
     ass_header = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920
@@ -159,7 +160,7 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},0,0,0,0,100,100,0,0,1,{outline_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},1,0,0,0,100,100,0,0,1,{outline_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -250,7 +251,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS cu efect de karaoke îmbunătățit pentru a evidenția cuvintele
-    pe măsură ce sunt pronunțate, cu poziționare corectă.
+    pe măsură ce sunt pronunțate, cu poziționare corectă și FONTURILE BOLD.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -273,7 +274,7 @@ def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
     margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
     
-    # Header ASS cu setări optime pentru karaoke
+    # Header ASS cu setări optime pentru karaoke și BOLD=1
     ass_header = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920
@@ -284,7 +285,7 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{font_color},&H{highlight_color},&H{border_color},&H80000000,0,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Default,{font_family},{font_size},&H{font_color},&H{highlight_color},&H{border_color},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -364,7 +365,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 abs_y = int((customY / 100) * 1080)
                 position_tag = f"{{\\pos({abs_x},{abs_y})}}"
             else:
-                # Pentru poziționarea predefinită
                 if position in ['top-20', 'top-30', 'top-40', 'bottom-20', 'bottom-30', 'bottom-40']:
                     position_map = {
                         'top-20': 20, 'top-30': 30, 'top-40': 40,
@@ -400,6 +400,7 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     """
     Alternativă îmbunătățită pentru efectul de karaoke care folosește multiple linii de dialog
     cu timpi calculați mai precis pentru a evidenția fiecare cuvânt în parte.
+    VERSIUNEA CU BOLD=1 pentru fonturile groase.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -422,7 +423,7 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
     margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
     
-    # Header ASS
+    # Header ASS cu BOLD=1
     ass_header = """[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920
@@ -432,8 +433,8 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{font_color},&H{secondary_color},&H{border_color},&H80000000,0,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
-Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Default,{font_family},{font_size},&H{font_color},&H{secondary_color},&H{border_color},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,110,110,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -555,11 +556,154 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
+                word_count = len(sub.get('words', []))
                 print(f"Word-by-word subtitle {i+1}: {fmt_start} -> {fmt_end} | {position_tag} | {len(words)} words | {text[:30]}...")
         
         print(f"Total highlighted words created: {total_highlighted_words}")
     
     print(f"Word-by-word ASS file created successfully: {output_path}")
+    return output_path
+
+def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles):
+    """
+    Creează un fișier ASS cu evidențierea PRECISĂ a cuvântului curent,
+    folosind timing-ul real de la Whisper (nu estimări).
+    VERSIUNEA CU BOLD=1 pentru fonturile groase.
+    
+    Args:
+        srt_path: Calea către fișierul SRT original
+        output_path: Calea unde va fi salvat fișierul ASS generat
+        style: Dicționar cu stilul subtitrărilor
+        subtitles: Lista de subtitrări cu timing word-level
+        
+    Returns:
+        str: Calea către fișierul ASS generat
+    """
+    print(f"Creating Precise Word Highlighting ASS file with style: {style}")
+    
+    # Extragem parametrii de poziționare
+    useCustomPosition = style.get('useCustomPosition', False)
+    customX = style.get('customX', 50)
+    customY = style.get('customY', 90)
+    position = style.get('position', 'bottom')
+    
+    # Calculăm poziția și coordonatele pentru ASS
+    alignment = get_ass_alignment_from_position(position, useCustomPosition)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    
+    # Header ASS cu stiluri pentru text normal și evidențiat + BOLD=1
+    ass_header = """[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+ScaledBorderAndShadow: yes
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Normal,{font_family},{font_size},&H{font_color},&H{secondary_color},&H{border_color},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,110,110,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+    
+    # Parametri de stil
+    font_family = style.get('fontFamily', 'Arial')
+    font_size = style.get('fontSize', 24)
+    print(f"Precise Word Highlighting ASS: Using font: {font_family}, size: {font_size}")
+    
+    font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
+    border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
+    highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
+    highlight_border = hex_to_ass_color(style.get('currentWordBorderColor', '#000000'))[2:]
+    border_width = style.get('borderWidth', 2)
+    
+    # Formatăm header-ul
+    ass_header = ass_header.format(
+        font_family=font_family,
+        font_size=font_size,
+        font_color=font_color,
+        secondary_color="FFFFFF",
+        border_color=border_color,
+        highlight_color=highlight_color,
+        highlight_border=highlight_border,
+        border_width=border_width,
+        alignment=alignment,
+        margin_l=margins['MarginL'],
+        margin_r=margins['MarginR'],
+        margin_v=margins['MarginV']
+    )
+    
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(ass_header)
+        
+        print(f"Creating Precise Word Highlighting ASS file with {len(subtitles)} subtitles")
+        
+        total_word_events = 0
+        
+        for i, sub in enumerate(subtitles):
+            text = process_text_with_options(sub['text'].strip(), style)
+            text = text.replace('\n', '\\N')
+            
+            start_time = sub['start']
+            end_time = sub['end']
+            
+            fmt_start = format_ass_timestamp(start_time)
+            fmt_end = format_ass_timestamp(end_time)
+            
+            # CRITICAL FIX: Calculăm poziționarea corectă
+            position_tag = ""
+            
+            if useCustomPosition:
+                abs_x = int((customX / 100) * 1920)
+                abs_y = int((customY / 100) * 1080)
+                position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+            else:
+                if position in ['top-20', 'top-30', 'top-40', 'bottom-20', 'bottom-30', 'bottom-40']:
+                    position_map = {
+                        'top-20': 20, 'top-30': 30, 'top-40': 40,
+                        'bottom-20': 80, 'bottom-30': 70, 'bottom-40': 60
+                    }
+                    y_percent = position_map.get(position, 90)
+                    abs_x = 960  # Centrat
+                    abs_y = int((y_percent / 100) * 1080)
+                    position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+                else:
+                    position_tag = f"{{\\an{alignment}}}"
+            
+            # Layer 0: Textul complet cu culoarea normală (fundal)
+            f.write(f"Dialogue: 0,{fmt_start},{fmt_end},Normal,,0,0,0,,{position_tag}{text}\n")
+            
+            # Layer 1: Evidențiere cuvinte individuale cu timing PRECIS
+            if 'words' in sub and sub['words'] and style.get('useKaraoke', False):
+                for word_info in sub['words']:
+                    word = word_info['word'].strip()
+                    if not word:
+                        continue
+                    
+                    # Aplicăm opțiunile de stil la cuvânt
+                    if style.get('allCaps', False):
+                        word = word.upper()
+                    if style.get('removePunctuation', False):
+                        word = re.sub(r'[.,\/#!$%\^&\*;:{}=\-_`~()]', '', word)
+                    
+                    # Timing PRECIS de la Whisper
+                    word_start = format_ass_timestamp(word_info['start'])
+                    word_end = format_ass_timestamp(word_info['end'])
+                    
+                    # Evidențiem doar acest cuvânt
+                    f.write(f"Dialogue: 1,{word_start},{word_end},Highlight,,0,0,0,,{position_tag}{word}\n")
+                    total_word_events += 1
+            
+            # Log pentru debugging la primele câteva subtitrări
+            if i < 3:
+                word_count = len(sub.get('words', []))
+                print(f"Precise subtitle {i+1}: {fmt_start} -> {fmt_end} | {position_tag} | {word_count} words | {text[:30]}...")
+        
+        print(f"Total word highlighting events created: {total_word_events}")
+    
+    print(f"Precise Word Highlighting ASS file created successfully: {output_path}")
     return output_path
 
 # Funcții de utilitate pentru debugging și testare
@@ -586,7 +730,7 @@ def validate_ass_timestamps(subtitles):
 
 def get_subtitle_statistics(subtitles):
     """
-    Returnează statistici despre subtitrări pentru debugging.
+    Returnează statistici despre subtitrări pentru debugging, incluzând timing word-level.
     """
     if not subtitles:
         return "No subtitles to analyze"
@@ -600,6 +744,10 @@ def get_subtitle_statistics(subtitles):
     char_counts = [len(sub['text']) for sub in subtitles]
     avg_chars = sum(char_counts) / len(char_counts)
     
+    # Verificăm câte subtitrări au timing word-level
+    subtitles_with_word_timing = sum(1 for sub in subtitles if 'words' in sub and len(sub.get('words', [])) > 0)
+    total_words_with_timing = sum(len(sub.get('words', [])) for sub in subtitles)
+    
     stats = f"""
 Subtitle Statistics:
 - Total subtitles: {len(subtitles)}
@@ -609,6 +757,8 @@ Subtitle Statistics:
 - Average characters per subtitle: {avg_chars:.1f}
 - Shortest subtitle: {min(sub['end'] - sub['start'] for sub in subtitles):.2f}s
 - Longest subtitle: {max(sub['end'] - sub['start'] for sub in subtitles):.2f}s
+- Subtitles with word-level timing: {subtitles_with_word_timing}/{len(subtitles)} ({(subtitles_with_word_timing/len(subtitles)*100):.1f}%)
+- Total words with precise timing: {total_words_with_timing}
 """
     
     return stats

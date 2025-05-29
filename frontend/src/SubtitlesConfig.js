@@ -56,7 +56,7 @@ const DEMO_PRESETS = {
   },
   'modern_minimal': {
     name: 'Modern Minimal',
-    description: 'Design modern și minimalist cu karaoke subtil',
+    description: 'Design modern și minimalist cu evidențiere subtilă',
     icon: '✨',
     style: {
       fontSize: 22,
@@ -381,7 +381,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           className={`tab-button ${activeTab === 'highlight' ? 'active' : ''}`}
           onClick={() => setActiveTab('highlight')}
         >
-          {compact ? 'Karaoke' : (isMobile ? '✨ Karaoke' : 'Karaoke')}
+          {compact ? 'Evidențiere' : (isMobile ? '✨ Evidențiere' : 'Evidențiere cuvânt')}
         </button>
         <button 
           className={`tab-button ${activeTab === 'presets' ? 'active' : ''}`}
@@ -706,7 +706,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           </div>
           
           <div className="style-item karaoke-toggle">
-            <label>Evidențiere cuvânt:</label>
+            <label>Evidențiere cuvânt curent:</label>
             <div className="toggle-switch">
               <label className="switch">
                 <input 
@@ -722,7 +722,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             </div>
             {!compact && (
               <p className="help-text">
-                Evidențiază cuvintele pe măsură ce sunt pronunțate
+                Evidențiază cuvântul care este pronunțat în momentul respectiv (timing precis)
               </p>
             )}
           </div>

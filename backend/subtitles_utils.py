@@ -77,14 +77,14 @@ def split_subtitle_into_lines(text, max_lines=2, max_width_percent=50, max_words
 
 def break_long_subtitles(subtitles, max_words_per_segment=4):
     """
-    Împarte subtitrările lungi în segmente mai mici.
+    Împarte subtitrările lungi în segmente mai mici, păstrând informațiile de timing pentru cuvinte.
     
     Args:
-        subtitles (list): Lista de subtitrări
+        subtitles (list): Lista de subtitrări cu timing-ul cuvintelor
         max_words_per_segment (int): Numărul maxim de cuvinte per segment
     
     Returns:
-        list: Lista de subtitrări împărțite în segmente mai mici
+        list: Lista de subtitrări împărțite în segmente mai mici cu timing păstrat
     """
     result = []
     
@@ -96,38 +96,77 @@ def break_long_subtitles(subtitles, max_words_per_segment=4):
             # Dacă e sub limita de cuvinte, o păstrăm așa cum e
             result.append(subtitle)
         else:
-            # Altfel, o împărțim în segmente
+            # Altfel, o împărțim în segmente, păstrând timing-ul word-level dacă există
             segments = split_subtitle_into_segments(subtitle['text'], max_words_per_segment)
             
             # Calculăm durata per segment
             duration = subtitle['end'] - subtitle['start']
-            segment_duration = duration / len(segments)
             
-            # Creăm noile segmente de subtitrare
-            for i, segment_text in enumerate(segments):
-                segment_start = subtitle['start'] + i * segment_duration
-                segment_end = segment_start + segment_duration
+            # Dacă avem timing word-level, îl folosim; altfel estimăm
+            if 'words' in subtitle and subtitle['words']:
+                # Folosim timing-ul real al cuvintelor
+                word_timings = subtitle['words']
+                current_word_index = 0
                 
-                result.append({
-                    'start': segment_start,
-                    'end': segment_end,
-                    'text': segment_text
-                })
+                for i, segment_text in enumerate(segments):
+                    segment_words = segment_text.split()
+                    segment_word_count = len(segment_words)
+                    
+                    # Găsim timing-ul pentru cuvintele din acest segment
+                    segment_words_timing = []
+                    segment_start = subtitle['start']
+                    segment_end = subtitle['end']
+                    
+                    if current_word_index < len(word_timings):
+                        segment_start = word_timings[current_word_index]['start']
+                        
+                        # Calculăm sfârșitul segmentului
+                        end_word_index = min(current_word_index + segment_word_count - 1, len(word_timings) - 1)
+                        segment_end = word_timings[end_word_index]['end']
+                        
+                        # Colectăm timing-ul pentru cuvintele din segment
+                        for j in range(segment_word_count):
+                            if current_word_index + j < len(word_timings):
+                                segment_words_timing.append(word_timings[current_word_index + j])
+                        
+                        current_word_index += segment_word_count
+                    
+                    result.append({
+                        'start': segment_start,
+                        'end': segment_end,
+                        'text': segment_text,
+                        'words': segment_words_timing
+                    })
+            else:
+                # Fallback la estimare dacă nu avem timing word-level
+                segment_duration = duration / len(segments)
+                
+                for i, segment_text in enumerate(segments):
+                    segment_start = subtitle['start'] + i * segment_duration
+                    segment_end = segment_start + segment_duration
+                    
+                    result.append({
+                        'start': segment_start,
+                        'end': segment_end,
+                        'text': segment_text,
+                        'words': []  # Fără timing word-level
+                    })
     
     return result
 
 def format_srt_with_line_limits(subtitles, max_lines=2, max_width_percent=50, max_words_per_line=4):
     """
-    Formatează lista de subtitrări pentru a respecta limitele de linii și lățime.
+    Formatează lista de subtitrări pentru a respecta limitele de linii și lățime,
+    păstrând informațiile de timing pentru cuvinte.
     
     Args:
-        subtitles (list): Lista de subtitrări
+        subtitles (list): Lista de subtitrări cu timing word-level
         max_lines (int): Numărul maxim de linii
         max_width_percent (int): Procentajul maxim din lățimea videoului
         max_words_per_line (int): Numărul maxim de cuvinte per linie
     
     Returns:
-        list: Lista de subtitrări formatată
+        list: Lista de subtitrări formatată cu timing păstrat
     """
     # Mai întâi împărțim subtitrările lungi în segmente mai mici
     segmented_subtitles = break_long_subtitles(subtitles, max_words_per_line)
@@ -143,10 +182,17 @@ def format_srt_with_line_limits(subtitles, max_lines=2, max_width_percent=50, ma
             max_words_per_line
         )
         
-        formatted_subtitles.append({
+        # Păstrăm timing-ul word-level dacă există
+        formatted_subtitle = {
             'start': subtitle['start'],
             'end': subtitle['end'],
             'text': formatted_text
-        })
+        }
+        
+        # Adăugăm informațiile de timing pentru cuvinte dacă există
+        if 'words' in subtitle:
+            formatted_subtitle['words'] = subtitle['words']
+        
+        formatted_subtitles.append(formatted_subtitle)
     
     return formatted_subtitles
