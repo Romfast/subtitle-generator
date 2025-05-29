@@ -7,6 +7,7 @@ import SubtitlePreview from './SubtitlePreview';
 import EditableSubtitleItem from './EditableSubtitleItem';
 import './App.css';
 import './ProgressBar.css';
+import './SubtitlesConfig.css'; // Import enhanced subtitle config styles
 
 // Backend API base URL
 const API_URL = process.env.REACT_APP_API_URL || '/api';
@@ -46,12 +47,10 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // Stări pentru secțiuni colapsabile pe mobil - stabilizate
-  const [settingsExpanded, setSettingsExpanded] = useState(false);
-  const [whisperSelectorExpanded, setWhisperSelectorExpanded] = useState(true);
-  const [expandedSections, setExpandedSections] = useState({
-    whisper: true,
-    settings: false // Configurările sunt inițial colapsate pe ambele platforme
+  // Stări pentru secțiuni colapsabile - ÎMBUNĂTĂȚITE
+  const [sectionsExpanded, setSectionsExpanded] = useState({
+    subtitlesList: false,    // Lista de subtitrări inițial colapsată
+    subtitlesConfig: false   // Configurările inițial colapsate
   });
   const [videoFitMode, setVideoFitMode] = useState('cover'); // 'cover' sau 'contain'
   
@@ -90,13 +89,11 @@ function App() {
       // Pe mobil, layout-ul este mereu 'bottom'
       if (isMobileDevice) {
         setLayoutMode('bottom');
-        // Pe mobil, setările sunt inițial colapsate pentru a economisi spațiu
-        setSettingsExpanded(false);
-        // Pe mobil, Whisper selector rămâne expandat pentru acces ușor
-        setExpandedSections(prev => ({
+        // Pe mobil, secțiunile rămân colapsate implicit pentru spațiu
+        setSectionsExpanded(prev => ({
           ...prev,
-          whisper: true,
-          settings: false
+          subtitlesList: false,
+          subtitlesConfig: false
         }));
       }
     };
@@ -378,12 +375,24 @@ function App() {
     setProcessProgress(0);
 
     try {
-      // Transmitem toate opțiunile de stil inclusiv useKaraoke pentru evidențierea cuvintelor
-      // și poziționarea personalizată dacă există
+      // IMPORTANT: Transmitem toate opțiunile de stil inclusiv poziționarea EXACTĂ
+      console.log('Sending subtitle style to backend:', subtitleStyle);
+      
       const response = await axios.post(`${API_URL}/create-video`, {
         filename: uploadedFileName,
         subtitles: subtitles,
-        style: subtitleStyle
+        style: {
+          ...subtitleStyle,
+          // Asigurăm că poziționarea se transmite corect
+          position: subtitleStyle.position || 'bottom',
+          useCustomPosition: subtitleStyle.useCustomPosition || false,
+          customX: subtitleStyle.customX || 50,
+          customY: subtitleStyle.customY || 90,
+          // Adăugăm informații despre device pentru backend
+          isMobile: isMobile,
+          screenWidth: window.innerWidth,
+          screenHeight: window.innerHeight
+        }
       });
 
       setOutputVideo(response.data.output_filename);
@@ -477,39 +486,35 @@ function App() {
     setCurrentTime(state.playedSeconds);
   };
 
-  // Obține descrierea modelului curent
-  const getCurrentModelDescription = () => {
-    const currentModel = availableModels.find(model => model.value === whisperModel);
-    return currentModel ? currentModel.description : '';
+  // Funcții pentru gestionarea colapsării secțiunilor
+  const toggleSection = (sectionKey) => {
+    setSectionsExpanded(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
   };
 
-  // Componente pentru secțiuni colapsabile pe mobil - stabilizate
-  const CollapsibleSection = ({ title, sectionKey, children, defaultExpanded = false }) => {
-    const [isExpanded, setIsExpanded] = useState(expandedSections[sectionKey] ?? defaultExpanded);
-    
-    const toggleExpanded = () => {
-      const newState = !isExpanded;
-      setIsExpanded(newState);
-      setExpandedSections(prev => ({
-        ...prev,
-        [sectionKey]: newState
-      }));
-    };
+  // Componente pentru secțiuni colapsabile - ÎMBUNĂTĂȚITE
+  const CollapsibleSection = ({ title, sectionKey, children, defaultExpanded = false, icon = "" }) => {
+    const isExpanded = sectionsExpanded[sectionKey] ?? defaultExpanded;
     
     return (
       <div className="collapsible-section">
         <button 
-          className="collapsible-header"
-          onClick={toggleExpanded}
+          className={`collapsible-header ${isExpanded ? 'expanded' : 'collapsed'}`}
+          onClick={() => toggleSection(sectionKey)}
           type="button"
         >
-          <span>{title}</span>
+          <span className="collapsible-title">
+            {icon && <span className="section-icon">{icon}</span>}
+            {title}
+          </span>
           <span className={`collapsible-arrow ${isExpanded ? 'expanded' : ''}`}>
             ▼
           </span>
         </button>
         <div className={`collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
-          <div style={{ padding: isExpanded ? '20px' : '0 20px' }}>
+          <div className="collapsible-inner">
             {children}
           </div>
         </div>
@@ -530,12 +535,21 @@ function App() {
 
       <div className="main-container">
         {/* ========== CASETA COMPACT DE CONTROL - TOATE ACȚIUNILE ========== */}
-        <section className="unified-control-panel">
-          <h2>Procesare Video</h2>
-          
+        <section className="unified-control-panel">          
           <div className="unified-controls">
-            {/* Linia 1: Model Whisper și Selectare Fișier */}
+            {/* Linia 1: Selectare Fișier și Model Whisper - ORDINEA SCHIMBATĂ */}
             <div className="control-row">
+              <div className="file-selector-compact">
+                <label>Selectați video:</label>
+                <input 
+                  type="file" 
+                  accept="video/*" 
+                  onChange={handleFileChange} 
+                  ref={fileInputRef}
+                  className="compact-file-input"
+                />
+              </div>
+              
               <div className="model-selector-compact">
                 <label>Model Whisper:</label>
                 <select 
@@ -550,20 +564,6 @@ function App() {
                     </option>
                   ))}
                 </select>
-                <span className={`model-indicator-mini ${whisperModel}`}>
-                  {whisperModel.toUpperCase()}
-                </span>
-              </div>
-              
-              <div className="file-selector-compact">
-                <label>Selectați video:</label>
-                <input 
-                  type="file" 
-                  accept="video/*" 
-                  onChange={handleFileChange} 
-                  ref={fileInputRef}
-                  className="compact-file-input"
-                />
               </div>
             </div>
             
@@ -684,18 +684,19 @@ function App() {
           </section>
         )}
 
-        {/* ========== SUBTITLES PANEL CU CONFIGURARI ========== */}
+        {/* ========== SUBTITLES PANEL CU CONFIGURARI - COLAPSABIL ========== */}
         {subtitles.length > 0 && (
           <section className="subtitles-management-section">
             <h2>Subtitrări și Configurări</h2>
             
             <div className={`subtitles-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
-              {/* ========== LISTA DE SUBTITLES - LANGA STANGA ========== */}
-              <div className="subtitles-list-panel">
-                <div className="subtitles-list-header">
-                  <h4>Subtitrări ({subtitles.length})</h4>
-                </div>
-                
+              {/* ========== LISTA DE SUBTITLES - COLAPSABILĂ ========== */}
+              <CollapsibleSection 
+                title={`Subtitrări (${subtitles.length})`}
+                sectionKey="subtitlesList"
+                defaultExpanded={false}
+                icon="📝"
+              >
                 <div className="subtitles-list-content">
                   <div className="subtitle-header-simplified">
                     <span className="subtitle-time-header">Început</span>
@@ -729,21 +730,21 @@ function App() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </CollapsibleSection>
               
-              {/* ========== CONFIGURARI - PARTEA DREAPTA ========== */}
-              <div className="subtitles-config-panel">
-                <div className="config-header">
-                  <h4>🎨 Configurări Stil</h4>
-                </div>
-                <div className="config-content">
-                  <SubtitlesConfig 
-                    subtitleStyle={subtitleStyle}
-                    handleStyleChange={handleStyleChange}
-                    compact={true}
-                  />
-                </div>
-              </div>
+              {/* ========== CONFIGURARI - COLAPSABILĂ ========== */}
+              <CollapsibleSection 
+                title="Configurări Stil"
+                sectionKey="subtitlesConfig"
+                defaultExpanded={false}
+                icon="🎨"
+              >
+                <SubtitlesConfig 
+                  subtitleStyle={subtitleStyle}
+                  handleStyleChange={handleStyleChange}
+                  compact={true}
+                />
+              </CollapsibleSection>
             </div>
           </section>
         )}
