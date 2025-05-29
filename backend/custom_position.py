@@ -1,6 +1,6 @@
 # backend/custom_position.py
 # Funcții pentru procesarea subtitrărilor cu poziție personalizată
-# VERSIUNEA COMPLETĂ cu eliminarea întârzierii duble și suport pentru toate modelele Whisper
+# VERSIUNEA COMPLETĂ FIX pentru poziționare corectă pe desktop și mobile
 
 import re
 
@@ -52,10 +52,79 @@ def format_ass_timestamp(seconds):
     
     return f"{hours}:{minutes:02d}:{seconds_int:02d}.{centiseconds:02d}"
 
+def get_ass_alignment_from_position(position, useCustomPosition=False):
+    """
+    Calculează alignment-ul ASS corect bazat pe poziția specificată.
+    
+    Args:
+        position: Poziția predefinită sau None
+        useCustomPosition: Dacă se folosește poziționarea personalizată
+    
+    Returns:
+        int: Codul de alignment pentru ASS
+    """
+    if useCustomPosition:
+        return 2  # Centru pentru poziționare personalizată
+    
+    # Mapare poziții standard la valorile de alignment ASS
+    position_align_map = {
+        'top': 8,          # Centru-sus (8)
+        'top-20': 8,       # Centru-sus
+        'top-30': 8,       # Centru-sus  
+        'top-40': 8,       # Centru-sus
+        'middle': 5,       # Centru (5)
+        'bottom-40': 2,    # Centru-jos (2)
+        'bottom-30': 2,    # Centru-jos
+        'bottom-20': 2,    # Centru-jos
+        'bottom': 2,       # Centru-jos (2)
+        'top-left': 7,     # Stânga-sus (7)
+        'top-right': 9,    # Dreapta-sus (9)
+        'bottom-left': 1,  # Stânga-jos (1)
+        'bottom-right': 3  # Dreapta-jos (3)
+    }
+    
+    return position_align_map.get(position, 2)  # Default: centru-jos
+
+def calculate_ass_margins_from_position(position, useCustomPosition=False, customX=50, customY=90):
+    """
+    Calculează marginile ASS corecte pentru poziția specificată.
+    
+    Args:
+        position: Poziția predefinită
+        useCustomPosition: Dacă se folosește poziționarea personalizată
+        customX: Poziția X personalizată (procent)
+        customY: Poziția Y personalizată (procent)
+    
+    Returns:
+        dict: Marginile pentru ASS (MarginL, MarginR, MarginV)
+    """
+    # Pentru poziționarea personalizată, nu folosim margini clasice
+    if useCustomPosition:
+        return {'MarginL': 10, 'MarginR': 10, 'MarginV': 10}
+    
+    # Mapare poziții la margini în pixeli (pentru 1920x1080)
+    position_margins = {
+        'top': {'MarginL': 10, 'MarginR': 10, 'MarginV': 50},
+        'top-20': {'MarginL': 10, 'MarginR': 10, 'MarginV': 150},
+        'top-30': {'MarginL': 10, 'MarginR': 10, 'MarginV': 250},
+        'top-40': {'MarginL': 10, 'MarginR': 10, 'MarginV': 350},
+        'middle': {'MarginL': 10, 'MarginR': 10, 'MarginV': 10},
+        'bottom-40': {'MarginL': 10, 'MarginR': 10, 'MarginV': 250},
+        'bottom-30': {'MarginL': 10, 'MarginR': 10, 'MarginV': 200},
+        'bottom-20': {'MarginL': 10, 'MarginR': 10, 'MarginV': 150},
+        'bottom': {'MarginL': 10, 'MarginR': 10, 'MarginV': 100},
+        'top-left': {'MarginL': 50, 'MarginR': 10, 'MarginV': 50},
+        'top-right': {'MarginL': 10, 'MarginR': 50, 'MarginV': 50},
+        'bottom-left': {'MarginL': 50, 'MarginR': 10, 'MarginV': 100},
+        'bottom-right': {'MarginL': 10, 'MarginR': 50, 'MarginV': 100}
+    }
+    
+    return position_margins.get(position, {'MarginL': 10, 'MarginR': 10, 'MarginV': 100})
+
 def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS (Advanced SubStation Alpha) pentru subtitrări cu poziționare personalizată.
-    VERSIUNEA FĂRĂ ÎNTÂRZIERE DUBLĂ - folosește timpii originali din subtitrări.
+    VERSIUNEA COMPLETĂ FIX - poziționare corectă pe toate platformele.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -66,25 +135,31 @@ def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles
     Returns:
         str: Calea către fișierul ASS generat
     """
-    custom_x = style.get('customX', 50)
-    custom_y = style.get('customY', 90)
+    print(f"Creating ASS file with style: {style}")
     
-    # Calculăm coordonatele în funcție de procentajele date
-    x_pos = custom_x / 100 * 1280  # Transformăm procentajul în coordonate absolute
-    y_pos = custom_y / 100 * 720   # pentru a asigura poziționarea consecventă
+    # Extragem parametrii de poziționare
+    useCustomPosition = style.get('useCustomPosition', False)
+    customX = style.get('customX', 50)
+    customY = style.get('customY', 90)
+    position = style.get('position', 'bottom')
     
-    # Creăm un header pentru fișierul ASS
+    print(f"Position settings: useCustom={useCustomPosition}, position={position}, X={customX}, Y={customY}")
+    
+    # Calculăm poziția și coordonatele pentru ASS
+    alignment = get_ass_alignment_from_position(position, useCustomPosition)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    
+    # Header ASS complet
     ass_header = """[Script Info]
 ScriptType: v4.00+
-PlayResX: 1280
-PlayResY: 720
+PlayResX: 1920
+PlayResY: 1080
 ScaledBorderAndShadow: yes
 WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},0,0,0,0,100,100,0,0,1,{outline_width},0,2,10,10,10,1
-Style: CurrentWord,{font_family},{font_size},&H{current_word_color},&H{secondary_color},&H{current_word_border_color},&H{back_color},1,0,0,0,100,100,0,0,1,{outline_width},0,2,10,10,10,1
+Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},0,0,0,0,100,100,0,0,1,{outline_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -93,15 +168,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # Extragem parametrii de stil - folosim mărimea fontului deja calculată în app.py
     font_family = style.get('fontFamily', 'Arial')
     font_size = style.get('fontSize', 24)  # Deja ajustată în app.py conform dimensiunilor video
-    print(f"ASS: Using pre-calculated font size: {font_size}")
+    print(f"ASS: Using font: {font_family}, size: {font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
     outline_width = style.get('borderWidth', 2)
-    
-    # Extragem culorile pentru cuvântul curent
-    current_word_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))
-    current_word_border_color = hex_to_ass_color(style.get('currentWordBorderColor', '#000000'))
     
     # Completăm header-ul cu informațiile de stil
     ass_header = ass_header.format(
@@ -110,25 +181,24 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         primary_color=font_color[2:],  # Eliminăm &H din început
         secondary_color="FFFFFF",
         outline_color=outline_color[2:],
-        current_word_color=current_word_color[2:],
-        current_word_border_color=current_word_border_color[2:],
         back_color="000000",
-        outline_width=outline_width
+        outline_width=outline_width,
+        alignment=alignment,
+        margin_l=margins['MarginL'],
+        margin_r=margins['MarginR'],
+        margin_v=margins['MarginV']
     )
     
     # Creăm fișierul ASS
     with open(output_path, 'w', encoding='utf-8') as ass_file:
         ass_file.write(ass_header)
         
-        # !! FIX: ELIMINĂM ÎNTÂRZIEREA DUBLĂ !!
-        # Folosim timpii originali din subtitrări, fără să adăugăm sync_delay
-        print(f"Creating ASS file with {len(subtitles)} subtitles using original timings")
+        print(f"Creating ASS file with {len(subtitles)} subtitles")
         
         # Adăugăm evenimentele de dialog pentru fiecare subtitrare
         for i, sub in enumerate(subtitles):
-            # Folosim timpii originali - NU mai adăugăm întârziere
-            start_time = sub['start']  # ÎNAINTE era: sub['start'] + sync_delay
-            end_time = sub['end']      # ÎNAINTE era: sub['end'] + sync_delay
+            start_time = sub['start']
+            end_time = sub['end']
             
             start_ts = format_ass_timestamp(start_time)
             end_ts = format_ass_timestamp(end_time)
@@ -137,8 +207,34 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
             
-            # Adăugăm poziția personalizată ca tag override cu coordonate absolute
-            position_tag = f"{{\\pos({x_pos},{y_pos})}}"
+            # CRITICAL FIX: Calculăm poziționarea corectă
+            position_tag = ""
+            
+            if useCustomPosition:
+                # Pentru poziționare personalizată, folosim tag-ul \pos()
+                # Convertim procentajele în coordonate absolute pentru 1920x1080
+                abs_x = int((customX / 100) * 1920)
+                abs_y = int((customY / 100) * 1080)
+                position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+                print(f"Custom position: {customX}%,{customY}% -> {abs_x},{abs_y}")
+            else:
+                # Pentru poziționarea predefinită, folosim \an pentru alignment
+                # și eventual \pos dacă avem nevoie de poziționare exactă
+                if position in ['top-20', 'top-30', 'top-40', 'bottom-20', 'bottom-30', 'bottom-40']:
+                    # Pentru pozițiile cu procente specifice, calculăm poziția exactă
+                    position_map = {
+                        'top-20': 20, 'top-30': 30, 'top-40': 40,
+                        'bottom-20': 80, 'bottom-30': 70, 'bottom-40': 60
+                    }
+                    y_percent = position_map.get(position, 90)
+                    abs_x = 960  # Centrat
+                    abs_y = int((y_percent / 100) * 1080)
+                    position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+                    print(f"Preset position {position}: {y_percent}% -> {abs_x},{abs_y}")
+                else:
+                    # Pentru pozițiile standard, folosim doar alignment-ul
+                    position_tag = f"{{\\an{alignment}}}"
+                    print(f"Standard position {position}: alignment {alignment}")
             
             # Scriem linia de dialog
             dialog_line = f"Dialogue: 0,{start_ts},{end_ts},Default,,0,0,0,,{position_tag}{text}\n"
@@ -146,7 +242,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
-                print(f"Subtitle {i+1}: {start_ts} -> {end_ts} | {text[:30]}...")
+                print(f"Subtitle {i+1}: {start_ts} -> {end_ts} | {position_tag} | {text[:30]}...")
     
     print(f"ASS file created successfully: {output_path}")
     return output_path
@@ -154,8 +250,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS cu efect de karaoke îmbunătățit pentru a evidenția cuvintele
-    pe măsură ce sunt pronunțate, cu o estimare mai precisă a duratei fiecărui cuvânt.
-    VERSIUNEA FĂRĂ ÎNTÂRZIERE DUBLĂ - folosește timpii originali din subtitrări.
+    pe măsură ce sunt pronunțate, cu poziționare corectă.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -166,52 +261,44 @@ def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     Returns:
         str: Calea către fișierul ASS generat
     """
+    print(f"Creating Karaoke ASS file with style: {style}")
+    
+    # Extragem parametrii de poziționare
+    useCustomPosition = style.get('useCustomPosition', False)
+    customX = style.get('customX', 50)
+    customY = style.get('customY', 90)
+    position = style.get('position', 'bottom')
+    
+    # Calculăm poziția și coordonatele pentru ASS
+    alignment = get_ass_alignment_from_position(position, useCustomPosition)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    
     # Header ASS cu setări optime pentru karaoke
     ass_header = """[Script Info]
 ScriptType: v4.00+
-PlayResX: 1280
-PlayResY: 720
+PlayResX: 1920
+PlayResY: 1080
 Timer: 100.0000
 ScaledBorderAndShadow: yes
 WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{font_color},&H{highlight_color},&H{border_color},&H80000000,0,0,0,0,100,100,0,0,1,{border_width},0,{text_align},10,10,10,1
+Style: Default,{font_family},{font_size},&H{font_color},&H{highlight_color},&H{border_color},&H80000000,0,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
-    # Parametri de stil - folosim mărimea fontului deja calculată în app.py
+    # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
-    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py
-    print(f"Karaoke ASS: Using pre-calculated font size: {font_size}")
+    font_size = style.get('fontSize', 24)
+    print(f"Karaoke ASS: Using font: {font_family}, size: {font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]  # Fără &H prefix
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
     border_width = style.get('borderWidth', 2)
-    text_align = style.get('textAlign', 2)  # Default centrat
-    
-    # Verificăm poziționarea
-    use_custom_position = style.get('useCustomPosition', False)
-    position = style.get('position', 'bottom')
-    
-    # Mapare poziții standard la valorile de aliniere ASS
-    position_align_map = {
-        'top': 8,      # Centru-sus
-        'middle': 5,   # Centru
-        'bottom': 2,   # Centru-jos
-        'top-left': 7, # Stânga-sus
-        'top-right': 9, # Dreapta-sus
-        'bottom-left': 1, # Stânga-jos
-        'bottom-right': 3 # Dreapta-jos
-    }
-    
-    # Folosim valoarea din mapare sau valoarea default 2 (centru-jos)
-    if not use_custom_position:
-        text_align = position_align_map.get(position, 2)
     
     # Formatăm header-ul
     ass_header = ass_header.format(
@@ -221,25 +308,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         highlight_color=highlight_color,
         border_color=border_color,
         border_width=border_width,
-        text_align=text_align
+        alignment=alignment,
+        margin_l=margins['MarginL'],
+        margin_r=margins['MarginR'],
+        margin_v=margins['MarginV']
     )
     
     # Creăm fișierul ASS
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
         
-        # !! FIX: ELIMINĂM ÎNTÂRZIEREA DUBLĂ !!
-        # Nu mai adăugăm sync_delay - folosim timpii originali
-        print(f"Creating Karaoke ASS file with {len(subtitles)} subtitles using original timings")
-        
-        # Verificăm dacă trebuie să folosim poziționare personalizată
-        position_tag = ""
-        if use_custom_position:
-            custom_x = style.get('customX', 50)
-            custom_y = style.get('customY', 90)
-            x_pos = custom_x / 100 * 1280
-            y_pos = custom_y / 100 * 720
-            position_tag = f"{{\\pos({x_pos},{y_pos})}}"
+        print(f"Creating Karaoke ASS file with {len(subtitles)} subtitles")
         
         # Adăugăm linii de dialog pentru fiecare subtitrare
         for i, sub in enumerate(subtitles):
@@ -247,9 +326,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
             
-            # Folosim timpii originali - NU mai adăugăm întârziere
-            start_time = sub['start']  # ÎNAINTE era: sub['start'] + sync_delay
-            end_time = sub['end']      # ÎNAINTE era: sub['end'] + sync_delay
+            start_time = sub['start']
+            end_time = sub['end']
             
             # Formatăm timpii
             start = format_ass_timestamp(start_time)
@@ -264,24 +342,40 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             duration = end_time - start_time
             
             # Îmbunătățim estimarea duratei cuvintelor bazat pe lungimea lor
-            # 1. Calculăm numărul total de caractere
             total_chars = sum(len(word) for word in words)
             
-            # 2. Calculăm durata în centisecunde pentru fiecare caracter
-            # Adăugăm un minim de 30 centisecunde pentru fiecare cuvânt pentru a gestiona cuvintele scurte
             char_durations = []
             for word in words:
-                # Durata proporțională cu lungimea cuvântului
-                # Folosim o pondere de 80% pentru lungime și 20% fixă
                 word_proportion = len(word) / max(total_chars, 1)
-                word_duration = max(30, int(word_proportion * duration * 100 * 0.8) + 20)  # minim 30 centisecunde
+                word_duration = max(30, int(word_proportion * duration * 100 * 0.8) + 20)
                 char_durations.append(word_duration)
             
             # Ajustăm pentru a asigura că suma duratelor este egală cu durata totală
             total_estimated_duration = sum(char_durations)
             adjustment_factor = (duration * 100) / max(total_estimated_duration, 1)
-            
             adjusted_durations = [int(d * adjustment_factor) for d in char_durations]
+            
+            # CRITICAL FIX: Calculăm poziționarea corectă pentru karaoke
+            position_tag = ""
+            
+            if useCustomPosition:
+                # Pentru poziționare personalizată
+                abs_x = int((customX / 100) * 1920)
+                abs_y = int((customY / 100) * 1080)
+                position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+            else:
+                # Pentru poziționarea predefinită
+                if position in ['top-20', 'top-30', 'top-40', 'bottom-20', 'bottom-30', 'bottom-40']:
+                    position_map = {
+                        'top-20': 20, 'top-30': 30, 'top-40': 40,
+                        'bottom-20': 80, 'bottom-30': 70, 'bottom-40': 60
+                    }
+                    y_percent = position_map.get(position, 90)
+                    abs_x = 960  # Centrat
+                    abs_y = int((y_percent / 100) * 1080)
+                    position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+                else:
+                    position_tag = f"{{\\an{alignment}}}"
             
             # Implementare karaoke folosind tag-ul \k cu durate îmbunătățite
             karaoke_text = position_tag  # Adăugăm tag-ul de poziție înainte de text
@@ -297,7 +391,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
-                print(f"Karaoke subtitle {i+1}: {start} -> {end} | {len(words)} words | {text[:30]}...")
+                print(f"Karaoke subtitle {i+1}: {start} -> {end} | {position_tag} | {len(words)} words | {text[:30]}...")
     
     print(f"Karaoke ASS file created successfully: {output_path}")
     return output_path
@@ -306,7 +400,6 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     """
     Alternativă îmbunătățită pentru efectul de karaoke care folosește multiple linii de dialog
     cu timpi calculați mai precis pentru a evidenția fiecare cuvânt în parte.
-    VERSIUNEA FĂRĂ ÎNTÂRZIERE DUBLĂ - folosește timpii originali din subtitrări.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -317,53 +410,45 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     Returns:
         str: Calea către fișierul ASS generat
     """
+    print(f"Creating Word-by-word ASS file with style: {style}")
+    
+    # Extragem parametrii de poziționare
+    useCustomPosition = style.get('useCustomPosition', False)
+    customX = style.get('customX', 50)
+    customY = style.get('customY', 90)
+    position = style.get('position', 'bottom')
+    
+    # Calculăm poziția și coordonatele pentru ASS
+    alignment = get_ass_alignment_from_position(position, useCustomPosition)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    
     # Header ASS
     ass_header = """[Script Info]
 ScriptType: v4.00+
-PlayResX: 1280
-PlayResY: 720
+PlayResX: 1920
+PlayResY: 1080
 ScaledBorderAndShadow: yes
 WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{font_color},&H{secondary_color},&H{border_color},&H80000000,0,0,0,0,100,100,0,0,1,{border_width},0,{text_align},10,10,10,1
-Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{text_align},10,10,10,1
+Style: Default,{font_family},{font_size},&H{font_color},&H{secondary_color},&H{border_color},&H80000000,0,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     
-    # Parametri de stil - folosim mărimea fontului deja calculată în app.py
+    # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
-    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py
-    print(f"Word-by-word ASS: Using pre-calculated font size: {font_size}")
+    font_size = style.get('fontSize', 24)
+    print(f"Word-by-word ASS: Using font: {font_family}, size: {font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
     highlight_border = hex_to_ass_color(style.get('currentWordBorderColor', '#000000'))[2:]
     border_width = style.get('borderWidth', 2)
-    
-    # Verificăm poziționarea
-    use_custom_position = style.get('useCustomPosition', False)
-    position = style.get('position', 'bottom')
-    
-    # Mapare poziții standard la valorile de aliniere ASS
-    position_align_map = {
-        'top': 8,      # Centru-sus
-        'middle': 5,   # Centru
-        'bottom': 2,   # Centru-jos
-        'top-left': 7, # Stânga-sus
-        'top-right': 9, # Dreapta-sus
-        'bottom-left': 1, # Stânga-jos
-        'bottom-right': 3 # Dreapta-jos
-    }
-    
-    # Folosim valoarea din mapare sau valoarea default 2 (centru-jos)
-    text_align = position_align_map.get(position, 2)
-    if use_custom_position:
-        text_align = 2  # Centrat pentru poziție personalizată
     
     # Formatăm header-ul
     ass_header = ass_header.format(
@@ -375,15 +460,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         highlight_color=highlight_color,
         highlight_border=highlight_border,
         border_width=border_width,
-        text_align=text_align
+        alignment=alignment,
+        margin_l=margins['MarginL'],
+        margin_r=margins['MarginR'],
+        margin_v=margins['MarginV']
     )
     
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
         
-        # !! FIX: ELIMINĂM ÎNTÂRZIEREA DUBLĂ !!
-        # Nu mai adăugăm sync_delay - folosim timpii originali
-        print(f"Creating Word-by-word ASS file with {len(subtitles)} subtitles using original timings")
+        print(f"Creating Word-by-word ASS file with {len(subtitles)} subtitles")
         
         total_highlighted_words = 0
         
@@ -391,21 +477,31 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
             
-            # Folosim timpii originali - NU mai adăugăm întârziere
-            start_time = sub['start']  # ÎNAINTE era: sub['start'] + sync_delay
-            end_time = sub['end']      # ÎNAINTE era: sub['end'] + sync_delay
+            start_time = sub['start']
+            end_time = sub['end']
             
             fmt_start = format_ass_timestamp(start_time)
             fmt_end = format_ass_timestamp(end_time)
             
-            # Adăugăm poziția personalizată dacă există
+            # CRITICAL FIX: Calculăm poziționarea corectă
             position_tag = ""
-            if use_custom_position:
-                custom_x = style.get('customX', 50)
-                custom_y = style.get('customY', 90)
-                x_pos = custom_x / 100 * 1280
-                y_pos = custom_y / 100 * 720
-                position_tag = f"{{\\pos({x_pos},{y_pos})}}"
+            
+            if useCustomPosition:
+                abs_x = int((customX / 100) * 1920)
+                abs_y = int((customY / 100) * 1080)
+                position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+            else:
+                if position in ['top-20', 'top-30', 'top-40', 'bottom-20', 'bottom-30', 'bottom-40']:
+                    position_map = {
+                        'top-20': 20, 'top-30': 30, 'top-40': 40,
+                        'bottom-20': 80, 'bottom-30': 70, 'bottom-40': 60
+                    }
+                    y_percent = position_map.get(position, 90)
+                    abs_x = 960  # Centrat
+                    abs_y = int((y_percent / 100) * 1080)
+                    position_tag = f"{{\\pos({abs_x},{abs_y})}}"
+                else:
+                    position_tag = f"{{\\an{alignment}}}"
             
             # Adăugăm întregul text cu stilul normal (Layer 0)
             f.write(f"Dialogue: 0,{fmt_start},{fmt_end},Default,,0,0,0,,{position_tag}{text}\n")
@@ -419,17 +515,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             duration = end_time - start_time
             total_chars = sum(len(word) for word in words)
             
-            # Îmbunătățim estimarea duratei cuvintelor bazat pe lungimea lor
-            # Și factori lingvistici (cuvinte mai lungi durează mai mult)
+            # Îmbunătățim estimarea duratei cuvintelor
             min_word_duration = 0.2  # Minim 200ms per cuvânt
             word_durations = []
             
             for word in words:
-                # Calculăm un factor de durată proporțional cu lungimea cuvântului
-                # dar cu o valoare minimă pentru cuvinte scurte
                 char_factor = len(word) / max(total_chars, 1)
-                
-                # Ajustăm durata: 60% bazată pe lungime, 40% distribuită uniform
                 word_duration = max(
                     min_word_duration,
                     (char_factor * 0.6 + 1/len(words) * 0.4) * duration
@@ -456,7 +547,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 fmt_word_end = format_ass_timestamp(word_end_times[j])
                 
                 # Afișăm fiecare cuvânt individual cu stil evidențiat
-                # Folosind tag-ul de culoare și poziționare dacă e necesar
                 highlighted_word = f"{position_tag}{{\\c&H{highlight_color}&}}{{\\b1}}{word}"
                 
                 # Layer 1 pentru a fi deasupra textului normal
@@ -465,7 +555,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
-                print(f"Word-by-word subtitle {i+1}: {fmt_start} -> {fmt_end} | {len(words)} words | {text[:30]}...")
+                print(f"Word-by-word subtitle {i+1}: {fmt_start} -> {fmt_end} | {position_tag} | {len(words)} words | {text[:30]}...")
         
         print(f"Total highlighted words created: {total_highlighted_words}")
     

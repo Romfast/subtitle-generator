@@ -47,7 +47,7 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // Stări pentru secțiuni colapsabile - ÎMBUNĂTĂȚITE
+  // Stări pentru secțiuni colapsabile - FIX: IMPLICIT COLAPSATE
   const [sectionsExpanded, setSectionsExpanded] = useState({
     subtitlesList: false,    // Lista de subtitrări inițial colapsată
     subtitlesConfig: false   // Configurările inițial colapsate
@@ -64,7 +64,7 @@ function App() {
     borderColor: '#000000',
     borderWidth: 2,
     maxLines: 1,  // Inițializat cu 1 linie
-    maxWidth: 50, // Procentaj din lățimea videoului
+    maxWidth: 50, // Procentaj din lățimea video-ului
     maxWordsPerLine: 3, // Inițializat cu 3 cuvinte per linie
     useCustomPosition: false, // Flag pentru activarea poziției personalizate
     customX: 50, // Poziția X procentuală (0-100)
@@ -298,6 +298,12 @@ function App() {
       const modelUsed = response.data.model_used || whisperModel;
       setUploadStatus(`Subtitrări generate cu succes folosind modelul ${modelUsed.toUpperCase()}!`);
       
+      // CRITICAL FIX: Expandează automat lista de subtitrări după generare
+      setSectionsExpanded(prev => ({
+        ...prev,
+        subtitlesList: true
+      }));
+      
       // Verificăm progresul pe server dacă primim un task_id
       if (response.data.task_id) {
         setTranscribeTaskId(response.data.task_id);
@@ -316,16 +322,30 @@ function App() {
 
   const handleStyleChange = (e) => {
     const { name, value } = e.target;
+    
+    // CRITICAL FIX: Aplicăm corect valorile pentru poziționare
+    let processedValue = value;
+    
+    if (name === 'maxLines' || name === 'maxWidth' || name === 'maxWordsPerLine' || 
+        name === 'customX' || name === 'customY' || name === 'fontSize' || 
+        name === 'borderWidth') {
+      processedValue = parseInt(value, 10);
+    } else if (name === 'useCustomPosition' || name === 'allCaps' || name === 'removePunctuation' || name === 'useKaraoke') {
+      processedValue = Boolean(value);
+    }
+    
+    console.log('Style change:', name, value, '->', processedValue);
+    
     setSubtitleStyle(prev => ({
       ...prev,
-      [name]: name === 'maxLines' || name === 'maxWidth' || name === 'maxWordsPerLine' || 
-               name === 'customX' || name === 'customY' || name === 'fontSize' ? 
-               parseInt(value, 10) : value
+      [name]: processedValue
     }));
   };
   
   // Funcție pentru actualizarea poziției subtitrărilor prin drag-and-drop
   const updateSubtitlePosition = (x, y, enableCustomPosition = false) => {
+    console.log('Updating subtitle position:', { x, y, enableCustomPosition });
+    
     setSubtitleStyle(prev => ({
       ...prev,
       customX: Math.round(x),
@@ -375,7 +395,7 @@ function App() {
     setProcessProgress(0);
 
     try {
-      // IMPORTANT: Transmitem toate opțiunile de stil inclusiv poziționarea EXACTĂ
+      // CRITICAL FIX: Transmitem toate opțiunile de stil inclusiv poziționarea EXACTĂ
       console.log('Sending subtitle style to backend:', subtitleStyle);
       
       const response = await axios.post(`${API_URL}/create-video`, {
@@ -383,11 +403,11 @@ function App() {
         subtitles: subtitles,
         style: {
           ...subtitleStyle,
-          // Asigurăm că poziționarea se transmite corect
+          // CRITICAL: Asigurăm că poziționarea se transmite corect
           position: subtitleStyle.position || 'bottom',
-          useCustomPosition: subtitleStyle.useCustomPosition || false,
-          customX: subtitleStyle.customX || 50,
-          customY: subtitleStyle.customY || 90,
+          useCustomPosition: Boolean(subtitleStyle.useCustomPosition),
+          customX: Number(subtitleStyle.customX) || 50,
+          customY: Number(subtitleStyle.customY) || 90,
           // Adăugăm informații despre device pentru backend
           isMobile: isMobile,
           screenWidth: window.innerWidth,
@@ -494,8 +514,97 @@ function App() {
     }));
   };
 
+  // DEMO PRESETS - aplicare presetare demo
+  const applyDemoPreset = (presetName) => {
+    const demoPresets = {
+      'cinema_classic': {
+        fontSize: 28,
+        fontFamily: 'Bebas Neue',
+        fontColor: '#FFFFFF',
+        borderColor: '#000000',
+        borderWidth: 3,
+        position: 'bottom',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 90,
+        allCaps: true,
+        removePunctuation: false,
+        useKaraoke: false,
+        maxLines: 1,
+        maxWordsPerLine: 3,
+        currentWordColor: '#FFFF00',
+        currentWordBorderColor: '#000000'
+      },
+      'modern_minimal': {
+        fontSize: 22,
+        fontFamily: 'Montserrat',
+        fontColor: '#F8F9FA',
+        borderColor: '#1A1A1A',
+        borderWidth: 1,
+        position: 'bottom-20',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 80,
+        allCaps: false,
+        removePunctuation: false,
+        useKaraoke: true,
+        maxLines: 2,
+        maxWordsPerLine: 4,
+        currentWordColor: '#10B981',
+        currentWordBorderColor: '#064E3B'
+      },
+      'gaming_style': {
+        fontSize: 26,
+        fontFamily: 'Quicksand',
+        fontColor: '#00FFFF',
+        borderColor: '#FF0080',
+        borderWidth: 2,
+        position: 'bottom-30',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 70,
+        allCaps: true,
+        removePunctuation: true,
+        useKaraoke: true,
+        maxLines: 1,
+        maxWordsPerLine: 3,
+        currentWordColor: '#FFFF00',
+        currentWordBorderColor: '#FF0080'
+      },
+      'elegant_serif': {
+        fontSize: 24,
+        fontFamily: 'Comfortaa',
+        fontColor: '#FFFBEB',
+        borderColor: '#7C2D12',
+        borderWidth: 2,
+        position: 'bottom',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 90,
+        allCaps: false,
+        removePunctuation: false,
+        useKaraoke: false,
+        maxLines: 2,
+        maxWordsPerLine: 4,
+        currentWordColor: '#FCD34D',
+        currentWordBorderColor: '#7C2D12'
+      }
+    };
+    
+    if (demoPresets[presetName]) {
+      setSubtitleStyle(demoPresets[presetName]);
+      setUploadStatus(`Preset "${presetName}" aplicat cu succes!`);
+      
+      // Expandează configurările pentru a vedea schimbările
+      setSectionsExpanded(prev => ({
+        ...prev,
+        subtitlesConfig: true
+      }));
+    }
+  };
+
   // Componente pentru secțiuni colapsabile - ÎMBUNĂTĂȚITE
-  const CollapsibleSection = ({ title, sectionKey, children, defaultExpanded = false, icon = "" }) => {
+  const CollapsibleSection = ({ title, sectionKey, children, defaultExpanded = false, icon = "", badge = null }) => {
     const isExpanded = sectionsExpanded[sectionKey] ?? defaultExpanded;
     
     return (
@@ -508,6 +617,7 @@ function App() {
           <span className="collapsible-title">
             {icon && <span className="section-icon">{icon}</span>}
             {title}
+            {badge && <span className="section-badge">{badge}</span>}
           </span>
           <span className={`collapsible-arrow ${isExpanded ? 'expanded' : ''}`}>
             ▼
@@ -537,7 +647,7 @@ function App() {
         {/* ========== CASETA COMPACT DE CONTROL - TOATE ACȚIUNILE ========== */}
         <section className="unified-control-panel">          
           <div className="unified-controls">
-            {/* Linia 1: Selectare Fișier și Model Whisper - ORDINEA SCHIMBATĂ */}
+            {/* Linia 1: Selectare Fișier și Model Whisper */}
             <div className="control-row">
               <div className="file-selector-compact">
                 <label>Selectați video:</label>
@@ -585,6 +695,95 @@ function App() {
                 Creează & Descarcă Video
               </button>
             </div>
+            
+            {/* DEMO PRESETS - Linia 3: Preseturi rapide */}
+            {!isMobile && (
+              <div className="demo-presets-row" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                gap: '8px', 
+                marginTop: '12px',
+                paddingTop: '12px',
+                borderTop: '1px solid rgba(148, 163, 184, 0.2)'
+              }}>
+                <button 
+                  onClick={() => applyDemoPreset('cinema_classic')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.8rem',
+                    background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  🎬 Cinema
+                </button>
+                <button 
+                  onClick={() => applyDemoPreset('modern_minimal')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.8rem',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  ✨ Modern
+                </button>
+                <button 
+                  onClick={() => applyDemoPreset('gaming_style')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.8rem',
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  🎮 Gaming
+                </button>
+                <button 
+                  onClick={() => applyDemoPreset('elegant_serif')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.8rem',
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  📖 Elegant
+                </button>
+              </div>
+            )}
           </div>
           
           {/* Bare de progres compacte */}
@@ -692,10 +891,11 @@ function App() {
             <div className={`subtitles-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
               {/* ========== LISTA DE SUBTITLES - COLAPSABILĂ ========== */}
               <CollapsibleSection 
-                title={`Subtitrări (${subtitles.length})`}
+                title="Subtitrări"
                 sectionKey="subtitlesList"
                 defaultExpanded={false}
                 icon="📝"
+                badge={`${subtitles.length}`}
               >
                 <div className="subtitles-list-content">
                   <div className="subtitle-header-simplified">

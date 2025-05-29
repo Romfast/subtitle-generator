@@ -223,6 +223,34 @@ section:hover {
   margin-top: 16px;
 }
 
+/* ========== DEMO PRESETS ROW ========== */
+.demo-presets-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.demo-preset-button {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-preset-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* ========== VIDEO SECTION - FIX PENTRU MOBIL ========== */
 .video-section {
   padding: 20px; /* REDUCED from 24px */
@@ -267,7 +295,7 @@ section:hover {
   flex-direction: column;
 }
 
-/* ========== COLLAPSIBLE SECTIONS STYLING ========== */
+/* ========== COLLAPSIBLE SECTIONS STYLING - ENHANCED WITH BADGES ========== */
 
 .collapsible-section {
   background: rgba(255, 255, 255, 0.95);
@@ -326,6 +354,30 @@ section:hover {
 .section-icon {
   font-size: 1.2rem;
   opacity: 0.8;
+}
+
+/* ========== SECTION BADGE - NEW ========== */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  min-width: 24px;
+  height: 20px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.collapsible-header.expanded .section-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .collapsible-arrow {
@@ -443,6 +495,14 @@ section:hover {
     font-size: 1.1rem;
   }
   
+  .section-badge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    margin-left: 6px;
+    min-width: 20px;
+    height: 18px;
+  }
+  
   .subtitle-header-simplified {
     grid-template-columns: 80px 1fr;
     padding: 10px 12px;
@@ -453,6 +513,11 @@ section:hover {
     grid-template-columns: 80px 1fr;
     padding: 10px 12px;
     font-size: 0.85rem;
+  }
+  
+  /* Hide demo presets on mobile */
+  .demo-presets-row {
+    display: none;
   }
 }
 
@@ -469,6 +534,14 @@ section:hover {
   
   .collapsible-title {
     gap: 8px;
+  }
+  
+  .section-badge {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    margin-left: 4px;
+    min-width: 18px;
+    height: 16px;
   }
   
   .subtitle-header-simplified {

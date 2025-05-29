@@ -29,6 +29,102 @@ const predefinedColors = {
   ]
 };
 
+// DEMO PRESETS - sincronizate cu App.js
+const DEMO_PRESETS = {
+  'cinema_classic': {
+    name: 'Cinema Clasic',
+    description: 'Stil clasic de cinema cu font mare și contur pronunțat',
+    icon: '🎬',
+    style: {
+      fontSize: 28,
+      fontFamily: 'Bebas Neue',
+      fontColor: '#FFFFFF',
+      borderColor: '#000000',
+      borderWidth: 3,
+      position: 'bottom',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 90,
+      allCaps: true,
+      removePunctuation: false,
+      useKaraoke: false,
+      maxLines: 1,
+      maxWordsPerLine: 3,
+      currentWordColor: '#FFFF00',
+      currentWordBorderColor: '#000000'
+    }
+  },
+  'modern_minimal': {
+    name: 'Modern Minimal',
+    description: 'Design modern și minimalist cu karaoke subtil',
+    icon: '✨',
+    style: {
+      fontSize: 22,
+      fontFamily: 'Montserrat',
+      fontColor: '#F8F9FA',
+      borderColor: '#1A1A1A',
+      borderWidth: 1,
+      position: 'bottom-20',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 80,
+      allCaps: false,
+      removePunctuation: false,
+      useKaraoke: true,
+      maxLines: 2,
+      maxWordsPerLine: 4,
+      currentWordColor: '#10B981',
+      currentWordBorderColor: '#064E3B'
+    }
+  },
+  'gaming_style': {
+    name: 'Gaming Style',
+    description: 'Stil vibrant pentru gaming cu efecte speciale',
+    icon: '🎮',
+    style: {
+      fontSize: 26,
+      fontFamily: 'Quicksand',
+      fontColor: '#00FFFF',
+      borderColor: '#FF0080',
+      borderWidth: 2,
+      position: 'bottom-30',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 70,
+      allCaps: true,
+      removePunctuation: true,
+      useKaraoke: true,
+      maxLines: 1,
+      maxWordsPerLine: 3,
+      currentWordColor: '#FFFF00',
+      currentWordBorderColor: '#FF0080'
+    }
+  },
+  'elegant_serif': {
+    name: 'Elegant Serif',
+    description: 'Stil elegant și rafinat pentru documentare',
+    icon: '📖',
+    style: {
+      fontSize: 24,
+      fontFamily: 'Comfortaa',
+      fontColor: '#FFFBEB',
+      borderColor: '#7C2D12',
+      borderWidth: 2,
+      position: 'bottom',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 90,
+      allCaps: false,
+      removePunctuation: false,
+      useKaraoke: false,
+      maxLines: 2,
+      maxWordsPerLine: 4,
+      currentWordColor: '#FCD34D',
+      currentWordBorderColor: '#7C2D12'
+    }
+  }
+};
+
 const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) => {
   const [activeTab, setActiveTab] = useState('general');
   const [useCustomPosition, setUseCustomPosition] = useState(subtitleStyle.useCustomPosition || false);
@@ -67,41 +163,15 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           setPresets(JSON.parse(savedPresets));
         }
       } else {
-        // Fallback pentru Claude artifacts - presetări demo
-        const demoPresets = [
-          {
-            id: 1,
-            name: 'Clasic Cinema',
-            style: {
-              fontSize: 28,
-              fontFamily: 'Bebas Neue',
-              fontColor: '#FFFFFF',
-              borderColor: '#000000',
-              borderWidth: 3,
-              position: 'bottom',
-              useCustomPosition: false,
-              allCaps: true,
-              useKaraoke: false
-            },
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 2,
-            name: 'Subtil Modern',
-            style: {
-              fontSize: 20,
-              fontFamily: 'Montserrat',
-              fontColor: '#F8F9FA',
-              borderColor: '#1A1A1A',
-              borderWidth: 1,
-              position: 'bottom-20',
-              useCustomPosition: false,
-              allCaps: false,
-              useKaraoke: true
-            },
-            createdAt: new Date().toISOString()
-          }
-        ];
+        // Fallback pentru Claude artifacts - presetări demo convertite
+        const demoPresets = Object.entries(DEMO_PRESETS).map(([key, preset], index) => ({
+          id: index + 1,
+          name: preset.name,
+          description: preset.description,
+          style: preset.style,
+          createdAt: new Date().toISOString(),
+          isDemo: true
+        }));
         setPresets(demoPresets);
       }
     } catch (error) {
@@ -119,7 +189,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       id: Date.now(),
       name: presetName.trim(),
       style: { ...subtitleStyle },
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isDemo: false
     };
 
     const updatedPresets = [...presets, newPreset];
@@ -157,7 +228,37 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     window.alert(`Presetarea "${preset.name}" a fost aplicată!`);
   };
 
+  // Aplică preset demo direct
+  const applyDemoPreset = (presetKey) => {
+    const preset = DEMO_PRESETS[presetKey];
+    if (preset) {
+      // Aplică toate setările din presetare
+      Object.keys(preset.style).forEach(key => {
+        handleStyleChange({
+          target: {
+            name: key,
+            value: preset.style[key]
+          }
+        });
+      });
+      
+      // Actualizează și starea locală pentru poziționare personalizată
+      setUseCustomPosition(preset.style.useCustomPosition || false);
+      
+      // Nu afișăm alert pentru preseturile demo pentru o experiență mai fluidă
+      console.log(`Demo preset "${preset.name}" applied`);
+    }
+  };
+
   const deletePreset = (presetId) => {
+    const presetToDelete = presets.find(p => p.id === presetId);
+    
+    // Nu permitem ștergerea preseturilor demo
+    if (presetToDelete && presetToDelete.isDemo) {
+      window.alert('Presetările demo nu pot fi șterse.');
+      return;
+    }
+    
     if (window.confirm('Sigur doriți să ștergeți această presetare?')) {
       const updatedPresets = presets.filter(p => p.id !== presetId);
       setPresets(updatedPresets);
@@ -630,6 +731,66 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       
       {activeTab === 'presets' && (
         <div className="presets-section">
+          {/* Demo Presets Quick Access */}
+          <div className="style-item demo-presets">
+            <label>Presetări Demo Rapide:</label>
+            <div className="demo-presets-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: compact ? '1fr 1fr' : 'repeat(2, 1fr)',
+              gap: '12px',
+              marginBottom: '20px'
+            }}>
+              {Object.entries(DEMO_PRESETS).map(([key, preset]) => (
+                <button
+                  key={key}
+                  onClick={() => applyDemoPreset(key)}
+                  className="demo-preset-card"
+                  style={{
+                    padding: '12px 16px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    textAlign: 'left',
+                    fontSize: '0.85rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#667eea';
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = '#e2e8f0';
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    marginBottom: '4px',
+                    fontWeight: '700',
+                    color: '#1e293b'
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>{preset.icon}</span>
+                    {preset.name}
+                  </div>
+                  {!compact && (
+                    <div style={{ 
+                      fontSize: '0.75rem',
+                      color: '#64748b',
+                      lineHeight: '1.3'
+                    }}>
+                      {preset.description}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Salvare presetare nouă */}
           <div className="style-item save-preset">
             <label>Salvează presetarea curentă:</label>
@@ -684,9 +845,23 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             ) : (
               <div className="presets-grid">
                 {presets.map((preset) => (
-                  <div key={preset.id} className="preset-item">
+                  <div key={preset.id} className={`preset-item ${preset.isDemo ? 'demo-preset' : ''}`}>
                     <div className="preset-info">
-                      <h4 className="preset-name">{preset.name}</h4>
+                      <h4 className="preset-name">
+                        {preset.isDemo && <span style={{ marginRight: '8px' }}>🌟</span>}
+                        {preset.name}
+                        {preset.isDemo && (
+                          <span style={{
+                            marginLeft: '8px',
+                            fontSize: '0.7rem',
+                            background: '#10b981',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            fontWeight: '600'
+                          }}>DEMO</span>
+                        )}
+                      </h4>
                       <div className="preset-details">
                         <span className="preset-font">{preset.style.fontFamily} {preset.style.fontSize}px</span>
                         <span className="preset-position">
@@ -695,8 +870,17 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                             : `Poziție: ${preset.style.position}`
                           }
                         </span>
+                        {preset.description && (
+                          <span className="preset-description" style={{
+                            fontStyle: 'italic',
+                            color: '#6b7280',
+                            fontSize: '0.8rem'
+                          }}>
+                            {preset.description}
+                          </span>
+                        )}
                         <span className="preset-date">
-                          {new Date(preset.createdAt).toLocaleDateString('ro-RO')}
+                          {preset.isDemo ? 'Presetare sistem' : new Date(preset.createdAt).toLocaleDateString('ro-RO')}
                         </span>
                       </div>
                     </div>
@@ -708,13 +892,15 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                       >
                         Aplică
                       </button>
-                      <button 
-                        className="preset-button delete"
-                        onClick={() => deletePreset(preset.id)}
-                        title="Șterge această presetare"
-                      >
-                        ✕
-                      </button>
+                      {!preset.isDemo && (
+                        <button 
+                          className="preset-button delete"
+                          onClick={() => deletePreset(preset.id)}
+                          title="Șterge această presetare"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

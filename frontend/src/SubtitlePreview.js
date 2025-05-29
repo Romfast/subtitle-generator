@@ -33,7 +33,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   }, []);
   
-  // Monitorizează dimensiunile și poziția video-ului - FIX COMPLET MOBIL
+  // Monitorizează dimensiunile și poziția video-ului - FIX COMPLET
   useEffect(() => {
     const updateVideoInfo = () => {
       if (containerRef.current) {
@@ -97,14 +97,14 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   }, [isMobileDevice]);
   
-  // Calculează mărimea fontului pentru previzualizare - FIX PENTRU SINCRONIZARE CU CONFIGURARI
+  // Calculează mărimea fontului pentru previzualizare 
   const getPreviewFontSize = () => {
     const baseFontSize = subtitleStyle.fontSize || 24;
     
     // Pe mobil, folosim direct mărimea din configurări pentru a reflecta setările utilizatorului
     if (isMobileDevice) {
       // Multiplicator pentru mobil pentru vizibilitate, dar păstrăm proporționalitatea
-      const mobileFactor = window.innerWidth < 480 ? 0.85 : 0.9; // Slightly smaller on very small screens
+      const mobileFactor = window.innerWidth < 480 ? 0.85 : 0.9; 
       return Math.max(16, Math.round(baseFontSize * mobileFactor));
     }
     
@@ -197,13 +197,13 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     }
   }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines, subtitleStyle.useKaraoke]);
   
-  // Re-formatează textul când se schimbă stilul - EXTENDED cu poziționare
+  // Re-formatează textul când se schimbă stilul - CRITICAL FIX pentru poziționare
   useEffect(() => {
     if (currentSubtitle) {
       const formattedResult = formatSubtitleText(currentSubtitle.text);
       setFormattedDisplay(formattedResult);
       
-      // Force re-render când se schimbă stilul - acum include toate opțiunile de poziționare
+      // CRITICAL: Log pentru debugging poziționarea
       console.log('Subtitle style changed, re-rendering with:', {
         fontSize: subtitleStyle.fontSize,
         fontFamily: subtitleStyle.fontFamily,
@@ -212,7 +212,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         useCustomPosition: subtitleStyle.useCustomPosition,
         customX: subtitleStyle.customX,
         customY: subtitleStyle.customY,
-        previewFontSize: getPreviewFontSize()
+        previewFontSize: getPreviewFontSize(),
+        isMobile: isMobileDevice,
+        videoRect
       });
     }
   }, [
@@ -234,7 +236,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     isMobileDevice                 
   ]);
   
-  // Calculează poziția pentru mobile (fixed positioning) - IMPROVED RANGE
+  // Calculează poziția pentru mobile (fixed positioning) - IMPROVED
   const getMobilePosition = (customX, customY) => {
     if (!videoRect || !isMobileDevice) return { x: customX, y: customY };
     
@@ -254,7 +256,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   };
   
-  // Convertește coordonatele absolute înapoi în procente - IMPROVED RANGE
+  // Convertește coordonatele absolute înapoi în procente - IMPROVED
   const convertToPercentage = (absoluteX, absoluteY) => {
     if (!videoRect || !isMobileDevice) return { x: 50, y: 90 };
     
@@ -354,12 +356,13 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     
     const touch = e.touches[0];
     
-    // Pentru mobile și desktop mic - calculează poziția relativ la viewport
-    if (isMobileDevice || window.innerWidth <= 1024) {
+    // Pentru mobile - calculează poziția relativ la viewport
+    if (isMobileDevice) {
       const percentage = convertToPercentage(touch.clientX, touch.clientY);
+      // CRITICAL FIX: Asigurăm că se activează poziționarea personalizată
       updatePosition(percentage.x, percentage.y, true);
     } else {
-      // Pentru desktop mare - calculează poziția relativ la containerul video
+      // Pentru desktop - calculează poziția relativ la containerul video
       if (videoRect) {
         const x = ((touch.clientX - videoRect.left) / videoRect.width) * 100;
         const y = ((touch.clientY - videoRect.top) / videoRect.height) * 100;
@@ -401,8 +404,8 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   const handleMouseDown = (e) => {
     if (isEditing) return;
     
-    // Pe touch devices sau ecrane mici, folosim touch events
-    if (isMobileDevice || window.innerWidth <= 1024) return;
+    // Pe touch devices, folosim touch events
+    if (isMobileDevice) return;
     
     if (e.button === 2 || e.detail === 2) {
       e.preventDefault();
@@ -415,10 +418,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   };
   
   const handleMouseMove = (e) => {
-    if (!isDragging || !containerRef.current) return;
-    
-    // Pe touch devices sau ecrane mici, nu procesăm mouse events
-    if (isMobileDevice || window.innerWidth <= 1024) return;
+    if (!isDragging || !containerRef.current || isMobileDevice) return;
     
     const container = containerRef.current.getBoundingClientRect();
     const videoElement = containerRef.current.querySelector('video');
@@ -445,6 +445,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       const boundedX = Math.min(Math.max(0, x), 100);
       const boundedY = Math.min(Math.max(0, y), 100);
       
+      // CRITICAL FIX: Asigurăm că se activează poziționarea personalizată
       updatePosition(boundedX, boundedY, true);
     }
   };
@@ -496,9 +497,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     }
   }, [isEditing]);
   
-  // Event listeners pentru mouse (doar pe desktop mare)
+  // Event listeners pentru mouse (doar pe desktop)
   useEffect(() => {
-    if (isDragging && !isMobileDevice && window.innerWidth > 1024) {
+    if (isDragging && !isMobileDevice) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     } else {
@@ -515,41 +516,44 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   // Nu afișa nimic dacă nu există subtitrare activă
   if (!currentSubtitle) return null;
   
-  // Calculează poziția finală - FIX COMPLET PENTRU TOATE PLATFORMELE
+  // CRITICAL FIX: Calculează poziția finală CORECT pentru toate platformele
   let finalStyle = {};
+  
+  // Determinăm poziția X și Y bazate pe setări
+  let targetX, targetY;
+  
+  if (subtitleStyle.useCustomPosition) {
+    // Poziționare personalizată - folosim coordonatele exacte
+    targetX = subtitleStyle.customX || 50;
+    targetY = subtitleStyle.customY || 90;
+    console.log('Using custom position:', { x: targetX, y: targetY });
+  } else {
+    // Poziționare predefinită - convertim poziția în coordonate
+    const positionMap = {
+      'top': { x: 50, y: 10 },
+      'top-20': { x: 50, y: 20 },
+      'top-30': { x: 50, y: 30 },
+      'top-40': { x: 50, y: 40 },
+      'middle': { x: 50, y: 50 },
+      'bottom-40': { x: 50, y: 60 },
+      'bottom-30': { x: 50, y: 70 },
+      'bottom-20': { x: 50, y: 80 },
+      'bottom': { x: 50, y: 90 },
+      'top-left': { x: 10, y: 10 },
+      'top-right': { x: 90, y: 10 },
+      'bottom-left': { x: 10, y: 90 },
+      'bottom-right': { x: 90, y: 90 }
+    };
+    
+    const coords = positionMap[subtitleStyle.position] || { x: 50, y: 90 };
+    targetX = coords.x;
+    targetY = coords.y;
+    console.log('Using preset position:', subtitleStyle.position, coords);
+  }
   
   if (isMobileDevice && videoRect) {
     // Pe mobil folosim fixed positioning pentru a fi deasupra controalelor video
-    let mobileX, mobileY;
-    
-    if (subtitleStyle.useCustomPosition) {
-      // Poziționare personalizată
-      mobileX = subtitleStyle.customX || 50;
-      mobileY = subtitleStyle.customY || 80;
-    } else {
-      // Poziționare predefinită - convertim în coordonate pentru mobil
-      const positionMap = {
-        'top': { x: 50, y: 10 },
-        'top-20': { x: 50, y: 20 },
-        'top-30': { x: 50, y: 30 },
-        'top-40': { x: 50, y: 40 },
-        'middle': { x: 50, y: 50 },
-        'bottom-40': { x: 50, y: 60 },
-        'bottom-30': { x: 50, y: 70 },
-        'bottom-20': { x: 50, y: 80 },
-        'bottom': { x: 50, y: 90 },
-        'top-left': { x: 10, y: 10 },
-        'top-right': { x: 90, y: 10 },
-        'bottom-left': { x: 10, y: 90 },
-        'bottom-right': { x: 90, y: 90 }
-      };
-      
-      const coords = positionMap[subtitleStyle.position] || { x: 50, y: 90 };
-      mobileX = coords.x;
-      mobileY = coords.y;
-    }
-    
-    const mobilePos = getMobilePosition(mobileX, mobileY);
+    const mobilePos = getMobilePosition(targetX, targetY);
     
     finalStyle = {
       position: 'fixed',
@@ -558,65 +562,19 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       transform: 'translate(-50%, -50%)',
       zIndex: 9999,
     };
-  } else {
-    // Pe desktop folosim positioning normal - FIX ÎMBUNĂTĂȚIT
-    const positionStyle = subtitleStyle.useCustomPosition
-      ? {
-          left: `${subtitleStyle.customX || 50}%`,
-          top: `${subtitleStyle.customY || 90}%`,
-          transform: 'translate(-50%, -50%)'
-        }
-      : {
-          // FIX: Poziționare predefinită îmbunătățită cu mapare completă
-          top: (() => {
-            switch(subtitleStyle.position) {
-              case 'top': return '10%';
-              case 'top-20': return '20%';
-              case 'top-30': return '30%';
-              case 'top-40': return '40%';
-              case 'middle': return '50%';
-              case 'bottom-40': return '60%';
-              case 'bottom-30': return '70%';
-              case 'bottom-20': return '80%';
-              case 'bottom': return '90%';
-              case 'top-left': return '10%';
-              case 'top-right': return '10%';
-              case 'bottom-left': return '90%';
-              case 'bottom-right': return '90%';
-              default: return '90%';
-            }
-          })(),
-          left: (() => {
-            switch(subtitleStyle.position) {
-              case 'top-left':
-              case 'bottom-left': 
-                return '10%';
-              case 'top-right':
-              case 'bottom-right': 
-                return '90%';
-              default: 
-                return '50%';
-            }
-          })(),
-          transform: (() => {
-            switch(subtitleStyle.position) {
-              case 'top-left':
-              case 'bottom-left': 
-                return 'translate(0, -50%)';
-              case 'top-right':
-              case 'bottom-right': 
-                return 'translate(-100%, -50%)';
-              default: 
-                return 'translate(-50%, -50%)';
-            }
-          })()
-        };
     
+    console.log('Mobile positioning:', { targetX, targetY, mobilePos, finalStyle });
+  } else {
+    // Pe desktop folosim positioning absolut în cadrul containerului video
     finalStyle = {
       position: 'absolute',
-      ...positionStyle,
+      left: `${targetX}%`,
+      top: `${targetY}%`,
+      transform: 'translate(-50%, -50%)',
       zIndex: 20,
     };
+    
+    console.log('Desktop positioning:', { targetX, targetY, finalStyle });
   }
   
   const previewFontSize = getPreviewFontSize();
@@ -654,11 +612,11 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
           // Optimize for touch
           touchAction: isMobileDevice ? 'none' : 'auto'
         }}
-        onMouseDown={(!isMobileDevice && window.innerWidth > 1024) ? handleMouseDown : undefined}
-        onClick={(!isMobileDevice && window.innerWidth > 1024 && !isEditing) ? handleSubtitleClick : undefined}
-        onTouchStart={(isMobileDevice || window.innerWidth <= 1024) ? handleTouchStart : undefined}
-        onTouchMove={(isMobileDevice || window.innerWidth <= 1024) ? handleTouchMove : undefined}
-        onTouchEnd={(isMobileDevice || window.innerWidth <= 1024) ? handleTouchEnd : undefined}
+        onMouseDown={!isMobileDevice ? handleMouseDown : undefined}
+        onClick={(!isMobileDevice && !isEditing) ? handleSubtitleClick : undefined}
+        onTouchStart={isMobileDevice ? handleTouchStart : undefined}
+        onTouchMove={isMobileDevice ? handleTouchMove : undefined}
+        onTouchEnd={isMobileDevice ? handleTouchEnd : undefined}
         onContextMenu={(e) => e.preventDefault()}
       >
         {isEditing ? (
