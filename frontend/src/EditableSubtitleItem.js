@@ -1,6 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const EditableSubtitleItem = ({ subtitle, index, formatTime, updateSubtitle, seekToTime, isActive, subtitleStyle, compact = false }) => {
+const EditableSubtitleItem = ({ 
+  subtitle, 
+  index, 
+  formatTime, 
+  updateSubtitle, 
+  seekToTime, 
+  isActive, 
+  subtitleStyle, 
+  compact = false, 
+  showTimeAndDuration = true  // NEW PROP: controls layout type
+}) => {
   const [text, setText] = useState(subtitle.text);
   const [isEditing, setIsEditing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -139,6 +149,119 @@ const EditableSubtitleItem = ({ subtitle, index, formatTime, updateSubtitle, see
   // Calculăm durata pentru afișare
   const duration = Math.round((subtitle.end - subtitle.start) * 10) / 10;
   
+  // ========== LAYOUT SIMPLIFICAT PENTRU LISTA COMPACTA ========== 
+  if (!showTimeAndDuration) {
+    // Layout simplificat: doar textul editabil (timpul e afișat separat)
+    return (
+      <div 
+        className={`subtitle-text-only-item ${isActive ? 'active' : ''} ${isMobile ? 'mobile-item' : ''}`}
+        style={{ 
+          position: 'relative',
+          width: '100%',
+          padding: '4px 0'
+        }}
+      >
+        {/* Doar zona de text editabilă */}
+        <div 
+          className={`subtitle-text editable ${isActive ? 'current' : ''} ${isMobile ? 'mobile-text' : ''}`}
+          onClick={!isEditing ? handleEditClick : undefined}
+          style={{
+            cursor: isEditing ? 'text' : 'pointer',
+            width: '100%',
+            padding: isMobile ? '8px 12px' : '6px 8px',
+            borderRadius: '6px',
+            backgroundColor: isEditing ? 'rgba(102, 126, 234, 0.05)' : 'transparent',
+            border: isEditing ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid transparent',
+            transition: 'all 0.2s ease',
+            fontSize: compact ? (isMobile ? '0.8rem' : '0.75rem') : (isMobile ? '0.85rem' : '0.8rem')
+          }}
+        >
+          {isEditing ? (
+            <div className="subtitle-edit-container" style={{ width: '100%' }}>
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={handleTextChange}
+                onBlur={handleSave}
+                onKeyDown={handleKeyDown}
+                className={`subtitle-textarea ${isMobile ? 'mobile-textarea' : ''}`}
+                style={{
+                  width: '100%',
+                  minHeight: isMobile ? '60px' : '50px',
+                  padding: isMobile ? '8px' : '6px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: isMobile ? '0.85rem' : '0.8rem',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  outline: 'none',
+                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
+                  lineHeight: '1.3'
+                }}
+                placeholder="Introduceți textul subtitrării..."
+              />
+              <div 
+                className="edit-instructions"
+                style={{
+                  fontSize: isMobile ? '0.7rem' : '0.65rem',
+                  color: '#64748b',
+                  marginTop: '2px',
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}
+              >
+                {isMobile 
+                  ? 'Atingeți în afara pentru a salva' 
+                  : 'Enter pentru salvare • Esc pentru anulare'
+                }
+              </div>
+            </div>
+          ) : (
+            <div className="subtitle-content" style={{ width: '100%' }}>
+              <pre 
+                className="subtitle-formatted-text"
+                style={{
+                  margin: 0,
+                  fontSize: 'inherit',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  lineHeight: isMobile ? '1.3' : '1.2',
+                  color: isActive ? '#1e293b' : '#374151',
+                  fontWeight: isActive ? '600' : '500'
+                }}
+              >
+                {formatDisplayText(subtitle.text)}
+              </pre>
+            </div>
+          )}
+        </div>
+        
+        {/* Indicator pentru numărul de cuvinte pe mobil */}
+        {isMobile && !isEditing && (
+          <div 
+            style={{
+              position: 'absolute',
+              top: '2px',
+              right: '4px',
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              color: '#667eea',
+              fontSize: '0.6rem',
+              padding: '1px 4px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              border: '1px solid rgba(102, 126, 234, 0.2)'
+            }}
+          >
+            {subtitle.text.split(' ').length}w
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // ========== LAYOUT COMPLET ORIGINAL ========== 
   return (
     <div className={`subtitle-item ${isActive ? 'active' : ''} ${isMobile ? 'mobile-item' : ''}`}>
       {/* Coloana timp - clicabilă pentru seek */}
@@ -243,7 +366,6 @@ const EditableSubtitleItem = ({ subtitle, index, formatTime, updateSubtitle, see
             >
               {formatDisplayText(subtitle.text)}
             </pre>
-            {/* REMOVED EDIT HINT */}
           </div>
         )}
       </div>

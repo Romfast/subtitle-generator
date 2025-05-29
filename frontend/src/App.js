@@ -529,29 +529,20 @@ function App() {
       </header>
 
       <div className="main-container">
-        <section className="control-panel">
-          <h2>Acțiuni</h2>
+        {/* ========== CASETA COMPACT DE CONTROL - TOATE ACȚIUNILE ========== */}
+        <section className="unified-control-panel">
+          <h2>Procesare Video</h2>
           
-          <div className="control-panel-content">
-            {/* Selector pentru modelul Whisper - ULTRA COMPACT */}
-            <div className="whisper-model-selector ultra-compact">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <label style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
-                  Model:
-                </label>
+          <div className="unified-controls">
+            {/* Linia 1: Model Whisper și Selectare Fișier */}
+            <div className="control-row">
+              <div className="model-selector-compact">
+                <label>Model Whisper:</label>
                 <select 
                   value={whisperModel} 
                   onChange={(e) => handleModelChange(e.target.value)}
-                  className="model-select ultra-compact"
                   disabled={isProcessing || modelLoading}
-                  style={{ 
-                    padding: '8px 12px', 
-                    fontSize: '0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    background: 'white',
-                    minWidth: '120px'
-                  }}
+                  className="compact-select"
                 >
                   {availableModels.map(model => (
                     <option key={model.value} value={model.value}>
@@ -559,116 +550,101 @@ function App() {
                     </option>
                   ))}
                 </select>
-                <span className={`model-indicator compact ${whisperModel}`} style={{
-                  fontSize: '0.7rem',
-                  padding: '4px 8px'
-                }}>
+                <span className={`model-indicator-mini ${whisperModel}`}>
                   {whisperModel.toUpperCase()}
                 </span>
               </div>
-            </div>
-
-            <div className="horizontal-controls">
-              <div className="file-select-area">
-                <label className="control-label">1. Selectați video:</label>
+              
+              <div className="file-selector-compact">
+                <label>Selectați video:</label>
                 <input 
                   type="file" 
                   accept="video/*" 
                   onChange={handleFileChange} 
                   ref={fileInputRef}
-                  className="file-input"
+                  className="compact-file-input"
                 />
               </div>
-              
+            </div>
+            
+            {/* Linia 2: Butoane de Acțiune */}
+            <div className="action-buttons-row">
               <button 
                 onClick={generateSubtitles} 
                 disabled={!uploadedFileName || isProcessing || modelLoading}
-                className="action-button generate-button"
+                className="compact-action-button generate"
               >
-                2. Generează Subtitrări ({whisperModel.toUpperCase()})
+                Generează Subtitrări
               </button>
               
               <button 
                 onClick={createAndDownloadVideoWithSubtitles} 
                 disabled={!subtitles.length || isProcessing}
-                className="action-button create-button"
+                className="compact-action-button create"
               >
-                3. Creează & Descarcă Video
+                Creează & Descarcă Video
               </button>
             </div>
           </div>
           
-          {/* Bare de progres */}
-          <div className="progress-indicators">
+          {/* Bare de progres compacte */}
+          <div className="compact-progress">
             {uploadProgress > 0 && uploadProgress < 100 && (
               <ProgressBar 
                 progress={uploadProgress} 
-                label="Progres încărcare" 
-                status={progressStatus || "Se încarcă fișierul..."}
+                label="Încărcare" 
+                status={progressStatus || "Se încarcă..."}
               />
             )}
             
             {transcribeProgress > 0 && transcribeProgress < 100 && (
               <ProgressBar 
                 progress={transcribeProgress} 
-                label={`Progres generare subtitrări (${whisperModel.toUpperCase()})`}
-                status={progressStatus || "Se procesează audio..."}
+                label={`Transcriere (${whisperModel.toUpperCase()})`}
+                status={progressStatus || "Se procesează..."}
               />
             )}
             
             {processProgress > 0 && processProgress < 100 && (
               <ProgressBar 
                 progress={processProgress}
-                label="Progres creare video"
-                status={progressStatus || "Se procesează video..."}
+                label="Creare video"
+                status={progressStatus || "Se procesează..."}
               />
             )}
           </div>
         </section>
 
+        {/* ========== VIDEO SECTION ========== */}
         {videoUrl && (
           <section className="video-section">
-            <h2>Previzualizare și editare</h2>
+            <h2>Preview Video</h2>
             
-            {!isMobile && (
-              <div className="layout-controls">
-                <button 
-                  onClick={toggleLayoutMode} 
-                  className="layout-toggle-button"
-                >
-                  Schimbă Layout: {layoutMode === 'side' ? 'Lateral' : 'Sub video'}
-                </button>
-              </div>
-            )}
-            
-            <div className={`video-subtitle-container ${layoutMode}`}>
-              {/* ========== VIDEO PREVIEW - PRIMUL ELEMENT ========== */}
-              <div className="video-preview-container">
-                <div className="player-wrapper" ref={playerContainerRef}>
-                  <ReactPlayer 
-                    ref={videoPlayerRef}
-                    url={videoUrl} 
-                    controls 
-                    width="100%" 
-                    height="100%" 
-                    className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
-                    playing={playing}
-                    onProgress={handleProgress}
-                    onPause={() => setPlaying(false)}
-                    onPlay={() => setPlaying(true)}
+            <div className="video-preview-container">
+              <div className="player-wrapper" ref={playerContainerRef}>
+                <ReactPlayer 
+                  ref={videoPlayerRef}
+                  url={videoUrl} 
+                  controls 
+                  width="100%" 
+                  height="100%" 
+                  className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
+                  playing={playing}
+                  onProgress={handleProgress}
+                  onPause={() => setPlaying(false)}
+                  onPlay={() => setPlaying(true)}
+                />
+                
+                {/* Overlay pentru subtitrări peste video */}
+                {subtitles.length > 0 && (
+                  <SubtitlePreview 
+                    subtitles={subtitles}
+                    currentTime={currentTime}
+                    subtitleStyle={subtitleStyle}
+                    updatePosition={updateSubtitlePosition}
+                    updateSubtitle={updateSubtitle}
                   />
-                  
-                  {/* Overlay pentru subtitrări peste video */}
-                  {subtitles.length > 0 && (
-                    <SubtitlePreview 
-                      subtitles={subtitles}
-                      currentTime={currentTime}
-                      subtitleStyle={subtitleStyle}
-                      updatePosition={updateSubtitlePosition}
-                      updateSubtitle={updateSubtitle}
-                    />
-                  )}
-                </div>
+                )}
               </div>
               
               {/* ========== INSTRUCTIUNI MOBILE - ULTRA COMPACT ========== */}
@@ -708,53 +684,68 @@ function App() {
           </section>
         )}
 
-        {/* ========== CONFIGURARI SUBTITLES - COLAPSABILE COMPACT ========== */}
+        {/* ========== SUBTITLES PANEL CU CONFIGURARI ========== */}
         {subtitles.length > 0 && (
-          <section className="customize-section ultra-compact">
-            <CollapsibleSection 
-              title="🎨 Configurări"
-              sectionKey="settings"
-              defaultExpanded={false}
-            >
-              <SubtitlesConfig 
-                subtitleStyle={subtitleStyle}
-                handleStyleChange={handleStyleChange}
-                compact={true}
-              />
-            </CollapsibleSection>
-          </section>
-        )}
-
-        {/* ========== SUBTITLES PANEL ========== */}
-        {subtitles.length > 0 && (
-          <div className="subtitles-panel">
-            <h4>
-              Subtitrări ({subtitles.length})
-            </h4>
-            <div className="subtitles-list">
-              <div className="subtitle-header">
-                <span className="subtitle-time">Timp</span>
-                <span className="subtitle-text">Text</span>
-                <span className="subtitle-duration">Dur.</span>
+          <section className="subtitles-management-section">
+            <h2>Subtitrări și Configurări</h2>
+            
+            <div className={`subtitles-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
+              {/* ========== LISTA DE SUBTITLES - LANGA STANGA ========== */}
+              <div className="subtitles-list-panel">
+                <div className="subtitles-list-header">
+                  <h4>Subtitrări ({subtitles.length})</h4>
+                </div>
+                
+                <div className="subtitles-list-content">
+                  <div className="subtitle-header-simplified">
+                    <span className="subtitle-time-header">Început</span>
+                    <span className="subtitle-text-header">Text subtitrare</span>
+                  </div>
+                  
+                  <div className="subtitle-items-container">
+                    {subtitles.map((subtitle, index) => (
+                      <div
+                        key={index}
+                        className={`subtitle-item-simplified ${currentTime >= subtitle.start && currentTime <= subtitle.end ? 'active' : ''}`}
+                        onClick={() => seekToTime(subtitle.start)}
+                      >
+                        <div className="subtitle-time-simplified">
+                          {formatTime(subtitle.start)}
+                        </div>
+                        <div className="subtitle-text-simplified">
+                          <EditableSubtitleItem
+                            subtitle={subtitle}
+                            index={index}
+                            formatTime={formatTime}
+                            updateSubtitle={updateSubtitle}
+                            seekToTime={seekToTime}
+                            isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
+                            subtitleStyle={subtitleStyle}
+                            compact={true}
+                            showTimeAndDuration={false}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               
-              <div className="subtitle-items-container">
-                {subtitles.map((subtitle, index) => (
-                  <EditableSubtitleItem
-                    key={index}
-                    subtitle={subtitle}
-                    index={index}
-                    formatTime={formatTime}
-                    updateSubtitle={updateSubtitle}
-                    seekToTime={seekToTime}
-                    isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
+              {/* ========== CONFIGURARI - PARTEA DREAPTA ========== */}
+              <div className="subtitles-config-panel">
+                <div className="config-header">
+                  <h4>🎨 Configurări Stil</h4>
+                </div>
+                <div className="config-content">
+                  <SubtitlesConfig 
                     subtitleStyle={subtitleStyle}
+                    handleStyleChange={handleStyleChange}
                     compact={true}
                   />
-                ))}
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {/* ========== STATUS MESSAGES - MOVED TO BOTTOM ========== */}
