@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  # Nginx service for reverse proxy
+  # Nginx service for reverse proxy with Basic Auth
   nginx:
     image: nginx:alpine
     ports:
@@ -13,8 +13,26 @@ services:
       - frontend
       - backend
     restart: unless-stopped
+    environment:
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-}
+    # Script îmbunătățit cu htpasswd (care există în nginx:alpine)
+    command: >
+      sh -c "
+        if [ -n \"$$AUTH_PASSWORD\" ]; then
+          echo 'Installing htpasswd and enabling Basic Auth...'
+          apk add --no-cache apache2-utils &&
+          htpasswd -cb /etc/nginx/.htpasswd \"$$AUTH_USERNAME\" \"$$AUTH_PASSWORD\" &&
+          echo 'Basic Auth enabled for user:' $$AUTH_USERNAME &&
+          cat /etc/nginx/.htpasswd
+        else
+          echo 'Basic Auth disabled - no password set'
+          rm -f /etc/nginx/.htpasswd
+        fi &&
+        nginx -g 'daemon off;'
+      "
 
-  # Frontend service
+  # Frontend service  
   frontend:
     build: 
       context: ./frontend
@@ -28,7 +46,7 @@ services:
       - REACT_APP_API_URL=/api
     restart: unless-stopped
 
-  # Backend service - OPTIMIZAT pentru selector dinamic de modele Whisper
+  # Backend service
   backend:
     build: 
       context: ./backend
@@ -38,30 +56,26 @@ services:
       - ./shared:/shared
       - uploaded_videos:/app/uploads
       - processed_videos:/app/processed
-      - whisper_models:/root/.cache/whisper  # Cache persistent pentru modele
+      - whisper_models:/root/.cache/whisper
     environment:
-      # Model inițial la pornire - utilizatorul poate schimba prin interfață
-      - WHISPER_MODEL=small
-      # Configurare pentru modele multiple
-      - MAX_UPLOAD_SIZE=3000MB
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+      - MAX_UPLOAD_SIZE=${MAX_UPLOAD_SIZE:-3000MB}
       - FLASK_ENV=development
       - FLASK_DEBUG=1
       - CORS_ORIGINS=*
-      # Setări pentru gestionarea memoriei cu modele multiple
       - PYTHONUNBUFFERED=1
       - MALLOC_ARENA_MAX=2
+      - BACKEND_API_KEY=${BACKEND_API_KEY:-}
+      - REQUIRE_API_KEY=${REQUIRE_API_KEY:-false}
     ports:
-      - "5000:5000"  # Expunem portul pentru debugging
-    # Configurare memorie pentru modele mari
+      - "5000:5000"
     deploy:
       resources:
         limits:
-          # Limitare memorie pentru a preveni crash-urile cu modele mari
           memory: 4G
         reservations:
           memory: 1G
     restart: unless-stopped
-    # Setări pentru debugging și monitorizare
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/test"]
       interval: 30s
@@ -72,6 +86,4 @@ services:
 volumes:
   uploaded_videos:
   processed_videos:
-  # Volume persistent pentru cache-ul modelelor Whisper
-  # Evită descărcarea repetată a modelelor la restart
   whisper_models:
