@@ -29,14 +29,14 @@ const predefinedColors = {
   ]
 };
 
-// DEMO PRESETS - sincronizate cu App.js
+// DEMO PRESETS - EXTINS cu presetări noi
 const DEMO_PRESETS = {
   'cinema_classic': {
     name: 'Cinema Clasic',
     description: 'Stil clasic de cinema cu font mare și contur pronunțat',
     icon: '🎬',
     style: {
-      fontSize: 28,
+      fontSize: 32,
       fontFamily: 'Bebas Neue',
       fontColor: '#FFFFFF',
       borderColor: '#000000',
@@ -54,15 +54,38 @@ const DEMO_PRESETS = {
       currentWordBorderColor: '#000000'
     }
   },
-  'modern_minimal': {
-    name: 'Modern Minimal',
-    description: 'Design modern și minimalist cu evidențiere subtilă',
-    icon: '✨',
+  'single_word_focus': {
+    name: 'Un Cuvânt Focus',
+    description: 'Un singur cuvânt evidențiat pe rând - perfect pentru impact maxim și atenție focalizată',
+    icon: '🎯',
     style: {
-      fontSize: 22,
-      fontFamily: 'Montserrat',
+      fontSize: 48,
+      fontFamily: 'Poppins',
+      fontColor: '#FFFFFF',
+      borderColor: '#000000',
+      borderWidth: 3,
+      position: 'middle',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 50,
+      allCaps: true,
+      removePunctuation: false,
+      useKaraoke: true, // CRITICAL: Activat pentru evidențierea cuvântului
+      maxLines: 1,
+      maxWordsPerLine: 1, // CRITICAL: UN SINGUR CUVÂNT PER LINIE!
+      currentWordColor: '#FF3366',
+      currentWordBorderColor: '#FFFFFF'
+    }
+  },
+  'rounded_soft': {
+    name: 'Rotunjit Soft',
+    description: 'Fonturi rotunjite și stiluri moi pentru un look prietenos',
+    icon: '🌸',
+    style: {
+      fontSize: 28,
+      fontFamily: 'Nunito',
       fontColor: '#F8F9FA',
-      borderColor: '#1A1A1A',
+      borderColor: '#E5E7EB',
       borderWidth: 1,
       position: 'bottom-20',
       useCustomPosition: false,
@@ -72,44 +95,67 @@ const DEMO_PRESETS = {
       removePunctuation: false,
       useKaraoke: true,
       maxLines: 2,
-      maxWordsPerLine: 4,
-      currentWordColor: '#10B981',
-      currentWordBorderColor: '#064E3B'
+      maxWordsPerLine: 3,
+      currentWordColor: '#F472B6',
+      currentWordBorderColor: '#BE185D'
     }
   },
-  'gaming_style': {
-    name: 'Gaming Style',
-    description: 'Stil vibrant pentru gaming cu efecte speciale',
-    icon: '🎮',
+  'bold_impact': {
+    name: 'Bold Impact',
+    description: 'Font foarte mare și vizibil pentru impact maxim',
+    icon: '💥',
     style: {
-      fontSize: 26,
-      fontFamily: 'Quicksand',
-      fontColor: '#00FFFF',
-      borderColor: '#FF0080',
-      borderWidth: 2,
-      position: 'bottom-30',
+      fontSize: 64,
+      fontFamily: 'Inter',
+      fontColor: '#FFFFFF',
+      borderColor: '#1F2937',
+      borderWidth: 4,
+      position: 'bottom',
       useCustomPosition: false,
       customX: 50,
-      customY: 70,
+      customY: 85,
       allCaps: true,
       removePunctuation: true,
+      useKaraoke: false,
+      maxLines: 1,
+      maxWordsPerLine: 2,
+      currentWordColor: '#EF4444',
+      currentWordBorderColor: '#7F1D1D'
+    }
+  },
+  'neon_futuristic': {
+    name: 'Neon Futuristic',
+    description: 'Stil futuristic cu culori neon și efecte vizuale',
+    icon: '⚡',
+    style: {
+      fontSize: 36,
+      fontFamily: 'Source Sans Pro',
+      fontColor: '#00FFFF',
+      borderColor: '#8B00FF',
+      borderWidth: 2,
+      position: 'top-30',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 30,
+      allCaps: true,
+      removePunctuation: false,
       useKaraoke: true,
       maxLines: 1,
       maxWordsPerLine: 3,
-      currentWordColor: '#FFFF00',
+      currentWordColor: '#00FF88',
       currentWordBorderColor: '#FF0080'
     }
   },
-  'elegant_serif': {
-    name: 'Elegant Serif',
-    description: 'Stil elegant și rafinat pentru documentare',
-    icon: '📖',
+  'documentary_clean': {
+    name: 'Documentary Clean',
+    description: 'Stil curat și profesional pentru documentare',
+    icon: '📺',
     style: {
-      fontSize: 24,
-      fontFamily: 'Comfortaa',
-      fontColor: '#FFFBEB',
-      borderColor: '#7C2D12',
-      borderWidth: 2,
+      fontSize: 26,
+      fontFamily: 'Open Sans',
+      fontColor: '#F9FAFB',
+      borderColor: '#374151',
+      borderWidth: 1,
       position: 'bottom',
       useCustomPosition: false,
       customX: 50,
@@ -119,8 +165,54 @@ const DEMO_PRESETS = {
       useKaraoke: false,
       maxLines: 2,
       maxWordsPerLine: 4,
-      currentWordColor: '#FCD34D',
-      currentWordBorderColor: '#7C2D12'
+      currentWordColor: '#3B82F6',
+      currentWordBorderColor: '#1E40AF'
+    }
+  },
+  'minimal_ultra': {
+    name: 'Minimal Ultra',
+    description: 'Extrem de simplu - doar text fără efecte',
+    icon: '⚪',
+    style: {
+      fontSize: 24,
+      fontFamily: 'Inter',
+      fontColor: '#FFFFFF',
+      borderColor: '#FFFFFF',
+      borderWidth: 0,
+      position: 'bottom',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 95,
+      allCaps: false,
+      removePunctuation: false,
+      useKaraoke: false,
+      maxLines: 1,
+      maxWordsPerLine: 4,
+      currentWordColor: '#D1D5DB',
+      currentWordBorderColor: '#9CA3AF'
+    }
+  },
+  'karaoke_party': {
+    name: 'Karaoke Party',
+    description: 'Perfect pentru karaoke cu evidențiere colorată',
+    icon: '🎤',
+    style: {
+      fontSize: 42,
+      fontFamily: 'Poppins',
+      fontColor: '#FBBF24',
+      borderColor: '#7C2D12',
+      borderWidth: 3,
+      position: 'middle',
+      useCustomPosition: false,
+      customX: 50,
+      customY: 45,
+      allCaps: false,
+      removePunctuation: false,
+      useKaraoke: true,
+      maxLines: 2,
+      maxWordsPerLine: 2,
+      currentWordColor: '#F59E0B',
+      currentWordBorderColor: '#92400E'
     }
   }
 };
@@ -408,13 +500,24 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               value={subtitleStyle.fontFamily} 
               onChange={handleStyleChange}
             >
-              <option value="Arial">Arial</option>
-              <option value="Bebas Neue">Bebas Neue</option>
-              <option value="Montserrat">Montserrat</option>
-              <option value="Quicksand">Quicksand</option>
+              {/* Fonturi rotunjite și moderne */}
+              <option value="Poppins">Poppins (Rotunjit Modern)</option>
+              <option value="Inter">Inter (Clean & Rotunjit)</option>
+              <option value="Nunito">Nunito (Foarte Rotunjit)</option>
+              <option value="Open Sans">Open Sans (Clasic Rotunjit)</option>
+              <option value="Source Sans Pro">Source Sans Pro (Professional)</option>
+              
+              {/* Fonturi existente */}
+              <option value="Montserrat">Montserrat (Geometric)</option>
+              <option value="Quicksand">Quicksand (Friendly)</option>
+              <option value="Comfortaa">Comfortaa (Soft)</option>
+              
+              {/* Fonturi clasice */}
+              <option value="Arial">Arial (Standard)</option>
+              <option value="Bebas Neue">Bebas Neue (Bold Display)</option>
+              
               {!compact && (
                 <>
-                  <option value="Comfortaa">Comfortaa</option>
                   <option value="Sans">Sans</option>
                   <option value="Serif">Serif</option>
                   <option value="Monospace">Monospace</option>
@@ -431,7 +534,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 type="range" 
                 name="fontSize" 
                 min="12" 
-                max="48" 
+                max="84" 
                 value={subtitleStyle.fontSize} 
                 onChange={handleStyleChange}
                 className="range-input"
@@ -736,7 +839,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             <label>Presetări Demo Rapide:</label>
             <div className="demo-presets-grid" style={{
               display: 'grid',
-              gridTemplateColumns: compact ? '1fr 1fr' : 'repeat(2, 1fr)',
+              gridTemplateColumns: compact ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
               gap: '12px',
               marginBottom: '20px'
             }}>

@@ -514,11 +514,11 @@ function App() {
     }));
   };
 
-  // DEMO PRESETS - aplicare presetare demo
+  // DEMO PRESETS - aplicare presetare demo EXTINS
   const applyDemoPreset = (presetName) => {
     const demoPresets = {
       'cinema_classic': {
-        fontSize: 28,
+        fontSize: 32,
         fontFamily: 'Bebas Neue',
         fontColor: '#FFFFFF',
         borderColor: '#000000',
@@ -535,11 +535,29 @@ function App() {
         currentWordColor: '#FFFF00',
         currentWordBorderColor: '#000000'
       },
-      'modern_minimal': {
-        fontSize: 22,
-        fontFamily: 'Montserrat',
+      'single_word_focus': {
+        fontSize: 48,
+        fontFamily: 'Poppins',
+        fontColor: '#FFFFFF',
+        borderColor: '#000000',
+        borderWidth: 3,
+        position: 'middle',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 50,
+        allCaps: true,
+        removePunctuation: false,
+        useKaraoke: true,
+        maxLines: 1,
+        maxWordsPerLine: 1, // UN SINGUR CUVÂNT!
+        currentWordColor: '#FF3366',
+        currentWordBorderColor: '#FFFFFF'
+      },
+      'rounded_soft': {
+        fontSize: 28,
+        fontFamily: 'Nunito',
         fontColor: '#F8F9FA',
-        borderColor: '#1A1A1A',
+        borderColor: '#E5E7EB',
         borderWidth: 1,
         position: 'bottom-20',
         useCustomPosition: false,
@@ -549,34 +567,52 @@ function App() {
         removePunctuation: false,
         useKaraoke: true,
         maxLines: 2,
-        maxWordsPerLine: 4,
-        currentWordColor: '#10B981',
-        currentWordBorderColor: '#064E3B'
+        maxWordsPerLine: 3,
+        currentWordColor: '#F472B6',
+        currentWordBorderColor: '#BE185D'
       },
-      'gaming_style': {
-        fontSize: 26,
-        fontFamily: 'Quicksand',
-        fontColor: '#00FFFF',
-        borderColor: '#FF0080',
-        borderWidth: 2,
-        position: 'bottom-30',
+      'bold_impact': {
+        fontSize: 64,
+        fontFamily: 'Inter',
+        fontColor: '#FFFFFF',
+        borderColor: '#1F2937',
+        borderWidth: 4,
+        position: 'bottom',
         useCustomPosition: false,
         customX: 50,
-        customY: 70,
+        customY: 85,
         allCaps: true,
         removePunctuation: true,
+        useKaraoke: false,
+        maxLines: 1,
+        maxWordsPerLine: 2,
+        currentWordColor: '#EF4444',
+        currentWordBorderColor: '#7F1D1D'
+      },
+      'neon_futuristic': {
+        fontSize: 36,
+        fontFamily: 'Source Sans Pro',
+        fontColor: '#00FFFF',
+        borderColor: '#8B00FF',
+        borderWidth: 2,
+        position: 'top-30',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 30,
+        allCaps: true,
+        removePunctuation: false,
         useKaraoke: true,
         maxLines: 1,
         maxWordsPerLine: 3,
-        currentWordColor: '#FFFF00',
+        currentWordColor: '#00FF88',
         currentWordBorderColor: '#FF0080'
       },
-      'elegant_serif': {
-        fontSize: 24,
-        fontFamily: 'Comfortaa',
-        fontColor: '#FFFBEB',
-        borderColor: '#7C2D12',
-        borderWidth: 2,
+      'documentary_clean': {
+        fontSize: 26,
+        fontFamily: 'Open Sans',
+        fontColor: '#F9FAFB',
+        borderColor: '#374151',
+        borderWidth: 1,
         position: 'bottom',
         useCustomPosition: false,
         customX: 50,
@@ -586,8 +622,44 @@ function App() {
         useKaraoke: false,
         maxLines: 2,
         maxWordsPerLine: 4,
-        currentWordColor: '#FCD34D',
-        currentWordBorderColor: '#7C2D12'
+        currentWordColor: '#3B82F6',
+        currentWordBorderColor: '#1E40AF'
+      },
+      'minimal_ultra': {
+        fontSize: 24,
+        fontFamily: 'Inter',
+        fontColor: '#FFFFFF',
+        borderColor: '#FFFFFF',
+        borderWidth: 0,
+        position: 'bottom',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 95,
+        allCaps: false,
+        removePunctuation: false,
+        useKaraoke: false,
+        maxLines: 1,
+        maxWordsPerLine: 4,
+        currentWordColor: '#D1D5DB',
+        currentWordBorderColor: '#9CA3AF'
+      },
+      'karaoke_party': {
+        fontSize: 42,
+        fontFamily: 'Poppins',
+        fontColor: '#FBBF24',
+        borderColor: '#7C2D12',
+        borderWidth: 3,
+        position: 'middle',
+        useCustomPosition: false,
+        customX: 50,
+        customY: 45,
+        allCaps: false,
+        removePunctuation: false,
+        useKaraoke: true,
+        maxLines: 2,
+        maxWordsPerLine: 2,
+        currentWordColor: '#F59E0B',
+        currentWordBorderColor: '#92400E'
       }
     };
     
@@ -696,12 +768,12 @@ function App() {
               </button>
             </div>
             
-            {/* DEMO PRESETS - Linia 3: Preseturi rapide */}
+            {/* DEMO PRESETS - Linia 3: Preseturi rapide EXTENDED */}
             {!isMobile && (
               <div className="demo-presets-row" style={{ 
                 display: 'grid', 
-                gridTemplateColumns: 'repeat(4, 1fr)', 
-                gap: '8px', 
+                gridTemplateColumns: 'repeat(6, 1fr)', 
+                gap: '6px', 
                 marginTop: '12px',
                 paddingTop: '12px',
                 borderTop: '1px solid rgba(148, 163, 184, 0.2)'
@@ -710,8 +782,8 @@ function App() {
                   onClick={() => applyDemoPreset('cinema_classic')}
                   className="demo-preset-button"
                   style={{
-                    padding: '8px 12px',
-                    fontSize: '0.8rem',
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
                     background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
                     color: 'white',
                     border: 'none',
@@ -720,18 +792,17 @@ function App() {
                     fontWeight: '600',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                  title="Stil clasic de cinema cu font mare"
                 >
                   🎬 Cinema
                 </button>
                 <button 
-                  onClick={() => applyDemoPreset('modern_minimal')}
+                  onClick={() => applyDemoPreset('single_word_focus')}
                   className="demo-preset-button"
                   style={{
-                    padding: '8px 12px',
-                    fontSize: '0.8rem',
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -739,18 +810,17 @@ function App() {
                     fontWeight: '600',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                  title="Un singur cuvânt pe rând - impact maxim"
                 >
-                  ✨ Modern
+                  🎯 Focus
                 </button>
                 <button 
-                  onClick={() => applyDemoPreset('gaming_style')}
+                  onClick={() => applyDemoPreset('rounded_soft')}
                   className="demo-preset-button"
                   style={{
-                    padding: '8px 12px',
-                    fontSize: '0.8rem',
-                    background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -758,17 +828,52 @@ function App() {
                     fontWeight: '600',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                  title="Fonturi rotunjite și moi"
                 >
-                  🎮 Gaming
+                  🌸 Soft
                 </button>
                 <button 
-                  onClick={() => applyDemoPreset('elegant_serif')}
+                  onClick={() => applyDemoPreset('bold_impact')}
                   className="demo-preset-button"
                   style={{
-                    padding: '8px 12px',
-                    fontSize: '0.8rem',
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Font foarte mare pentru impact"
+                >
+                  💥 Impact
+                </button>
+                <button 
+                  onClick={() => applyDemoPreset('neon_futuristic')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Stil futuristic cu neon"
+                >
+                  ⚡ Neon
+                </button>
+                <button 
+                  onClick={() => applyDemoPreset('karaoke_party')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
                     background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                     color: 'white',
                     border: 'none',
@@ -777,10 +882,9 @@ function App() {
                     fontWeight: '600',
                     transition: 'all 0.2s ease'
                   }}
-                  onMouseEnter={(e) => e.target.style.transform = 'translateY(-1px)'}
-                  onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                  title="Perfect pentru karaoke"
                 >
-                  📖 Elegant
+                  🎤 Karaoke
                 </button>
               </div>
             )}

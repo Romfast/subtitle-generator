@@ -223,19 +223,19 @@ section:hover {
   margin-top: 16px;
 }
 
-/* ========== DEMO PRESETS ROW ========== */
+/* ========== DEMO PRESETS ROW - EXTENDED ========== */
 .demo-presets-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .demo-preset-button {
-  padding: 8px 12px;
-  font-size: 0.8rem;
+  padding: 6px 8px;
+  font-size: 0.75rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -244,11 +244,18 @@ section:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 .demo-preset-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+
+.demo-preset-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* ========== VIDEO SECTION - FIX PENTRU MOBIL ========== */
@@ -515,9 +522,20 @@ section:hover {
     font-size: 0.85rem;
   }
   
-  /* Hide demo presets on mobile */
+  /* Hide demo presets on mobile and tablet */
   .demo-presets-row {
     display: none;
+  }
+  
+  /* Adjust grid for smaller tablets */
+  .control-row {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .action-buttons-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 }
 
@@ -987,9 +1005,13 @@ section:hover {
   }
 }
 
-/* Import Google Fonts */
+/* Import Google Fonts - EXTENDED cu fonturi rotunjite */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
