@@ -1,6 +1,6 @@
 # backend/custom_position.py
-# VERSIUNEA CORECTATĂ pentru poziționarea precisă a evidențierii cuvintelor
-# Fix pentru alinierea cuvântului evidențiat cu cuvântul din textul de bază
+# VERSIUNEA ÎMBUNĂTĂȚITĂ pentru evidențiere cuvinte cu mărime mărită
+# Synchronizes perfectly with frontend highlighting effects
 
 import re
 
@@ -17,6 +17,34 @@ def hex_to_ass_color(hex_color):
         return f'&H00{b:02X}{g:02X}{r:02X}'
     
     return '&H00FFFFFF'  # Default to white if invalid
+
+def calculate_highlighted_font_size(base_font_size):
+    """
+    Calculează mărimea fontului pentru cuvântul evidențiat.
+    Folosește aceeași logică ca în frontend pentru sincronizare perfectă.
+    
+    Args:
+        base_font_size (int): Mărimea de bază a fontului
+    
+    Returns:
+        int: Mărimea mărită pentru cuvântul evidențiat
+    """
+    # Factorul de mărire pentru cuvântul evidențiat - SYNCHRONIZED cu frontend
+    highlight_factor = 1.15  # 15% mai mare default
+    
+    # Pentru fonturi mici, mărim mai mult pentru vizibilitate
+    if base_font_size < 20:
+        highlight_factor = 1.25  # 25% mai mare pentru fonturi mici
+    elif base_font_size < 30:
+        highlight_factor = 1.2   # 20% mai mare pentru fonturi medii
+    elif base_font_size > 48:
+        highlight_factor = 1.1   # 10% mai mare pentru fonturi mari (să nu devină excesiv de mari)
+    
+    highlighted_size = int(round(base_font_size * highlight_factor))
+    
+    print(f"Highlighted font size calculation: base={base_font_size}, factor={highlight_factor}, highlighted={highlighted_size}")
+    
+    return highlighted_size
 
 def estimate_text_width(text, font_size):
     """
@@ -306,9 +334,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles):
     """
-    VERSIUNEA SIMPLIFICATĂ: Creează un fișier ASS cu evidențierea PRECISĂ a cuvântului curent
-    folosind un singur layer cu tag-uri de culoare inline pentru fiecare cuvânt.
-    MULT MAI PRECIS - nu mai sunt probleme de alinyere între layere!
+    VERSIUNEA ÎMBUNĂTĂȚITĂ: Creează un fișier ASS cu evidențierea PRECISĂ a cuvântului curent
+    folosind un singur layer cu tag-uri de culoare și mărime inline pentru fiecare cuvânt.
+    INCLUDE MĂRIREA FONTULUI pentru cuvântul evidențiat - SYNCHRONIZED cu frontend!
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -319,7 +347,7 @@ def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles
     Returns:
         str: Calea către fișierul ASS generat
     """
-    print(f"Creating SIMPLIFIED Precise Word Highlighting ASS file with style: {style}")
+    print(f"Creating ENHANCED Precise Word Highlighting ASS file with style: {style}")
     
     # Extragem parametrii de poziționare
     useCustomPosition = style.get('useCustomPosition', False)
@@ -349,18 +377,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     
     # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
-    font_size = style.get('fontSize', 24)
-    print(f"Simplified Precise Word Highlighting ASS: Using font: {font_family}, size: {font_size}")
+    base_font_size = style.get('fontSize', 24)
+    highlighted_font_size = calculate_highlighted_font_size(base_font_size)
+    
+    print(f"Enhanced Precise Word Highlighting ASS: Using font: {font_family}, base size: {base_font_size}, highlighted size: {highlighted_font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
     border_width = style.get('borderWidth', 2)
     
-    # Formatăm header-ul
+    # Formatăm header-ul cu mărimea de bază (highlight se face inline)
     ass_header = ass_header.format(
         font_family=font_family,
-        font_size=font_size,
+        font_size=base_font_size,
         font_color=font_color,
         secondary_color="FFFFFF",
         border_color=border_color,
@@ -374,7 +404,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(ass_header)
         
-        print(f"Creating Simplified Precise Word Highlighting ASS file with {len(subtitles)} subtitles")
+        print(f"Creating Enhanced Precise Word Highlighting ASS file with {len(subtitles)} subtitles")
         
         total_dialogue_lines = 0
         
@@ -418,8 +448,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     first_word_start = max(start_time, word_timings[0]['start'])
                     first_word_end = min(word_timings[0]['end'], end_time) if len(word_timings) > 1 else end_time
                     
-                    # Textul cu primul cuvânt evidențiat
-                    highlighted_text = create_highlighted_text(processed_words, 0, highlight_color)
+                    # Textul cu primul cuvânt evidențiat + mărit
+                    highlighted_text = create_enhanced_highlighted_text(
+                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size
+                    )
                     word_events.append((first_word_start, first_word_end, highlighted_text))
                 
                 # Pentru fiecare cuvânt următor, creez o nouă linie de dialog
@@ -429,7 +461,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     word_end = min(word_end, end_time)
                     
                     if word_start < word_end:  # Doar dacă avem un interval valid
-                        highlighted_text = create_highlighted_text(processed_words, word_idx, highlight_color)
+                        highlighted_text = create_enhanced_highlighted_text(
+                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size
+                        )
                         word_events.append((word_start, word_end, highlighted_text))
                 
                 # Scriu toate evenimentele pentru această subtitrare
@@ -451,25 +485,28 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
                 word_count = len(sub.get('words', []))
-                karaoke_status = "karaoke" if (style.get('useKaraoke', False) and word_count > 0) else "normal"
+                karaoke_status = "enhanced_karaoke" if (style.get('useKaraoke', False) and word_count > 0) else "normal"
                 print(f"Subtitle {i+1}: {karaoke_status} | {position_tag} | {word_count} words | {text[:30]}...")
         
         print(f"Total dialogue lines created: {total_dialogue_lines}")
     
-    print(f"SIMPLIFIED Precise Word Highlighting ASS file created successfully: {output_path}")
+    print(f"ENHANCED Precise Word Highlighting ASS file created successfully: {output_path}")
     return output_path
 
-def create_highlighted_text(words, highlighted_word_index, highlight_color):
+def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size):
     """
     Creează textul cu un cuvânt evidențiat folosind tag-uri ASS inline.
+    ÎMBUNĂTĂȚITĂ: Include mărirea fontului pentru cuvântul evidențiat.
     
     Args:
         words: Lista de cuvinte
         highlighted_word_index: Indexul cuvântului de evidențiat (0-based)
         highlight_color: Culoarea pentru evidențiere (fără &H prefix)
+        highlighted_font_size: Mărimea fontului pentru cuvântul evidențiat
+        base_font_size: Mărimea fontului pentru cuvintele normale
     
     Returns:
-        str: Textul formatat cu tag-uri ASS pentru evidențiere
+        str: Textul formatat cu tag-uri ASS pentru evidențiere + mărire
     """
     if not words or highlighted_word_index >= len(words):
         return ' '.join(words) if words else ''
@@ -478,15 +515,16 @@ def create_highlighted_text(words, highlighted_word_index, highlight_color):
     
     for i, word in enumerate(words):
         if i == highlighted_word_index:
-            # Cuvântul evidențiat: schimb culoarea și revin la culoarea normală
-            result_parts.append(f"{{\\c&H{highlight_color}&}}{word}{{\\r}}")
+            # Cuvântul evidențiat: schimb culoarea, mărimea și revin la setările normale
+            # \fs = font size, \c = primary color, \r = reset to style
+            result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&}}{word}{{\\r}}")
         else:
-            # Cuvânt normal
+            # Cuvânt normal - folosește setările din stil
             result_parts.append(word)
     
     return ' '.join(result_parts)
 
-# Păstrez celelalte funcții neschimbate
+# Păstrez celelalte funcții neschimbate pentru compatibilitate
 def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS cu efect de karaoke îmbunătățit pentru a evidenția cuvintele
@@ -673,7 +711,7 @@ WrapStyle: 0
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,{font_family},{font_size},&H{font_color},&H{secondary_color},&H{border_color},&H80000000,1,0,0,0,100,100,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
-Style: Highlight,{font_family},{font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,110,110,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Highlight,{font_family},{highlight_font_size},&H{highlight_color},&H{secondary_color},&H{highlight_border},&H80000000,1,0,0,0,110,110,0,0,1,{border_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -681,8 +719,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     
     # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
-    font_size = style.get('fontSize', 24)
-    print(f"Word-by-word ASS: Using font: {font_family}, size: {font_size}")
+    base_font_size = style.get('fontSize', 24)
+    highlight_font_size = calculate_highlighted_font_size(base_font_size)
+    
+    print(f"Word-by-word ASS: Using font: {font_family}, base size: {base_font_size}, highlight size: {highlight_font_size}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
@@ -693,7 +733,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # Formatăm header-ul
     ass_header = ass_header.format(
         font_family=font_family,
-        font_size=font_size,
+        font_size=base_font_size,
+        highlight_font_size=highlight_font_size,
         font_color=font_color,
         secondary_color="FFFFFF",
         border_color=border_color,
@@ -786,11 +827,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 fmt_word_start = format_ass_timestamp(word_start_times[j])
                 fmt_word_end = format_ass_timestamp(word_end_times[j])
                 
-                # Afișăm fiecare cuvânt individual cu stil evidențiat
-                highlighted_word = f"{position_tag}{{\\c&H{highlight_color}&}}{{\\b1}}{word}"
-                
+                # Afișăm fiecare cuvânt individual cu stil evidențiat (mărime mărită)
                 # Layer 1 pentru a fi deasupra textului normal
-                f.write(f"Dialogue: 1,{fmt_word_start},{fmt_word_end},Default,,0,0,0,,{highlighted_word}\n")
+                f.write(f"Dialogue: 1,{fmt_word_start},{fmt_word_end},Highlight,,0,0,0,,{position_tag}{word}\n")
                 total_highlighted_words += 1
             
             # Log pentru debugging la primele câteva subtitrări
@@ -846,7 +885,7 @@ def get_subtitle_statistics(subtitles):
     total_words_with_timing = sum(len(sub.get('words', [])) for sub in subtitles)
     
     stats = f"""
-Subtitle Statistics:
+Enhanced Subtitle Statistics:
 - Total subtitles: {len(subtitles)}
 - Total duration: {total_duration:.2f}s
 - Average duration per subtitle: {avg_duration:.2f}s
@@ -856,6 +895,7 @@ Subtitle Statistics:
 - Longest subtitle: {max(sub['end'] - sub['start'] for sub in subtitles):.2f}s
 - Subtitles with word-level timing: {subtitles_with_word_timing}/{len(subtitles)} ({(subtitles_with_word_timing/len(subtitles)*100):.1f}%)
 - Total words with precise timing: {total_words_with_timing}
+- Enhanced highlighting support: Available
 """
     
     return stats

@@ -667,6 +667,8 @@ section:hover {
   100% { transform: rotate(360deg); }
 }
 
+/* ========== ENHANCED SUBTITLE PREVIEW STYLES ========== */
+
 /* Subtitle Preview - PERFECT MOBILE POSITIONING */
 .subtitle-container {
   position: absolute;
@@ -702,6 +704,69 @@ section:hover {
   background: rgba(0, 0, 0, 0.9) !important;
   border-color: rgba(102, 126, 234, 0.8) !important;
   transform: scale(1.02) !important;
+}
+
+/* NEW: Enhanced Word Highlighting Styles */
+.subtitle-word {
+  display: inline-block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.subtitle-word.highlighted {
+  /* Enhanced highlighting effects */
+  animation: word-highlight-pulse 0.6s ease-in-out;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+@keyframes word-highlight-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* Special styling for single word mode */
+.subtitle-overlay.single-word-mode {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 2px solid rgba(102, 126, 234, 0.6) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+}
+
+.subtitle-overlay.single-word-mode .subtitle-word {
+  font-size: 1.2em !important;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.8) !important;
+}
+
+.single-word-line {
+  text-align: center;
+  margin: 0;
+}
+
+.subtitle-word.single-word {
+  display: block;
+  padding: 8px 16px !important;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(4px);
+}
+
+/* Enhanced karaoke effects */
+.subtitle-overlay[data-karaoke="true"] .subtitle-word:not(.highlighted) {
+  opacity: 0.75;
+  filter: brightness(0.8);
+}
+
+.subtitle-overlay[data-karaoke="true"] .subtitle-word.highlighted {
+  opacity: 1;
+  filter: brightness(1.2) drop-shadow(0 0 12px currentColor);
+  text-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
 }
 
 /* ========== TABLET RESPONSIVE STYLES ========== */
@@ -918,6 +983,19 @@ section:hover {
     /* Will be positioned via JavaScript */
   }
   
+  /* Enhanced mobile word highlighting */
+  .subtitle-overlay.mobile-mode .subtitle-word.highlighted {
+    transform: scale(1.1) !important;
+    text-shadow: 0 0 12px currentColor, 0 0 20px currentColor !important;
+    filter: brightness(1.3) drop-shadow(0 0 8px currentColor) !important;
+  }
+  
+  .subtitle-overlay.mobile-mode.single-word-mode .subtitle-word {
+    font-size: 1.4em !important;
+    padding: 12px 20px !important;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.9) !important;
+  }
+  
   /* Make sure video controls don't interfere */
   .react-player video::-webkit-media-controls-panel {
     z-index: 100 !important;
@@ -977,6 +1055,14 @@ section:hover {
     font-size: 0.8rem !important;
   }
   
+  /* Enhanced word highlighting for very small screens */
+  .subtitle-overlay .subtitle-word.highlighted {
+    transform: scale(1.15) !important;
+    padding: 2px 4px !important;
+    border-radius: 4px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+  
   /* Ensure minimum touch targets on very small screens */
   .compact-action-button {
     min-height: 48px !important;
@@ -1003,6 +1089,91 @@ section:hover {
   .compact-file-input {
     min-height: 44px !important; /* Touch-friendly inputs */
   }
+  
+  /* Enhanced touch feedback for word highlighting */
+  .subtitle-word.highlighted {
+    animation: touch-highlight-pulse 0.8s ease-in-out infinite alternate;
+  }
+  
+  @keyframes touch-highlight-pulse {
+    0% {
+      text-shadow: 0 0 8px currentColor;
+    }
+    100% {
+      text-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
+    }
+  }
+}
+
+/* ========== ACCESSIBILITY ENHANCEMENTS ========== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .subtitle-word.highlighted {
+    background: yellow !important;
+    color: black !important;
+    text-shadow: none !important;
+    border: 2px solid black !important;
+  }
+  
+  .subtitle-overlay {
+    background: black !important;
+    border: 2px solid white !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .subtitle-word,
+  .subtitle-overlay,
+  .demo-preset-button,
+  .compact-action-button {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .subtitle-word.highlighted {
+    transform: none !important;
+    filter: none !important;
+    text-decoration: underline;
+    font-weight: bold;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .subtitle-overlay {
+    background: rgba(0, 0, 0, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+  
+  .subtitle-word.highlighted {
+    text-shadow: 0 0 12px currentColor, 0 0 20px currentColor, 0 0 2px white !important;
+  }
+}
+
+/* ========== PERFORMANCE OPTIMIZATIONS ========== */
+
+/* GPU acceleration for animations */
+.subtitle-word,
+.subtitle-overlay,
+.demo-preset-button,
+.compact-action-button {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Optimize font rendering */
+.subtitle-word {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Optimize video rendering */
+.react-player video {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Import Google Fonts - EXTENDED cu fonturi rotunjite */
@@ -1015,3 +1186,93 @@ section:hover {
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
+
+/* ========== ENHANCED CONFIGURATION DISPLAY STYLES ========== */
+
+.active-configuration-display {
+  animation: config-fade-in 0.5s ease-in-out;
+}
+
+@keyframes config-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.config-section {
+  transition: all 0.3s ease;
+}
+
+.config-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Status indicators for configuration */
+.config-status-active {
+  color: #059669 !important;
+  font-weight: 700;
+}
+
+.config-status-inactive {
+  color: #dc2626 !important;
+  font-weight: 700;
+}
+
+/* Enhanced preset styling */
+.demo-preset-card.applied {
+  border-color: #10b981 !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%) !important;
+  transform: scale(1.02);
+}
+
+.demo-preset-card.applied::before {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%) !important;
+  transform: scaleX(1) !important;
+}
+
+/* Enhanced feedback for user actions */
+.style-item.updated {
+  animation: setting-updated 0.6s ease-in-out;
+}
+
+@keyframes setting-updated {
+  0% {
+    background: rgba(16, 185, 129, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    background: rgba(16, 185, 129, 0.2);
+    transform: scale(1.02);
+  }
+  100% {
+    background: rgba(16, 185, 129, 0.1);
+    transform: scale(1);
+  }
+}
+
+/* Loading states */
+.config-loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.config-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}

@@ -413,6 +413,37 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     });
   };
 
+  // NEW: Determină ce configurări se aplică pentru styling
+  const getActiveStyleConfiguration = () => {
+    const config = {
+      general: {
+        font: subtitleStyle.fontFamily,
+        size: subtitleStyle.fontSize,
+        color: subtitleStyle.fontColor,
+        border: subtitleStyle.borderColor,
+        borderWidth: subtitleStyle.borderWidth,
+        position: subtitleStyle.useCustomPosition ? 
+          `Custom (${subtitleStyle.customX}%, ${subtitleStyle.customY}%)` : 
+          subtitleStyle.position,
+        caps: subtitleStyle.allCaps,
+        punctuation: !subtitleStyle.removePunctuation
+      },
+      highlight: {
+        enabled: subtitleStyle.useKaraoke,
+        color: subtitleStyle.currentWordColor,
+        border: subtitleStyle.currentWordBorderColor,
+        effect: 'Mărime mărită + culoare'
+      },
+      layout: {
+        wordsPerLine: subtitleStyle.maxWordsPerLine,
+        maxLines: subtitleStyle.maxLines,
+        mode: subtitleStyle.maxWordsPerLine === 1 ? 'Single Word Focus' : 'Multi-word'
+      }
+    };
+
+    return config;
+  };
+
   // Componentă pentru selectorul de culori predefinite
   const PredefinedColorSelector = ({ colorType, currentColor, colorName }) => {
     if (compact) {
@@ -448,6 +479,148 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             ></div>
           ))}
         </div>
+      </div>
+    );
+  };
+
+  // NEW: Componentă pentru afișarea configurației active
+  const ActiveConfigurationDisplay = () => {
+    const config = getActiveStyleConfiguration();
+    
+    return (
+      <div className="active-configuration-display" style={{
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
+        border: '1px solid rgba(102, 126, 234, 0.2)',
+        borderRadius: '12px',
+        padding: '16px',
+        marginBottom: '20px'
+      }}>
+        <h4 style={{
+          margin: '0 0 12px 0',
+          fontSize: '0.9rem',
+          fontWeight: '700',
+          color: '#1e293b',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span>⚙️</span>
+          Configurația Activă
+        </h4>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: compact ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '12px',
+          fontSize: '0.8rem'
+        }}>
+          {/* Configurații Generale */}
+          <div className="config-section">
+            <div style={{ fontWeight: '600', color: '#667eea', marginBottom: '6px' }}>
+              📝 Text General
+            </div>
+            <div style={{ color: '#64748b', lineHeight: '1.4' }}>
+              <div>Font: <strong>{config.general.font}</strong></div>
+              <div>Mărime: <strong>{config.general.size}px</strong></div>
+              <div>Culoare: <span style={{ 
+                display: 'inline-block', 
+                width: '12px', 
+                height: '12px', 
+                backgroundColor: config.general.color,
+                borderRadius: '2px',
+                verticalAlign: 'middle',
+                marginRight: '4px',
+                border: '1px solid #ccc'
+              }}></span><strong>{config.general.color}</strong></div>
+              <div>Poziție: <strong>{config.general.position}</strong></div>
+            </div>
+          </div>
+
+          {/* Configurații Evidențiere */}
+          <div className="config-section">
+            <div style={{ fontWeight: '600', color: config.highlight.enabled ? '#f59e0b' : '#9ca3af', marginBottom: '6px' }}>
+              ✨ Evidențiere Cuvânt
+            </div>
+            <div style={{ color: '#64748b', lineHeight: '1.4' }}>
+              <div>Status: <strong style={{ color: config.highlight.enabled ? '#059669' : '#dc2626' }}>
+                {config.highlight.enabled ? 'ACTIVĂ' : 'DEZACTIVATĂ'}
+              </strong></div>
+              {config.highlight.enabled && (
+                <>
+                  <div>Culoare: <span style={{ 
+                    display: 'inline-block', 
+                    width: '12px', 
+                    height: '12px', 
+                    backgroundColor: config.highlight.color,
+                    borderRadius: '2px',
+                    verticalAlign: 'middle',
+                    marginRight: '4px',
+                    border: '1px solid #ccc'
+                  }}></span><strong>{config.highlight.color}</strong></div>
+                  <div>Efect: <strong>{config.highlight.effect}</strong></div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Configurații Layout */}
+          <div className="config-section">
+            <div style={{ fontWeight: '600', color: '#8b5cf6', marginBottom: '6px' }}>
+              📐 Layout
+            </div>
+            <div style={{ color: '#64748b', lineHeight: '1.4' }}>
+              <div>Mod: <strong style={{ 
+                color: config.layout.mode === 'Single Word Focus' ? '#dc2626' : '#059669' 
+              }}>
+                {config.layout.mode}
+              </strong></div>
+              <div>Cuvinte/linie: <strong>{config.layout.wordsPerLine}</strong></div>
+              <div>Linii max: <strong>{config.layout.maxLines}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alertă pentru Single Word Focus */}
+        {config.layout.mode === 'Single Word Focus' && (
+          <div style={{
+            marginTop: '12px',
+            padding: '8px 12px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            fontSize: '0.75rem',
+            color: '#991b1b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <span>🎯</span>
+            <strong>Modul Focus activ:</strong> Se afișează doar un cuvânt pe rând cu evidențiere automată
+          </div>
+        )}
+
+        {/* Info aplicare configurări */}
+        {config.highlight.enabled && (
+          <div style={{
+            marginTop: '12px',
+            padding: '8px 12px',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '8px',
+            fontSize: '0.75rem',
+            color: '#047857',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <span>💡</span>
+            <div>
+              <strong>Configurări aplicate:</strong><br/>
+              • Text normal: folosește configurările generale<br/>
+              • Cuvânt evidențiat: folosește configurările de evidențiere + mărire automată
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -489,6 +662,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     <div className={`subtitle-style-controls ${compact ? 'compact' : ''}`}>
       {!compact && <h3>Stil subtitrare</h3>}
       
+      {/* NEW: Afișare configurație activă */}
+      {!compact && <ActiveConfigurationDisplay />}
+      
       <MobileTabs />
       
       {activeTab === 'general' && (
@@ -525,6 +701,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 </>
               )}
             </select>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Se aplică pentru: textul normal al subtitrării
+            </p>
           </div>
           
           <div className="style-item">
@@ -539,12 +718,17 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 onChange={handleStyleChange}
                 className="range-input"
               />
-              <span className="range-value">{subtitleStyle.fontSize}px</span>
+              <span className={`range-value ${subtitleStyle.fontSize > 60 ? 'large-font' : ''}`}>
+                {subtitleStyle.fontSize}px
+              </span>
             </div>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Text normal: {subtitleStyle.fontSize}px | Cuvânt evidențiat: ~{Math.round(subtitleStyle.fontSize * 1.15)}px
+            </p>
           </div>
           
           <div className="style-item">
-            <label>Culoare:</label>
+            <label>Culoare text normal:</label>
             <div className="color-selector">
               <input 
                 type="color" 
@@ -559,10 +743,13 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 colorName="fontColor" 
               />
             </div>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Se aplică pentru: cuvintele neevidentiate
+            </p>
           </div>
           
           <div className="style-item">
-            <label>Contur:</label>
+            <label>Contur text normal:</label>
             <div className="color-selector">
               <input 
                 type="color" 
@@ -577,10 +764,13 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 colorName="borderColor" 
               />
             </div>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Se aplică pentru: conturul cuvintelor neevidentiate
+            </p>
           </div>
           
           <div className="style-item">
-            <label>Grosime:</label>
+            <label>Grosime contur:</label>
             <div className="range-input-container">
               <input 
                 type="range" 
@@ -594,6 +784,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               />
               <span className="range-value">{subtitleStyle.borderWidth}px</span>
             </div>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Se aplică pentru: toate cuvintele (normal + evidențiat)
+            </p>
           </div>
           
           <div className="style-item">
@@ -611,6 +804,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 {subtitleStyle.allCaps ? 'DA' : 'Nu'}
               </span>
             </div>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Se aplică pentru: toate cuvintele (normal + evidențiat)
+            </p>
           </div>
           
           {!compact && (
@@ -629,6 +825,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                   {subtitleStyle.removePunctuation ? 'DA' : 'Nu'}
                 </span>
               </div>
+              <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                Se aplică pentru: toate cuvintele (normal + evidențiat)
+              </p>
             </div>
           )}
           
@@ -674,6 +873,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 <span className="toggle-label">Manual</span>
               </div>
             </div>
+            <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+              Se aplică pentru: întreaga subtitrare (toate cuvintele)
+            </p>
           </div>
           
           {useCustomPosition && (
@@ -761,55 +963,29 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               value={subtitleStyle.maxWordsPerLine || 4} 
               onChange={handleStyleChange}
             >
-              <option value={1}>1</option>
+              <option value={1}>1 (Focus mode)</option>
               <option value={2}>2</option>
               <option value={3}>3</option>
               <option value={4}>4</option>
             </select>
+            {subtitleStyle.maxWordsPerLine === 1 && (
+              <p className="help-text" style={{ 
+                margin: '4px 0 0 0', 
+                fontSize: '0.75rem', 
+                color: '#dc2626',
+                fontWeight: '600'
+              }}>
+                🎯 Modul Focus: Se afișează doar un cuvânt pe rând
+              </p>
+            )}
           </div>
         </ResponsiveStyleGrid>
       )}
       
       {activeTab === 'highlight' && (
         <ResponsiveStyleGrid>
-          <div className="style-item">
-            <label>Culoare evidențiere:</label>
-            <div className="color-selector">
-              <input 
-                type="color" 
-                name="currentWordColor" 
-                value={subtitleStyle.currentWordColor || '#FFFF00'} 
-                onChange={handleStyleChange}
-                className="color-input"
-              />
-              <PredefinedColorSelector 
-                colorType="highlight" 
-                currentColor={subtitleStyle.currentWordColor} 
-                colorName="currentWordColor" 
-              />
-            </div>
-          </div>
-          
-          <div className="style-item">
-            <label>Contur evidențiere:</label>
-            <div className="color-selector">
-              <input 
-                type="color" 
-                name="currentWordBorderColor" 
-                value={subtitleStyle.currentWordBorderColor || '#000000'} 
-                onChange={handleStyleChange}
-                className="color-input"
-              />
-              <PredefinedColorSelector 
-                colorType="border" 
-                currentColor={subtitleStyle.currentWordBorderColor} 
-                colorName="currentWordBorderColor" 
-              />
-            </div>
-          </div>
-          
           <div className="style-item karaoke-toggle">
-            <label>Evidențiere cuvânt curent:</label>
+            <label>Activează evidențiere cuvânt:</label>
             <div className="toggle-switch">
               <label className="switch">
                 <input 
@@ -819,8 +995,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 />
                 <span className="slider round"></span>
               </label>
-              <span className="toggle-label">
-                {subtitleStyle.useKaraoke === true ? 'DA' : 'Nu'}
+              <span className="toggle-label" style={{
+                color: subtitleStyle.useKaraoke ? '#059669' : '#dc2626',
+                fontWeight: '700'
+              }}>
+                {subtitleStyle.useKaraoke === true ? 'ACTIVĂ' : 'DEZACTIVATĂ'}
               </span>
             </div>
             {!compact && (
@@ -829,6 +1008,105 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               </p>
             )}
           </div>
+
+          {subtitleStyle.useKaraoke && (
+            <>
+              <div className="style-item">
+                <label>Culoare cuvânt evidențiat:</label>
+                <div className="color-selector">
+                  <input 
+                    type="color" 
+                    name="currentWordColor" 
+                    value={subtitleStyle.currentWordColor || '#FFFF00'} 
+                    onChange={handleStyleChange}
+                    className="color-input"
+                  />
+                  <PredefinedColorSelector 
+                    colorType="highlight" 
+                    currentColor={subtitleStyle.currentWordColor} 
+                    colorName="currentWordColor" 
+                  />
+                </div>
+                <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                  ✨ Se aplică DOAR pentru cuvântul care este pronunțat acum
+                </p>
+              </div>
+              
+              <div className="style-item">
+                <label>Contur cuvânt evidențiat:</label>
+                <div className="color-selector">
+                  <input 
+                    type="color" 
+                    name="currentWordBorderColor" 
+                    value={subtitleStyle.currentWordBorderColor || '#000000'} 
+                    onChange={handleStyleChange}
+                    className="color-input"
+                  />
+                  <PredefinedColorSelector 
+                    colorType="border" 
+                    currentColor={subtitleStyle.currentWordBorderColor} 
+                    colorName="currentWordBorderColor" 
+                  />
+                </div>
+                <p className="help-text" style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                  ✨ Se aplică DOAR pentru conturul cuvântului evidențiat
+                </p>
+              </div>
+
+              {/* Explicații detaliate despre evidențiere */}
+              <div className="style-item" style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                borderRadius: '12px',
+                padding: '16px'
+              }}>
+                <label style={{ color: '#047857', fontWeight: '700', marginBottom: '8px', display: 'block' }}>
+                  💡 Cum funcționează evidențierea:
+                </label>
+                <div style={{ fontSize: '0.8rem', color: '#047857', lineHeight: '1.4' }}>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>🎯 Cuvânt evidențiat:</strong>
+                  </div>
+                  <div style={{ marginLeft: '16px', marginBottom: '8px' }}>
+                    • Folosește culoarea de evidențiere<br/>
+                    • Folosește conturul de evidențiere<br/>
+                    • Este cu ~15% mai mare decât restul<br/>
+                    • Are efect de mărire și background subtil
+                  </div>
+                  
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong>📝 Cuvinte normale:</strong>
+                  </div>
+                  <div style={{ marginLeft: '16px' }}>
+                    • Folosesc configurările generale (culoare text normal)<br/>
+                    • Folosesc conturul general<br/>
+                    • Mărime normală (din setările generale)<br/>
+                    • Fără efecte speciale
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {!subtitleStyle.useKaraoke && (
+            <div className="style-item" style={{
+              background: 'rgba(107, 114, 128, 0.1)',
+              border: '1px solid rgba(107, 114, 128, 0.2)',
+              borderRadius: '12px',
+              padding: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>😴</div>
+                <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                  Evidențierea este dezactivată
+                </div>
+                <div style={{ fontSize: '0.8rem' }}>
+                  Toate cuvintele vor folosi doar configurările generale
+                </div>
+              </div>
+            </div>
+          )}
         </ResponsiveStyleGrid>
       )}
       
@@ -847,7 +1125,13 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 <button
                   key={key}
                   onClick={() => applyDemoPreset(key)}
-                  className="demo-preset-card"
+                  className={`demo-preset-card ${
+                    preset.style.fontSize > 60 ? 'large-font-preset' : ''
+                  } ${
+                    preset.style.maxWordsPerLine === 1 ? 'single-word-preset' : ''
+                  } ${
+                    preset.style.useKaraoke ? 'karaoke-preset' : ''
+                  }`}
                   style={{
                     padding: '12px 16px',
                     border: '2px solid #e2e8f0',
@@ -857,16 +1141,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                     transition: 'all 0.3s ease',
                     textAlign: 'left',
                     fontSize: '0.85rem'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.borderColor = '#667eea';
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.borderColor = '#e2e8f0';
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = 'none';
                   }}
                 >
                   <div style={{ 
@@ -889,6 +1163,39 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                       {preset.description}
                     </div>
                   )}
+                  {/* Badges pentru caracteristici speciale */}
+                  <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {preset.style.useKaraoke && (
+                      <span style={{
+                        fontSize: '0.6rem',
+                        background: '#f59e0b',
+                        color: 'white',
+                        padding: '1px 4px',
+                        borderRadius: '4px',
+                        fontWeight: '600'
+                      }}>KARAOKE</span>
+                    )}
+                    {preset.style.maxWordsPerLine === 1 && (
+                      <span style={{
+                        fontSize: '0.6rem',
+                        background: '#dc2626',
+                        color: 'white',
+                        padding: '1px 4px',
+                        borderRadius: '4px',
+                        fontWeight: '600'
+                      }}>FOCUS</span>
+                    )}
+                    {preset.style.fontSize > 60 && (
+                      <span style={{
+                        fontSize: '0.6rem',
+                        background: '#7c2d12',
+                        color: 'white',
+                        padding: '1px 4px',
+                        borderRadius: '4px',
+                        fontWeight: '600'
+                      }}>XL FONT</span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -948,7 +1255,13 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             ) : (
               <div className="presets-grid">
                 {presets.map((preset) => (
-                  <div key={preset.id} className={`preset-item ${preset.isDemo ? 'demo-preset' : ''}`}>
+                  <div key={preset.id} className={`preset-item ${preset.isDemo ? 'demo-preset' : ''} ${
+                    preset.style?.fontSize > 60 ? 'large-font-preset' : ''
+                  } ${
+                    preset.style?.maxWordsPerLine === 1 ? 'single-word-preset' : ''
+                  } ${
+                    preset.style?.useKaraoke ? 'karaoke-preset' : ''
+                  }`}>
                     <div className="preset-info">
                       <h4 className="preset-name">
                         {preset.isDemo && <span style={{ marginRight: '8px' }}>🌟</span>}
@@ -966,13 +1279,56 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                         )}
                       </h4>
                       <div className="preset-details">
-                        <span className="preset-font">{preset.style.fontFamily} {preset.style.fontSize}px</span>
+                        <span className="preset-font">{preset.style?.fontFamily} {preset.style?.fontSize}px</span>
                         <span className="preset-position">
-                          {preset.style.useCustomPosition 
-                            ? `Poziție: ${preset.style.customX}%, ${preset.style.customY}%`
-                            : `Poziție: ${preset.style.position}`
+                          {preset.style?.useCustomPosition 
+                            ? `Poziție: ${preset.style?.customX}%, ${preset.style?.customY}%`
+                            : `Poziție: ${preset.style?.position}`
                           }
                         </span>
+                        {/* Afișare configurări active */}
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                          {preset.style?.useKaraoke && (
+                            <span style={{
+                              fontSize: '0.6rem',
+                              background: '#f59e0b',
+                              color: 'white',
+                              padding: '1px 4px',
+                              borderRadius: '4px',
+                              fontWeight: '600'
+                            }}>KARAOKE</span>
+                          )}
+                          {preset.style?.maxWordsPerLine === 1 && (
+                            <span style={{
+                              fontSize: '0.6rem',
+                              background: '#dc2626',
+                              color: 'white',
+                              padding: '1px 4px',
+                              borderRadius: '4px',
+                              fontWeight: '600'
+                            }}>FOCUS</span>
+                          )}
+                          {preset.style?.fontSize > 60 && (
+                            <span style={{
+                              fontSize: '0.6rem',
+                              background: '#7c2d12',
+                              color: 'white',
+                              padding: '1px 4px',
+                              borderRadius: '4px',
+                              fontWeight: '600'
+                            }}>XL FONT</span>
+                          )}
+                          {preset.style?.allCaps && (
+                            <span style={{
+                              fontSize: '0.6rem',
+                              background: '#6b7280',
+                              color: 'white',
+                              padding: '1px 4px',
+                              borderRadius: '4px',
+                              fontWeight: '600'
+                            }}>ALL CAPS</span>
+                          )}
+                        </div>
                         {preset.description && (
                           <span className="preset-description" style={{
                             fontStyle: 'italic',
@@ -1012,8 +1368,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           </div>
         </div>
       )}
-      
-      {/* REMOVED STYLE PREVIEW - No longer needed since effects are visible directly */}
     </div>
   );
 };

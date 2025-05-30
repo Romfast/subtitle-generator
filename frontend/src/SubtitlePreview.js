@@ -147,6 +147,27 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     return finalSize;
   };
   
+  // IMPROVED: Calculează mărimea fontului pentru cuvântul evidențiat
+  const getHighlightedWordFontSize = (baseFontSize) => {
+    // Factorul de mărire pentru cuvântul evidențiat
+    let highlightFactor = 1.15; // 15% mai mare default
+    
+    // Pentru fonturi mici, mărim mai mult pentru vizibilitate
+    if (baseFontSize < 20) {
+      highlightFactor = 1.25; // 25% mai mare pentru fonturi mici
+    } else if (baseFontSize < 30) {
+      highlightFactor = 1.2; // 20% mai mare pentru fonturi medii
+    } else if (baseFontSize > 48) {
+      highlightFactor = 1.1; // 10% mai mare pentru fonturi mari (să nu devină excesiv de mari)
+    }
+    
+    const highlightedSize = Math.round(baseFontSize * highlightFactor);
+    
+    console.log(`Highlighted word font size: base=${baseFontSize}, factor=${highlightFactor}, highlighted=${highlightedSize}`);
+    
+    return highlightedSize;
+  };
+  
   // Formatează textul subtitrării - IMPROVED pentru single word focus
   const formatSubtitleText = (text) => {
     if (!text) return { lines: [], allWords: [] };
@@ -298,7 +319,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         previewFontSize: getPreviewFontSize(),
         isMobile: isMobileDevice,
         videoRect,
-        singleWordMode: subtitleStyle.maxWordsPerLine === 1
+        singleWordMode: subtitleStyle.maxWordsPerLine === 1,
+        useKaraoke: subtitleStyle.useKaraoke,
+        highlightColor: subtitleStyle.currentWordColor
       });
     }
   }, [
@@ -316,6 +339,9 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     subtitleStyle.customX,         // CRITICAL: Re-render on X change
     subtitleStyle.customY,         // CRITICAL: Re-render on Y change  
     subtitleStyle.position,        // CRITICAL: Re-render on preset position change
+    subtitleStyle.useKaraoke,      // CRITICAL: Re-render on karaoke mode change
+    subtitleStyle.currentWordColor, // CRITICAL: Re-render on highlight color change
+    subtitleStyle.currentWordBorderColor, // CRITICAL: Re-render on highlight border change
     actualVideoSize.width,         
     isMobileDevice                 
   ]);
@@ -355,7 +381,35 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   };
   
-  // Renderează liniile cu cuvinte - ÎMBUNĂTĂȚIT PENTRU SINGLE WORD FOCUS
+  // NEW: Determină ce configurări se aplică pentru cuvântul evidențiat
+  const getEffectiveWordStyle = (isHighlighted) => {
+    if (!isHighlighted) {
+      // Cuvinte normale folosesc configurările generale
+      return {
+        fontSize: getPreviewFontSize(),
+        fontColor: subtitleStyle.fontColor,
+        borderColor: subtitleStyle.borderColor,
+        borderWidth: subtitleStyle.borderWidth,
+        fontFamily: subtitleStyle.fontFamily,
+        scaleTransform: 'scale(1)'
+      };
+    }
+    
+    // Pentru cuvântul evidențiat, folosim configurările de evidențiere
+    const baseFontSize = getPreviewFontSize();
+    const highlightedFontSize = getHighlightedWordFontSize(baseFontSize);
+    
+    return {
+      fontSize: highlightedFontSize,
+      fontColor: subtitleStyle.currentWordColor || subtitleStyle.fontColor,
+      borderColor: subtitleStyle.currentWordBorderColor || subtitleStyle.borderColor,
+      borderWidth: subtitleStyle.borderWidth,
+      fontFamily: subtitleStyle.fontFamily,
+      scaleTransform: 'scale(1.05)' // Scaling suplimentar pentru evidențiere
+    };
+  };
+  
+  // Renderează liniile cu cuvinte - ÎMBUNĂTĂȚIT PENTRU ENHANCED HIGHLIGHTING
   const renderLines = () => {
     if (!currentSubtitle || formattedDisplay.lines.length === 0) return null;
     
@@ -366,6 +420,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       // Pentru single word mode, avem doar un cuvânt per linie
       if (isSingleWordMode) {
         const isCurrentWord = subtitleStyle.useKaraoke === true;
+        const wordStyle = getEffectiveWordStyle(isCurrentWord);
         
         return (
           <div key={`single-word-${lineIndex}`} className="subtitle-line single-word-line" style={{
@@ -375,22 +430,23 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             <span
               className={`subtitle-word single-word ${isCurrentWord ? 'highlighted' : ''}`}
               style={{
-                color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
+                color: wordStyle.fontColor,
                 fontWeight: 'bold',
-                fontSize: `${previewFontSize}px`,
+                fontSize: `${wordStyle.fontSize}px`,
+                fontFamily: wordStyle.fontFamily,
                 textShadow: subtitleStyle.borderWidth > 0 ? 
-                  `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
-                   ${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
-                  -${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
-                   ${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor}` 
+                  `-${wordStyle.borderWidth}px -${wordStyle.borderWidth}px 0 ${wordStyle.borderColor},
+                   ${wordStyle.borderWidth}px -${wordStyle.borderWidth}px 0 ${wordStyle.borderColor},
+                  -${wordStyle.borderWidth}px ${wordStyle.borderWidth}px 0 ${wordStyle.borderColor},
+                   ${wordStyle.borderWidth}px ${wordStyle.borderWidth}px 0 ${wordStyle.borderColor}` 
                   : 'none',
                 display: 'inline-block',
-                padding: isMobileDevice ? '0 6px' : '0 4px',
-                transform: 'scale(1)',
-                transition: 'color 0.3s ease, text-shadow 0.3s ease',
-                backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                borderRadius: isCurrentWord ? '6px' : '0',
-                // Pentru single word, aplicăm un efect mai dramatic
+                padding: isMobileDevice ? '0 8px' : '0 6px',
+                transform: wordStyle.scaleTransform,
+                transition: 'all 0.3s ease',
+                backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                borderRadius: isCurrentWord ? '8px' : '0',
+                boxShadow: isCurrentWord ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none',
                 filter: 'none'
               }}
             >
@@ -411,28 +467,32 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       const wordElements = lineWords.map((word, wordIndex) => {
         const isCurrentWord = subtitleStyle.useKaraoke === true && 
                          (globalWordIndex + wordIndex) === currentWordIndex;
+        const wordStyle = getEffectiveWordStyle(isCurrentWord);
         
         return (
           <span
             key={`word-${lineIndex}-${wordIndex}`}
             className={`subtitle-word ${isCurrentWord ? 'highlighted' : ''}`}
             style={{
-              color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
+              color: wordStyle.fontColor,
               fontWeight: 'bold',
-              fontSize: `${previewFontSize}px`,
+              fontSize: `${wordStyle.fontSize}px`,
+              fontFamily: wordStyle.fontFamily,
               textShadow: subtitleStyle.borderWidth > 0 ? 
-                `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
-                 ${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
-                -${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
-                 ${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor}` 
+                `-${wordStyle.borderWidth}px -${wordStyle.borderWidth}px 0 ${wordStyle.borderColor},
+                 ${wordStyle.borderWidth}px -${wordStyle.borderWidth}px 0 ${wordStyle.borderColor},
+                -${wordStyle.borderWidth}px ${wordStyle.borderWidth}px 0 ${wordStyle.borderColor},
+                 ${wordStyle.borderWidth}px ${wordStyle.borderWidth}px 0 ${wordStyle.borderColor}` 
                 : 'none',
               display: 'inline-block',
-              padding: isMobileDevice ? '0 3px' : '0 2px',
-              transform: 'scale(1)',
-              transition: 'color 0.3s ease, text-shadow 0.3s ease',
-              backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-              borderRadius: isCurrentWord ? '3px' : '0',
-              filter: subtitleStyle.useKaraoke === true && !isCurrentWord ? 'opacity(0.7)' : 'none'
+              padding: isMobileDevice ? '0 4px' : '0 3px',
+              transform: wordStyle.scaleTransform,
+              transition: 'all 0.3s ease',
+              backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+              borderRadius: isCurrentWord ? '4px' : '0',
+              boxShadow: isCurrentWord ? '0 1px 4px rgba(0, 0, 0, 0.3)' : 'none',
+              filter: subtitleStyle.useKaraoke === true && !isCurrentWord ? 'opacity(0.8)' : 'none',
+              margin: '0 1px' // Spațiere micro între cuvinte pentru claritate
             }}
           >
             {word}
@@ -865,6 +925,26 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             🎯 FOCUS
+          </div>
+        )}
+        
+        {/* NEW: Indicator pentru configurări active */}
+        {subtitleStyle.useKaraoke && !isSingleWordMode && !isMobileDevice && (
+          <div style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '8px',
+            backgroundColor: 'rgba(102, 126, 234, 0.9)',
+            color: 'white',
+            padding: '2px 6px',
+            borderRadius: '6px',
+            fontSize: '9px',
+            fontWeight: '600',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            🎤 KARAOKE
           </div>
         )}
       </div>
