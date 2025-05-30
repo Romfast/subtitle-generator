@@ -97,13 +97,19 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   }, [isMobileDevice]);
   
-  // Calculează mărimea fontului pentru previzualizare 
+  // Calculează mărimea fontului pentru previzualizare - EXTENDED pentru fonturi mari
   const getPreviewFontSize = () => {
     const baseFontSize = subtitleStyle.fontSize || 24;
     
     // Pe mobil, folosim direct mărimea din configurări pentru a reflecta setările utilizatorului
     if (isMobileDevice) {
-      // Multiplicator pentru mobil pentru vizibilitate, dar păstrăm proporționalitatea
+      // Pentru fonturi foarte mari (>60px), reducem puțin pentru mobil
+      if (baseFontSize > 60) {
+        const mobileFactor = 0.75; // Reducem fonturile foarte mari pe mobil
+        return Math.max(18, Math.round(baseFontSize * mobileFactor));
+      }
+      
+      // Pentru fonturi normale, multiplicator pentru mobil pentru vizibilitate
       const mobileFactor = window.innerWidth < 480 ? 0.85 : 0.9; 
       return Math.max(16, Math.round(baseFontSize * mobileFactor));
     }
@@ -112,13 +118,20 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     const previewWidth = containerRef.current ? 
       containerRef.current.querySelector('video')?.clientWidth || 640 : 640;
     
-    // Factor de scalare bazat pe lățimea previzualizării față de 1920px (referință)
-    const scalingFactor = Math.max(0.6, previewWidth / 1920);
+    // Pentru fonturi foarte mari (>60px), folosim un factor de scalare diferit
+    let scalingFactor;
+    if (baseFontSize > 60) {
+      // Pentru fonturi mari, reducem factorul de scalare pentru a nu fi prea mari în preview
+      scalingFactor = Math.max(0.5, previewWidth / 1920 * 0.8);
+    } else {
+      // Factor de scalare normal pentru fonturi obișnuite
+      scalingFactor = Math.max(0.6, previewWidth / 1920);
+    }
     
     // Aplicăm factorul de scalare la mărimea de bază
     const scaledSize = baseFontSize * scalingFactor;
     
-    // Asigurăm o mărime minimă pentru lizibilitate
+    // Asigurăm o mărime minimă pentru lizibilitate, dar permitem dimensiuni mari
     const finalSize = Math.max(14, Math.round(scaledSize));
     
     console.log('Preview font size calculation:', {
@@ -127,13 +140,14 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       scalingFactor,
       scaledSize,
       finalSize,
-      isMobile: isMobileDevice
+      isMobile: isMobileDevice,
+      isLargeFont: baseFontSize > 60
     });
     
     return finalSize;
   };
   
-  // Formatează textul subtitrării
+  // Formatează textul subtitrării - IMPROVED pentru single word focus
   const formatSubtitleText = (text) => {
     if (!text) return { lines: [], allWords: [] };
     
@@ -151,6 +165,27 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     const maxWordsPerLine = parseInt(subtitleStyle.maxWordsPerLine || 3, 10); 
     const maxLines = parseInt(subtitleStyle.maxLines || 1, 10);
     
+    // SPECIAL CASE: Pentru presetarea "single word focus" (maxWordsPerLine = 1)
+    if (maxWordsPerLine === 1) {
+      // Pentru un singur cuvânt per linie, afișăm doar cuvântul curent evidențiat
+      // sau primul cuvânt dacă karaoke nu e activat
+      if (subtitleStyle.useKaraoke && currentWordIndex < allWords.length) {
+        return { 
+          lines: [allWords[currentWordIndex]], 
+          allWords: allWords,
+          currentWordOnly: true 
+        };
+      } else {
+        // Fără karaoke, afișăm primul cuvânt
+        return { 
+          lines: allWords.length > 0 ? [allWords[0]] : [], 
+          allWords: allWords,
+          currentWordOnly: true 
+        };
+      }
+    }
+    
+    // Pentru presetări normale, folosim logica obișnuită
     const lines = [];
     for (let i = 0; i < allWords.length && lines.length < maxLines; i += maxWordsPerLine) {
       const lineWords = allWords.slice(i, i + maxWordsPerLine);
@@ -164,10 +199,10 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       }
     }
     
-    return { lines, allWords };
+    return { lines, allWords, currentWordOnly: false };
   };
   
-  // Evidențiază cuvântul curent cu timing PRECIS
+  // Evidențiază cuvântul curent cu timing PRECIS - IMPROVED pentru single word
   useEffect(() => {
     const activeSubtitle = subtitles.find(
       sub => currentTime >= sub.start && currentTime <= sub.end
@@ -209,6 +244,13 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         
         if (foundWordIndex !== -1 && foundWordIndex !== currentWordIndex) {
           setCurrentWordIndex(foundWordIndex);
+          
+          // Pentru single word focus, actualizăm display-ul când se schimbă cuvântul
+          if (subtitleStyle.maxWordsPerLine === 1) {
+            const formattedResult = formatSubtitleText(activeSubtitle.text);
+            setFormattedDisplay(formattedResult);
+          }
+          
           console.log(`Precise word timing: word ${foundWordIndex + 1}/${activeSubtitle.words.length} at ${currentTime.toFixed(2)}s`);
         }
       } else {
@@ -224,11 +266,18 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         
         if (wordIndex !== currentWordIndex && wordIndex >= 0) {
           setCurrentWordIndex(wordIndex);
+          
+          // Pentru single word focus, actualizăm display-ul când se schimbă cuvântul
+          if (subtitleStyle.maxWordsPerLine === 1) {
+            const formattedResult = formatSubtitleText(activeSubtitle.text);
+            setFormattedDisplay(formattedResult);
+          }
+          
           console.log(`Estimated word timing: word ${wordIndex + 1}/${formattedDisplay.allWords.length} at ${currentTime.toFixed(2)}s`);
         }
       }
     }
-  }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines, subtitleStyle.useKaraoke]);
+  }, [subtitles, currentTime, isEditing, subtitleStyle.allCaps, subtitleStyle.removePunctuation, subtitleStyle.maxWordsPerLine, subtitleStyle.maxLines, subtitleStyle.useKaraoke, currentWordIndex]);
   
   // Re-formatează textul când se schimbă stilul - CRITICAL FIX pentru poziționare
   useEffect(() => {
@@ -245,9 +294,11 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         useCustomPosition: subtitleStyle.useCustomPosition,
         customX: subtitleStyle.customX,
         customY: subtitleStyle.customY,
+        maxWordsPerLine: subtitleStyle.maxWordsPerLine,
         previewFontSize: getPreviewFontSize(),
         isMobile: isMobileDevice,
-        videoRect
+        videoRect,
+        singleWordMode: subtitleStyle.maxWordsPerLine === 1
       });
     }
   }, [
@@ -304,13 +355,52 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     };
   };
   
-  // Renderează liniile cu cuvinte - ÎMBUNĂTĂȚIT PENTRU EVIDENȚIERE SUBTILĂ
+  // Renderează liniile cu cuvinte - ÎMBUNĂTĂȚIT PENTRU SINGLE WORD FOCUS
   const renderLines = () => {
     if (!currentSubtitle || formattedDisplay.lines.length === 0) return null;
     
     const previewFontSize = getPreviewFontSize();
+    const isSingleWordMode = formattedDisplay.currentWordOnly;
     
     return formattedDisplay.lines.map((line, lineIndex) => {
+      // Pentru single word mode, avem doar un cuvânt per linie
+      if (isSingleWordMode) {
+        const isCurrentWord = subtitleStyle.useKaraoke === true;
+        
+        return (
+          <div key={`single-word-${lineIndex}`} className="subtitle-line single-word-line" style={{
+            lineHeight: isMobileDevice ? '1.4' : '1.3',
+            textAlign: 'center'
+          }}>
+            <span
+              className={`subtitle-word single-word ${isCurrentWord ? 'highlighted' : ''}`}
+              style={{
+                color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
+                fontWeight: 'bold',
+                fontSize: `${previewFontSize}px`,
+                textShadow: subtitleStyle.borderWidth > 0 ? 
+                  `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
+                   ${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
+                  -${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
+                   ${subtitleStyle.borderWidth}px ${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor}` 
+                  : 'none',
+                display: 'inline-block',
+                padding: isMobileDevice ? '0 6px' : '0 4px',
+                transform: 'scale(1)',
+                transition: 'color 0.3s ease, text-shadow 0.3s ease',
+                backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                borderRadius: isCurrentWord ? '6px' : '0',
+                // Pentru single word, aplicăm un efect mai dramatic
+                filter: 'none'
+              }}
+            >
+              {line}
+            </span>
+          </div>
+        );
+      }
+      
+      // Pentru mode-ul normal cu mai multe cuvinte
       const lineWords = line.split(/\s+/).filter(w => w.length > 0);
       let globalWordIndex = 0;
       
@@ -328,7 +418,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             className={`subtitle-word ${isCurrentWord ? 'highlighted' : ''}`}
             style={{
               color: isCurrentWord ? subtitleStyle.currentWordColor : subtitleStyle.fontColor,
-              fontWeight: 'bold', // TOATE CUVINTELE BOLD pentru fonturile groase
+              fontWeight: 'bold',
               fontSize: `${previewFontSize}px`,
               textShadow: subtitleStyle.borderWidth > 0 ? 
                 `-${subtitleStyle.borderWidth}px -${subtitleStyle.borderWidth}px 0 ${isCurrentWord ? subtitleStyle.currentWordBorderColor : subtitleStyle.borderColor},
@@ -338,13 +428,10 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
                 : 'none',
               display: 'inline-block',
               padding: isMobileDevice ? '0 3px' : '0 2px',
-              // EVIDENȚIERE SUBTILĂ - doar culoarea se schimbă, nu scaling-ul
-              transform: 'scale(1)', // Fără scaling pentru aspect mai curat
-              transition: 'color 0.3s ease, text-shadow 0.3s ease', // Tranziții mai lente și mai naturale
-              // Adăugăm o evidențiere subtilă prin background pentru cuvântul curent
+              transform: 'scale(1)',
+              transition: 'color 0.3s ease, text-shadow 0.3s ease',
               backgroundColor: isCurrentWord ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
               borderRadius: isCurrentWord ? '3px' : '0',
-              // Opțional: puțin blur pentru celelalte cuvinte când evidențiem unul
               filter: subtitleStyle.useKaraoke === true && !isCurrentWord ? 'opacity(0.7)' : 'none'
             }}
           >
@@ -617,6 +704,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   }
   
   const previewFontSize = getPreviewFontSize();
+  const isSingleWordMode = formattedDisplay.currentWordOnly;
   
   return (
     <div 
@@ -625,7 +713,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     >
       <div 
         ref={subtitleRef}
-        className={`subtitle-overlay ${isDragging ? 'dragging' : ''} ${isMobileDevice ? 'mobile-mode' : ''}`}
+        className={`subtitle-overlay ${isDragging ? 'dragging' : ''} ${isMobileDevice ? 'mobile-mode' : ''} ${isSingleWordMode ? 'single-word-mode' : ''}`}
         style={{
           ...finalStyle,
           maxWidth: isMobileDevice ? '90%' : `${subtitleStyle.maxWidth || 50}%`,
@@ -649,7 +737,13 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
           userSelect: isMobileDevice ? 'none' : 'auto',
           WebkitUserSelect: isMobileDevice ? 'none' : 'auto',
           // Optimize for touch
-          touchAction: isMobileDevice ? 'none' : 'auto'
+          touchAction: isMobileDevice ? 'none' : 'auto',
+          // Special styling pentru single word mode
+          ...(isSingleWordMode && {
+            minWidth: isMobileDevice ? '200px' : '150px',
+            padding: isMobileDevice ? '20px 30px' : '12px 20px',
+            fontSize: `${previewFontSize * 1.1}px` // Puțin mai mare pentru single word
+          })
         }}
         onMouseDown={!isMobileDevice ? handleMouseDown : undefined}
         onClick={(!isMobileDevice && !isEditing) ? handleSubtitleClick : undefined}
@@ -696,7 +790,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
               textTransform: subtitleStyle.allCaps ? 'uppercase' : 'none',
               maxWidth: '100%',
               textAlign: 'center',
-              fontWeight: 'bold', // TOATE FONTURILE BOLD în previzualizare pentru consistență
+              fontWeight: 'bold',
               textShadow: isMobileDevice ? 
                 `2px 2px 4px rgba(0, 0, 0, 0.8)` : 
                 `1px 1px 2px rgba(0, 0, 0, 0.5)`
@@ -706,7 +800,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
           </div>
         )}
         
-        {/* Indicator pentru mobil - îmbunătățit */}
+        {/* Indicator pentru mobil - îmbunătățit pentru single word */}
         {isMobileDevice && !isEditing && (
           <div style={{
             position: 'absolute',
@@ -714,7 +808,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             right: '-12px',
             width: '24px',
             height: '24px',
-            backgroundColor: isDragging ? 'rgba(16, 185, 129, 0.9)' : 'rgba(102, 126, 234, 0.9)',
+            backgroundColor: isDragging ? 'rgba(16, 185, 129, 0.9)' : (isSingleWordMode ? 'rgba(239, 68, 68, 0.9)' : 'rgba(102, 126, 234, 0.9)'),
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
@@ -727,7 +821,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             transition: 'all 0.3s ease',
             border: '2px solid rgba(255, 255, 255, 0.2)'
           }}>
-            {isDragging ? '✓' : '⤢'}
+            {isDragging ? '✓' : (isSingleWordMode ? '🎯' : '⤢')}
           </div>
         )}
         
@@ -749,7 +843,28 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            Poziționare...
+            {isSingleWordMode ? 'Cuvânt Focus...' : 'Poziționare...'}
+          </div>
+        )}
+        
+        {/* Indicator special pentru single word mode */}
+        {isSingleWordMode && !isMobileDevice && (
+          <div style={{
+            position: 'absolute',
+            top: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(239, 68, 68, 0.9)',
+            color: 'white',
+            padding: '2px 8px',
+            borderRadius: '8px',
+            fontSize: '10px',
+            fontWeight: '600',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            🎯 FOCUS
           </div>
         )}
       </div>

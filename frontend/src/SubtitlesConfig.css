@@ -76,7 +76,7 @@
   background-color: #f8fafc;
 }
 
-/* Enhanced Range Inputs */
+/* Enhanced Range Inputs - EXTENDED pentru fonturi mari */
 .range-input-container {
   display: flex;
   align-items: center;
@@ -132,6 +132,23 @@
   border: 1px solid rgba(102, 126, 234, 0.2);
   min-width: 60px;
   text-align: center;
+  position: relative;
+}
+
+/* Special styling pentru fonturi mari */
+.range-value.large-font {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.3);
+  font-weight: 800;
+}
+
+.range-value.large-font::after {
+  content: '🔥';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.8rem;
 }
 
 /* Enhanced Color Inputs */
@@ -436,12 +453,100 @@ input:checked + .slider:before {
   transform: translateY(-1px);
 }
 
-/* ========== PRESETS SYSTEM STYLES ========== */
+/* ========== PRESETS SYSTEM STYLES - EXTENDED ========== */
 
 .presets-section {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* Demo Presets Quick Access - ENHANCED */
+.demo-presets {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.demo-presets-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.demo-preset-card {
+  padding: 16px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  font-size: 0.9rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-preset-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.demo-preset-card:hover::before {
+  transform: scaleX(1);
+}
+
+.demo-preset-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+}
+
+.demo-preset-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+/* Special styling pentru presetări cu fonturi mari */
+.demo-preset-card.large-font-preset {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.02) 100%);
+}
+
+.demo-preset-card.large-font-preset::before {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.demo-preset-card.large-font-preset:hover {
+  border-color: #ef4444;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
+}
+
+/* Special styling pentru single word focus */
+.demo-preset-card.single-word-preset {
+  border-color: rgba(249, 115, 22, 0.3);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(234, 88, 12, 0.02) 100%);
+}
+
+.demo-preset-card.single-word-preset::before {
+  background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+}
+
+.demo-preset-card.single-word-preset::after {
+  content: '🎯';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 1.2rem;
+  opacity: 0.7;
 }
 
 .save-preset-controls {
@@ -591,6 +696,16 @@ input:checked + .slider:before {
   transform: translateY(-1px);
 }
 
+.preset-item.demo-preset {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.02) 100%);
+}
+
+.preset-item.demo-preset:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
 .preset-info {
   flex: 1;
   min-width: 0;
@@ -630,10 +745,48 @@ input:checked + .slider:before {
   opacity: 0.8;
 }
 
+.preset-description {
+  font-style: italic;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
 .preset-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* ========== SPECIAL INDICATORS FOR PRESET TYPES ========== */
+
+/* Indicator pentru presetări cu fonturi mari */
+.preset-item.large-font-preset::before {
+  content: '🔥';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+/* Indicator pentru single word presets */
+.preset-item.single-word-preset::before {
+  content: '🎯';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+/* Indicator pentru karaoke presets */
+.preset-item.karaoke-preset::before {
+  content: '🎤';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 1rem;
+  z-index: 1;
 }
 
 /* Mobile Specific Enhancements */
@@ -649,6 +802,7 @@ input:checked + .slider:before {
     align-items: stretch;
     gap: 12px;
     padding: 20px;
+    position: relative;
   }
   
   .preset-actions {
@@ -677,30 +831,18 @@ input:checked + .slider:before {
   .preset-details span {
     font-size: 0.85rem;
   }
-}
-
-/* Extra small mobile devices */
-@media (max-width: 480px) {
-  .presets-grid {
-    gap: 16px;
+  
+  .demo-presets-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
   }
   
-  .preset-item {
-    padding: 16px;
+  .demo-preset-card {
+    padding: 12px 16px;
+    font-size: 0.85rem;
   }
   
-  .no-presets {
-    padding: 24px 12px;
-  }
-  
-  .tab-button {
-    font-size: 0.75rem;
-    padding: 12px 8px;
-  }
-}
-
-/* Mobile Specific Enhancements */
-@media (max-width: 768px) {
+  /* Style items cu padding mai mare pe mobil */
   .style-item {
     padding: 20px; /* Even larger padding on mobile */
   }
@@ -758,6 +900,23 @@ input:checked + .slider:before {
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
+  .presets-grid {
+    gap: 16px;
+  }
+  
+  .preset-item {
+    padding: 16px;
+  }
+  
+  .no-presets {
+    padding: 24px 12px;
+  }
+  
+  .tab-button {
+    font-size: 0.75rem;
+    padding: 12px 8px;
+  }
+  
   .position-coordinates {
     grid-template-columns: 1fr; /* Stack coordinate inputs on very small screens */
     gap: 12px;
@@ -770,4 +929,70 @@ input:checked + .slider:before {
   .style-item {
     padding: 16px; /* Slightly reduce padding on very small screens */
   }
+  
+  .demo-presets-grid {
+    gap: 6px;
+  }
+  
+  .demo-preset-card {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ========== ANIMATION ENHANCEMENTS ========== */
+
+/* Smooth transitions for all interactive elements */
+.demo-preset-card,
+.preset-item,
+.preset-button,
+.style-item,
+.color-swatch,
+.tab-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects with micro-animations */
+.demo-preset-card:hover,
+.preset-item:hover,
+.preset-button:hover {
+  animation: subtle-bounce 0.3s ease-in-out;
+}
+
+@keyframes subtle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Loading animation pentru range values când se schimbă */
+.range-value {
+  transition: all 0.2s ease;
+}
+
+.range-value.updating {
+  animation: value-highlight 0.5s ease-in-out;
+}
+
+@keyframes value-highlight {
+  0%, 100% { 
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1);
+  }
+  50% { 
+    background: rgba(102, 126, 234, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+/* Focus animations */
+.style-item select:focus,
+.preset-name-input:focus,
+.coordinate-field:focus {
+  animation: focus-pulse 0.3s ease-in-out;
+}
+
+@keyframes focus-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
