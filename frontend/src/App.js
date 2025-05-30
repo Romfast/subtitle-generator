@@ -55,25 +55,25 @@ function App() {
   const [videoFitMode, setVideoFitMode] = useState('cover'); // 'cover' sau 'contain'
   
   const [subtitleStyle, setSubtitleStyle] = useState({
-    fontSize: 24,
-    fontColor: '#FFFFFF',
+    fontSize: 48,
+    fontColor: '#90EE90', // Verde deschis ca în preset default
     backgroundColor: '#000000',
     opacity: 80,
-    position: 'bottom', // 'bottom', 'top', 'middle', 'top-left', 'top-right', 'bottom-left', 'bottom-right'
-    fontFamily: 'Bebas Neue', // Font default
+    position: 'bottom',
+    fontFamily: 'Bebas Neue',
     borderColor: '#000000',
     borderWidth: 2,
-    maxLines: 1,  // Inițializat cu 1 linie
-    maxWidth: 50, // Procentaj din lățimea video-ului
-    maxWordsPerLine: 3, // Inițializat cu 3 cuvinte per linie
-    useCustomPosition: false, // Flag pentru activarea poziției personalizate
-    customX: 50, // Poziția X procentuală (0-100)
-    customY: 90,  // Poziția Y procentuală (0-100)
-    currentWordColor: '#FFFF00', // Culoare cuvânt curent (galben default)
-    currentWordBorderColor: '#000000', // Culoare contur cuvânt curent
-    allCaps: true, // Opțiune pentru ALL CAPS
-    removePunctuation: false, // Opțiune pentru eliminarea punctuației
-    useKaraoke: false // Modificat din true în false pentru a dezactiva implicit evidențierea cuvântului curent
+    maxLines: 1,
+    maxWidth: 50,
+    maxWordsPerLine: 4,
+    useCustomPosition: true, // Activat pentru default preset
+    customX: 50,
+    customY: 70,
+    currentWordColor: '#FFFF00', // Galben pentru evidențiere
+    currentWordBorderColor: '#000000',
+    allCaps: true, // Activat pentru default preset
+    removePunctuation: false,
+    useKaraoke: true // Activat pentru default preset - evidențiere cuvânt curent
   });
 
   const fileInputRef = useRef();
@@ -396,24 +396,41 @@ function App() {
 
     try {
       // CRITICAL FIX: Transmitem toate opțiunile de stil inclusiv poziționarea EXACTĂ
-      console.log('Sending subtitle style to backend:', subtitleStyle);
+      console.log('=== CREATING VIDEO WITH SUBTITLES ===');
+      console.log('Current subtitle style state:', JSON.stringify(subtitleStyle, null, 2));
       
-      const response = await axios.post(`${API_URL}/create-video`, {
-        filename: uploadedFileName,
-        subtitles: subtitles,
-        style: {
-          ...subtitleStyle,
-          // CRITICAL: Asigurăm că poziționarea se transmite corect
+      const stylePayload = {
+          // CRITICAL FIX: Asigurăm transmiterea completă a tuturor configurărilor
+          fontFamily: subtitleStyle.fontFamily || 'Arial',
+          fontSize: parseInt(subtitleStyle.fontSize) || 24,
+          fontColor: subtitleStyle.fontColor || '#FFFFFF',
+          borderColor: subtitleStyle.borderColor || '#000000',
+          borderWidth: parseInt(subtitleStyle.borderWidth) || 2,
           position: subtitleStyle.position || 'bottom',
           useCustomPosition: Boolean(subtitleStyle.useCustomPosition),
-          customX: Number(subtitleStyle.customX) || 50,
-          customY: Number(subtitleStyle.customY) || 90,
+          customX: parseInt(subtitleStyle.customX) || 50,
+          customY: parseInt(subtitleStyle.customY) || 90,
+          allCaps: Boolean(subtitleStyle.allCaps),
+          removePunctuation: Boolean(subtitleStyle.removePunctuation),
+          useKaraoke: Boolean(subtitleStyle.useKaraoke),
+          currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
+          currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000',
+          maxLines: parseInt(subtitleStyle.maxLines) || 1,
+          maxWordsPerLine: parseInt(subtitleStyle.maxWordsPerLine) || 4,
+          maxWidth: parseInt(subtitleStyle.maxWidth) || 50,
           // Adăugăm informații despre device pentru backend
           isMobile: isMobile,
           screenWidth: window.innerWidth,
           screenHeight: window.innerHeight
-        }
-      });
+        };
+        
+        console.log('Style payload being sent to backend:', JSON.stringify(stylePayload, null, 2));
+
+        const response = await axios.post(`${API_URL}/create-video`, {
+          filename: uploadedFileName,
+          subtitles: subtitles,
+          style: stylePayload
+        });
 
       setOutputVideo(response.data.output_filename);
       setUploadStatus('Videoclip cu subtitrări creat. Se inițiază descărcarea...');
@@ -515,6 +532,7 @@ function App() {
   };
 
   // DEMO PRESETS - aplicare presetare demo EXTINS
+  // DEMO PRESETS - aplicare presetare demo EXTINS - FIX COMPLET
   const applyDemoPreset = (presetName) => {
     const demoPresets = {
       'default': {
@@ -522,14 +540,14 @@ function App() {
         fontFamily: 'Bebas Neue',
         fontColor: '#90EE90',
         borderColor: '#000000',
-        borderWidth: 3,
+        borderWidth: 2,
         position: 'bottom',
         useCustomPosition: true,
         customX: 50,
         customY: 90,
         allCaps: true,
         removePunctuation: false,
-        useKaraoke: false,
+        useKaraoke: true,
         maxLines: 1,
         maxWordsPerLine: 4,
         currentWordColor: '#FFFF00',
@@ -682,7 +700,13 @@ function App() {
     };
     
     if (demoPresets[presetName]) {
-      setSubtitleStyle(demoPresets[presetName]);
+      // CRITICAL FIX: Aplicăm complet starea nouă
+      const newStyle = { ...demoPresets[presetName] };
+      setSubtitleStyle(newStyle);
+      
+      // Log pentru debugging
+      console.log('Applied demo preset:', presetName, newStyle);
+      
       setUploadStatus(`Preset "${presetName}" aplicat cu succes!`);
       
       // Expandează configurările pentru a vedea schimbările
@@ -797,7 +821,7 @@ function App() {
                 borderTop: '1px solid rgba(148, 163, 184, 0.2)'
               }}>
                 <button 
-                  onClick={() => applyDemoPreset('default_preset')}
+                  onClick={() => applyDemoPreset('default')}
                   className="demo-preset-button"
                   style={{
                     padding: '6px 8px',

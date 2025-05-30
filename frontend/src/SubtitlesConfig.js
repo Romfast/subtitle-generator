@@ -41,10 +41,10 @@ const DEMO_PRESETS = {
       fontColor: '#90EE90', // Verde deschis (Light Green)
       borderColor: '#000000',
       borderWidth: 2,
-      position: 'bottom',
+      position: 'bottom-30',
       useCustomPosition: true,
       customX: 50,
-      customY: 90,
+      customY: 70,
       allCaps: true,
       removePunctuation: false,
       useKaraoke: true,
@@ -87,7 +87,7 @@ const DEMO_PRESETS = {
       fontColor: '#FFFFFF',
       borderColor: '#000000',
       borderWidth: 3,
-      position: 'middle',
+      position: 'bottom-30',
       useCustomPosition: false,
       customX: 50,
       customY: 50,
@@ -133,7 +133,7 @@ const DEMO_PRESETS = {
       fontColor: '#FFFFFF',
       borderColor: '#1F2937',
       borderWidth: 4,
-      position: 'bottom',
+      position: 'bottom-20',
       useCustomPosition: false,
       customX: 50,
       customY: 85,
@@ -156,7 +156,7 @@ const DEMO_PRESETS = {
       fontColor: '#00FFFF',
       borderColor: '#8B00FF',
       borderWidth: 2,
-      position: 'top-30',
+      position: 'bottom-30',
       useCustomPosition: false,
       customX: 50,
       customY: 30,
@@ -179,7 +179,7 @@ const DEMO_PRESETS = {
       fontColor: '#F9FAFB',
       borderColor: '#374151',
       borderWidth: 1,
-      position: 'bottom',
+      position: 'bottom-20',
       useCustomPosition: false,
       customX: 50,
       customY: 90,
@@ -202,7 +202,7 @@ const DEMO_PRESETS = {
       fontColor: '#FFFFFF',
       borderColor: '#FFFFFF',
       borderWidth: 0,
-      position: 'bottom',
+      position: 'bottom-20',
       useCustomPosition: false,
       customX: 50,
       customY: 95,
@@ -225,7 +225,7 @@ const DEMO_PRESETS = {
       fontColor: '#FBBF24',
       borderColor: '#7C2D12',
       borderWidth: 3,
-      position: 'middle',
+      position: 'bottom-30',
       useCustomPosition: false,
       customX: 50,
       customY: 45,
@@ -327,41 +327,50 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
   };
 
   const loadPreset = (preset) => {
-    // Aplică toate setările din presetare
-    Object.keys(preset.style).forEach(key => {
+    // CRITICAL FIX: Aplicăm toate setările prin handleStyleChange pentru sincronizare completă
+    const newStyle = { ...preset.style };
+    
+    // Aplicăm fiecare setare individual pentru a declanșa toate update-urile
+    Object.keys(newStyle).forEach(key => {
       handleStyleChange({
         target: {
           name: key,
-          value: preset.style[key]
+          value: newStyle[key]
         }
       });
     });
     
     // Actualizează și starea locală pentru poziționare personalizată
-    setUseCustomPosition(preset.style.useCustomPosition || false);
+    setUseCustomPosition(newStyle.useCustomPosition || false);
+    
+    // Log pentru debugging
+    console.log(`Preset "${preset.name}" loaded with full sync`, newStyle);
     
     window.alert(`Presetarea "${preset.name}" a fost aplicată!`);
   };
 
-  // Aplică preset demo direct
+  // Aplică preset demo direct - FIX COMPLET PENTRU SINCRONIZARE
   const applyDemoPreset = (presetKey) => {
     const preset = DEMO_PRESETS[presetKey];
     if (preset) {
-      // Aplică toate setările din presetare
-      Object.keys(preset.style).forEach(key => {
+      // CRITICAL FIX: Aplicăm toate setările prin handleStyleChange pentru sincronizare completă
+      const newStyle = { ...preset.style };
+      
+      // Aplicăm fiecare setare individual pentru a declanșa toate update-urile
+      Object.keys(newStyle).forEach(key => {
         handleStyleChange({
           target: {
             name: key,
-            value: preset.style[key]
+            value: newStyle[key]
           }
         });
       });
       
       // Actualizează și starea locală pentru poziționare personalizată
-      setUseCustomPosition(preset.style.useCustomPosition || false);
+      setUseCustomPosition(newStyle.useCustomPosition || false);
       
-      // Nu afișăm alert pentru preseturile demo pentru o experiență mai fluidă
-      console.log(`Demo preset "${preset.name}" applied`);
+      // Log pentru debugging
+      console.log(`Demo preset "${preset.name}" applied with full sync`, newStyle);
     }
   };
 

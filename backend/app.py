@@ -501,6 +501,34 @@ def create_video_with_subtitles():
         return jsonify({'error': 'Video file not found', 'task_id': task_id}), 404
     
     try:
+        # CRITICAL FIX: Transmitem toate opțiunile de stil inclusiv poziționarea EXACTĂ
+        print('=== VIDEO GENERATION DEBUG ===')
+        print('Raw style received from frontend:', json.dumps(style, indent=2))
+        
+        # Validăm și normalizăm stilul primit
+        validated_style = {
+            'fontFamily': style.get('fontFamily', 'Arial'),
+            'fontSize': int(style.get('fontSize', 24)),
+            'fontColor': style.get('fontColor', '#FFFFFF'),
+            'borderColor': style.get('borderColor', '#000000'),
+            'borderWidth': int(style.get('borderWidth', 2)),
+            'position': style.get('position', 'bottom'),
+            'useCustomPosition': bool(style.get('useCustomPosition', False)),
+            'customX': int(style.get('customX', 50)),
+            'customY': int(style.get('customY', 90)),
+            'allCaps': bool(style.get('allCaps', False)),
+            'removePunctuation': bool(style.get('removePunctuation', False)),
+            'useKaraoke': bool(style.get('useKaraoke', False)),
+            'currentWordColor': style.get('currentWordColor', '#FFFF00'),
+            'currentWordBorderColor': style.get('currentWordBorderColor', '#000000'),
+            'maxLines': int(style.get('maxLines', 1)),
+            'maxWordsPerLine': int(style.get('maxWordsPerLine', 4)),
+            'maxWidth': int(style.get('maxWidth', 50))
+        }
+        
+        print('Validated and normalized style:', json.dumps(validated_style, indent=2))
+        print('=== END VIDEO GENERATION DEBUG ===\n')
+        
         # Verificăm dimensiunea video-ului real pentru a face ajustări mai precise
         try:
             # Obținem dimensiunile video-ului original
@@ -529,10 +557,10 @@ def create_video_with_subtitles():
         
         update_task_status(task_id, "processing", 10, "Creare fișier temporar de subtitrări")
         
-        # Extragem parametrii de stil
-        max_lines = style.get('maxLines', 1)  # Default 1 linie
-        max_width = style.get('maxWidth', 50)
-        max_words_per_line = style.get('maxWordsPerLine', 4)  # Default 4 cuvinte
+        # Extragem parametrii de stil din stilul validat
+        max_lines = validated_style['maxLines']
+        max_width = validated_style['maxWidth']
+        max_words_per_line = validated_style['maxWordsPerLine']
         
         # Deja s-a aplicat limitarea la generare, dar o aplicăm din nou pentru siguranță
         formatted_subtitles = format_srt_with_line_limits(
@@ -551,7 +579,7 @@ def create_video_with_subtitles():
                 end_time = format_srt_timestamp(sub['end'])
                 
                 # Procesează textul conform opțiunilor de stil (ALL CAPS, eliminare punctuație)
-                text = process_subtitle_text(sub['text'].strip(), style)
+                text = process_subtitle_text(sub['text'].strip(), validated_style)
                 
                 srt_file.write(f"{i}\n")
                 srt_file.write(f"{start_time} --> {end_time}\n")
@@ -563,20 +591,20 @@ def create_video_with_subtitles():
                     update_task_status(task_id, "creating_subtitles", progress, 
                                      f"Creare fișier subtitrări: {i}/{len(subtitles)}")
         
-        # Extract style parameters
-        font_family = style.get('fontFamily', 'Arial')
-        base_font_size = style.get('fontSize', 24)
+        # Extract style parameters din stilul validat
+        font_family = validated_style['fontFamily']
+        base_font_size = validated_style['fontSize']
         # Ajustăm dimensiunea fontului pentru video
         font_size = adjust_font_size_for_video(base_font_size, video_width, 1920)
         print(f"Font size adjusted from {base_font_size} to {font_size} for video width {video_width}px")
         
-        font_color = style.get('fontColor', '#FFFFFF')
-        border_color = style.get('borderColor', '#000000')
-        border_width = style.get('borderWidth', 2)
-        position = style.get('position', 'bottom')
-        use_custom_position = style.get('useCustomPosition', False)
-        custom_x = style.get('customX', 50)
-        custom_y = style.get('customY', 90)
+        font_color = validated_style['fontColor']
+        border_color = validated_style['borderColor']
+        border_width = validated_style['borderWidth']
+        position = validated_style['position']
+        use_custom_position = validated_style['useCustomPosition']
+        custom_x = validated_style['customX']
+        custom_y = validated_style['customY']
 
         # Asigură-te că culorile sunt în format corect (cu # în față)
         if font_color and not font_color.startswith('#'):
@@ -586,16 +614,16 @@ def create_video_with_subtitles():
             border_color = '#' + border_color
 
         # Extragem parametrii pentru cuvântul curent
-        current_word_color = style.get('currentWordColor', '#FFFF00')
+        current_word_color = validated_style['currentWordColor']
         if current_word_color and not current_word_color.startswith('#'):
             current_word_color = '#' + current_word_color
             
-        current_word_border_color = style.get('currentWordBorderColor', '#000000')
+        current_word_border_color = validated_style['currentWordBorderColor']
         if current_word_border_color and not current_word_border_color.startswith('#'):
             current_word_border_color = '#' + current_word_border_color
             
         # Activăm sau dezactivăm karaoke (evidențierea cuvântului curent)
-        use_karaoke = style.get('useKaraoke', False)  # Default dezactivat
+        use_karaoke = validated_style['useKaraoke']
 
         # Log pentru debugging
         print(f"Applying subtitle style: font={font_family}, size={font_size}, color={font_color}, border={border_color}, width={border_width}")
@@ -629,8 +657,8 @@ def create_video_with_subtitles():
                         'customY': custom_y,
                         'currentWordColor': current_word_color,
                         'currentWordBorderColor': current_word_border_color,
-                        'allCaps': style.get('allCaps', False),
-                        'removePunctuation': style.get('removePunctuation', False),
+                        'allCaps': validated_style['allCaps'],
+                        'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True,  # Activăm evidențierea
                         'textAlign': 2  # Centrat pentru poziție personalizată
                     },
@@ -650,8 +678,8 @@ def create_video_with_subtitles():
                         'useCustomPosition': use_custom_position,
                         'customX': custom_x,
                         'customY': custom_y,
-                        'allCaps': style.get('allCaps', False),
-                        'removePunctuation': style.get('removePunctuation', False)
+                        'allCaps': validated_style['allCaps'],
+                        'removePunctuation': validated_style['removePunctuation']
                     },
                     formatted_subtitles
                 )
@@ -671,8 +699,8 @@ def create_video_with_subtitles():
                         'position': position,
                         'currentWordColor': current_word_color,
                         'currentWordBorderColor': current_word_border_color,
-                        'allCaps': style.get('allCaps', False),
-                        'removePunctuation': style.get('removePunctuation', False),
+                        'allCaps': validated_style['allCaps'],
+                        'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True  # Activăm evidențierea
                     },
                     formatted_subtitles
@@ -690,8 +718,8 @@ def create_video_with_subtitles():
                         'borderColor': border_color,
                         'borderWidth': border_width,
                         'position': position,
-                        'allCaps': style.get('allCaps', False),
-                        'removePunctuation': style.get('removePunctuation', False)
+                        'allCaps': validated_style['allCaps'],
+                        'removePunctuation': validated_style['removePunctuation']
                     },
                     formatted_subtitles
                 )
