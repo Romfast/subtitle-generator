@@ -1,51 +1,66 @@
+# backend/subtitles_utils.py
+# FIX #9: Calculare automată a numărului de cuvinte pe linie bazată pe 70% lățime video
+# FIX #8: Suport corect pentru numărul configurabil de linii
+
 import re
 
-def split_subtitle_into_segments(text, max_words_per_segment=4):
+def calculate_optimal_words_per_line(text, max_width_percent=70, video_width=1920):
     """
-    Împarte textul subtitlării în segmente mai mici, fiecare cu maxim 4 cuvinte.
-    Această funcție este folosită pentru a crea segmente separate de subtitrări, nu doar linii.
+    Calculează numărul optim de cuvinte pe linie bazat pe lățimea video și procentajul maxim.
     
     Args:
-        text (str): Textul subtitlării originale
-        max_words_per_segment (int): Numărul maxim de cuvinte per segment
+        text (str): Textul pentru care calculăm
+        max_width_percent (int): Procentajul maxim din lățimea video (default 70%)
+        video_width (int): Lățimea video-ului în pixeli (default 1920)
     
     Returns:
-        list: Lista de segmente noi de subtitrare
+        int: Numărul optim de cuvinte pe linie
     """
     if not text:
-        return []
+        return 3
     
-    # Împărțim textul în cuvinte
+    # Calculăm lățimea disponibilă în pixeli
+    available_width = (video_width * max_width_percent) / 100
+    
+    # Estimăm că un caracter mediu are ~12 pixeli lățime la fonturile standard
+    avg_char_width = 12
+    
+    # Calculăm numărul maxim de caractere pe linie
+    max_chars_per_line = int(available_width / avg_char_width)
+    
+    # Împărțim textul în cuvinte și calculăm lungimea medie a cuvintelor
     words = text.split()
+    if not words:
+        return 3
     
-    # Dacă avem mai puține sau egal cu max_words_per_segment cuvinte, returnăm un singur segment
-    if len(words) <= max_words_per_segment:
-        return [text]
+    avg_word_length = sum(len(word) for word in words) / len(words)
     
-    # Altfel, împărțim în segmente de max_words_per_segment cuvinte
-    segments = []
-    for i in range(0, len(words), max_words_per_segment):
-        segment_words = words[i:i + max_words_per_segment]
-        segments.append(" ".join(segment_words))
+    # Calculăm numărul optim de cuvinte pe linie (incluzând spațiile)
+    # Un spațiu între cuvinte = 1 caracter
+    optimal_words = max(1, int(max_chars_per_line / (avg_word_length + 1)))
     
-    return segments
+    # Limităm între 1 și 6 cuvinte pentru lizibilitate
+    return min(max(1, optimal_words), 6)
 
-def split_subtitle_into_lines(text, max_lines=2, max_width_percent=50, max_words_per_line=4):
+def split_subtitle_into_lines_auto(text, max_lines=2, max_width_percent=70, video_width=1920):
     """
-    Împarte textul subtitlării în mai multe linii, respectând numărul maxim de linii
-    și limitând fiecare linie la max_words_per_line cuvinte.
+    FIX #9: Împarte textul subtitrării în linii folosind calculul automat de cuvinte pe linie.
+    FIX #8: Respectă numărul maxim configurabil de linii.
     
     Args:
         text (str): Textul subtitlării
-        max_lines (int): Numărul maxim de linii
-        max_width_percent (int): Procentajul maxim din lățimea videoului
-        max_words_per_line (int): Numărul maxim de cuvinte per linie
+        max_lines (int): Numărul maxim de linii (configurabil)
+        max_width_percent (int): Procentajul maxim din lățimea video-ului
+        video_width (int): Lățimea video-ului în pixeli
     
     Returns:
-        str: Textul subtitlării formatat pe mai multe linii
+        str: Textul formatat pe linii
     """
     if not text:
         return ""
+    
+    # Calculăm numărul optim de cuvinte pe linie
+    optimal_words_per_line = calculate_optimal_words_per_line(text, max_width_percent, video_width)
     
     # Împărțim textul în cuvinte
     words = text.split()
@@ -53,51 +68,138 @@ def split_subtitle_into_lines(text, max_lines=2, max_width_percent=50, max_words
     if not words:
         return ""
     
-    # Dacă avem mai puține sau egal cu max_words_per_line cuvinte, returnăm textul ca atare
-    if len(words) <= max_words_per_line:
+    # Dacă avem mai puține cuvinte decât optimul pentru o linie, returnăm textul ca atare
+    if len(words) <= optimal_words_per_line:
         return text
     
     # Construim liniile
     lines = []
-    for i in range(0, len(words), max_words_per_line):
-        # Luăm maxim max_words_per_line cuvinte pentru fiecare linie
-        line_words = words[i:i + max_words_per_line]
-        lines.append(" ".join(line_words))
-        
-        # Dacă am ajuns la numărul maxim de linii, ne oprim
-        if len(lines) >= max_lines:
-            # Dacă mai avem cuvinte rămase, le adăugăm la ultima linie
-            if i + max_words_per_line < len(words):
-                remaining_words = words[i + max_words_per_line:]
-                lines[-1] = lines[-1] + " " + " ".join(remaining_words)
-            break
+    current_line_words = []
     
-    # Combinăm liniile cu un caracter newline
-    return "\n".join(lines)
+    for word in words:
+        # Verificăm dacă adăugarea acestui cuvânt ar depăși limita
+        if len(current_line_words) >= optimal_words_per_line:
+            # Salvăm linia curentă și începem una nouă
+            if current_line_words:
+                lines.append(" ".join(current_line_words))
+                current_line_words = []
+            
+            # Dacă am atins numărul maxim de linii, forțăm restul pe ultima linie
+            if len(lines) >= max_lines:
+                break
+        
+        current_line_words.append(word)
+    
+    # Adăugăm ultima linie dacă mai avem cuvinte
+    if current_line_words:
+        if len(lines) < max_lines:
+            lines.append(" ".join(current_line_words))
+        else:
+            # Dacă am depășit numărul maxim de linii, adăugăm la ultima linie
+            if lines:
+                lines[-1] += " " + " ".join(current_line_words)
+            else:
+                lines.append(" ".join(current_line_words))
+    
+    # Dacă mai avem cuvinte rămase și am atins limita de linii
+    remaining_words_index = sum(len(line.split()) for line in lines)
+    if remaining_words_index < len(words):
+        remaining_words = words[remaining_words_index:]
+        if lines and len(lines) == max_lines:
+            # Adăugăm cuvintele rămase la ultima linie
+            lines[-1] += " " + " ".join(remaining_words)
+        elif len(lines) < max_lines:
+            # Creăm o linie nouă cu cuvintele rămase
+            lines.append(" ".join(remaining_words))
+    
+    # Combinăm liniile cu caractere de întrerupere linie
+    result = "\n".join(lines)
+    
+    print(f"Auto line split: '{text}' -> {len(lines)} lines, {optimal_words_per_line} words/line optimal")
+    print(f"Result: '{result}'")
+    
+    return result
 
-def break_long_subtitles(subtitles, max_words_per_segment=4):
+def split_subtitle_into_segments_auto(text, max_lines=2, max_width_percent=70, video_width=1920):
     """
-    Împarte subtitrările lungi în segmente mai mici, păstrând informațiile de timing pentru cuvinte.
+    FIX #9: Împarte textul în segmente separate dacă depășește capacitatea de afișare.
+    
+    Args:
+        text (str): Textul subtitlării originale
+        max_lines (int): Numărul maxim de linii per segment
+        max_width_percent (int): Procentajul maxim din lățimea video-ului
+        video_width (int): Lățimea video-ului în pixeli
+    
+    Returns:
+        list: Lista de segmente de text
+    """
+    if not text:
+        return []
+    
+    # Calculăm capacitatea optimă per segment
+    optimal_words_per_line = calculate_optimal_words_per_line(text, max_width_percent, video_width)
+    max_words_per_segment = optimal_words_per_line * max_lines
+    
+    # Împărțim textul în cuvinte
+    words = text.split()
+    
+    # Dacă încape într-un singur segment, returnăm textul formatat
+    if len(words) <= max_words_per_segment:
+        formatted_text = split_subtitle_into_lines_auto(text, max_lines, max_width_percent, video_width)
+        return [formatted_text]
+    
+    # Altfel, împărțim în segmente
+    segments = []
+    for i in range(0, len(words), max_words_per_segment):
+        segment_words = words[i:i + max_words_per_segment]
+        segment_text = " ".join(segment_words)
+        formatted_segment = split_subtitle_into_lines_auto(segment_text, max_lines, max_width_percent, video_width)
+        segments.append(formatted_segment)
+    
+    print(f"Split into {len(segments)} segments, max {max_words_per_segment} words per segment")
+    
+    return segments
+
+def break_long_subtitles_auto(subtitles, max_lines=2, max_width_percent=70, video_width=1920):
+    """
+    FIX #9: Împarte subtitrările lungi în segmente mai mici cu calculul automat de cuvinte.
+    FIX #8: Respectă numărul configurabil de linii.
     
     Args:
         subtitles (list): Lista de subtitrări cu timing-ul cuvintelor
-        max_words_per_segment (int): Numărul maxim de cuvinte per segment
+        max_lines (int): Numărul maxim de linii per segment
+        max_width_percent (int): Procentajul maxim din lățimea video-ului
+        video_width (int): Lățimea video-ului în pixeli
     
     Returns:
-        list: Lista de subtitrări împărțite în segmente mai mici cu timing păstrat
+        list: Lista de subtitrări împărțite în segmente cu timing păstrat
     """
     result = []
     
     for subtitle in subtitles:
+        # Calculăm capacitatea optimă
+        optimal_words_per_line = calculate_optimal_words_per_line(subtitle['text'], max_width_percent, video_width)
+        max_words_per_segment = optimal_words_per_line * max_lines
+        
         # Verificăm dacă subtitrarea are prea multe cuvinte
         words = subtitle['text'].split()
         
         if len(words) <= max_words_per_segment:
-            # Dacă e sub limita de cuvinte, o păstrăm așa cum e
-            result.append(subtitle)
+            # Dacă încape, o formatăm și o păstrăm
+            formatted_text = split_subtitle_into_lines_auto(
+                subtitle['text'], max_lines, max_width_percent, video_width
+            )
+            result.append({
+                'start': subtitle['start'],
+                'end': subtitle['end'],
+                'text': formatted_text,
+                'words': subtitle.get('words', [])
+            })
         else:
             # Altfel, o împărțim în segmente, păstrând timing-ul word-level dacă există
-            segments = split_subtitle_into_segments(subtitle['text'], max_words_per_segment)
+            segments = split_subtitle_into_segments_auto(
+                subtitle['text'], max_lines, max_width_percent, video_width
+            )
             
             # Calculăm durata per segment
             duration = subtitle['end'] - subtitle['start']
@@ -109,8 +211,8 @@ def break_long_subtitles(subtitles, max_words_per_segment=4):
                 current_word_index = 0
                 
                 for i, segment_text in enumerate(segments):
-                    segment_words = segment_text.split()
-                    segment_word_count = len(segment_words)
+                    # Numărăm cuvintele din acest segment (fără \n)
+                    segment_word_count = len(segment_text.replace('\n', ' ').split())
                     
                     # Găsim timing-ul pentru cuvintele din acest segment
                     segment_words_timing = []
@@ -149,50 +251,64 @@ def break_long_subtitles(subtitles, max_words_per_segment=4):
                         'start': segment_start,
                         'end': segment_end,
                         'text': segment_text,
-                        'words': []  # Fără timing word-level
+                        'words': []
                     })
     
     return result
 
-def format_srt_with_line_limits(subtitles, max_lines=2, max_width_percent=50, max_words_per_line=4):
+def format_srt_with_auto_lines(subtitles, max_lines=2, max_width_percent=70, video_width=1920):
     """
-    Formatează lista de subtitrări pentru a respecta limitele de linii și lățime,
-    păstrând informațiile de timing pentru cuvinte.
+    FIX #9: Formatează lista de subtitrări cu calculul automat de cuvinte pe linie.
+    FIX #8: Respectă numărul configurabil de linii.
     
     Args:
         subtitles (list): Lista de subtitrări cu timing word-level
         max_lines (int): Numărul maxim de linii
-        max_width_percent (int): Procentajul maxim din lățimea videoului
-        max_words_per_line (int): Numărul maxim de cuvinte per linie
+        max_width_percent (int): Procentajul maxim din lățimea video-ului
+        video_width (int): Lățimea video-ului în pixeli
     
     Returns:
         list: Lista de subtitrări formatată cu timing păstrat
     """
+    print(f"Formatting subtitles with auto calculation: max_lines={max_lines}, max_width={max_width_percent}%, video_width={video_width}")
+    
     # Mai întâi împărțim subtitrările lungi în segmente mai mici
-    segmented_subtitles = break_long_subtitles(subtitles, max_words_per_line)
+    segmented_subtitles = break_long_subtitles_auto(subtitles, max_lines, max_width_percent, video_width)
     
-    # Apoi formatăm fiecare segment pe linii
-    formatted_subtitles = []
+    # Rezultatul este deja formatat corect din break_long_subtitles_auto
+    print(f"Final result: {len(segmented_subtitles)} subtitle segments")
     
-    for subtitle in segmented_subtitles:
-        formatted_text = split_subtitle_into_lines(
-            subtitle['text'], 
-            max_lines, 
-            max_width_percent,
-            max_words_per_line
-        )
-        
-        # Păstrăm timing-ul word-level dacă există
-        formatted_subtitle = {
-            'start': subtitle['start'],
-            'end': subtitle['end'],
-            'text': formatted_text
-        }
-        
-        # Adăugăm informațiile de timing pentru cuvinte dacă există
-        if 'words' in subtitle:
-            formatted_subtitle['words'] = subtitle['words']
-        
-        formatted_subtitles.append(formatted_subtitle)
-    
-    return formatted_subtitles
+    return segmented_subtitles
+
+# Funcții originale păstrate pentru compatibilitate cu codul vechi
+def split_subtitle_into_segments(text, max_words_per_segment=4):
+    """
+    DEPRECATED: Folosește split_subtitle_into_segments_auto în loc.
+    Păstrată pentru compatibilitate.
+    """
+    # Convertim la noua funcție automat
+    return split_subtitle_into_segments_auto(text, max_lines=1, max_width_percent=70)
+
+def split_subtitle_into_lines(text, max_lines=2, max_width_percent=50, max_words_per_line=4):
+    """
+    DEPRECATED: Folosește split_subtitle_into_lines_auto în loc.
+    Păstrată pentru compatibilitate.
+    """
+    # Convertim la noua funcție automată
+    return split_subtitle_into_lines_auto(text, max_lines, max_width_percent)
+
+def break_long_subtitles(subtitles, max_words_per_segment=4):
+    """
+    DEPRECATED: Folosește break_long_subtitles_auto în loc.
+    Păstrată pentru compatibilitate.
+    """
+    # Convertim la noua funcție automată
+    return break_long_subtitles_auto(subtitles, max_lines=2, max_width_percent=70)
+
+def format_srt_with_line_limits(subtitles, max_lines=2, max_width_percent=50, max_words_per_line=4):
+    """
+    DEPRECATED: Folosește format_srt_with_auto_lines în loc.
+    Păstrată pentru compatibilitate.
+    """
+    # Convertim la noua funcție automată
+    return format_srt_with_auto_lines(subtitles, max_lines, max_width_percent)

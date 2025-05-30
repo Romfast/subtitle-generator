@@ -318,8 +318,10 @@ def generate_subtitles():
     style = data.get('style', {})
     requested_model = data.get('model', current_model_name)  # Model solicitat din frontend
     
-    max_words_per_line = style.get('maxWordsPerLine', 4)
-    max_lines = style.get('maxLines', 1)
+    # FIX #8: Folosim maxLines din configurare
+    max_lines = style.get('maxLines', 2)
+    # FIX #9: Nu mai folosim maxWordsPerLine - se calculează automat
+    max_width_percent = style.get('maxWidth', 50)  # Crescut la 70% pentru mai mult spați
     
     # Create a unique task ID for transcription
     task_id = str(uuid.uuid4())
@@ -403,34 +405,34 @@ def generate_subtitles():
             }
             raw_subtitles.append(subtitle_data)
         
-        # Aplicăm limitarea numărului de cuvinte per linie și de linii CHIAR LA GENERARE
-        # Folosim funcțiile din subtitles_utils.py
-        max_width_percent = style.get('maxWidth', 50)
+        # FIX #8 & #9: Folosim noile funcții cu calculare automată
+        # Obținem dimensiunile video pentru calcul precis
+        try:
+            probe_cmd = [
+                'ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                '-show_entries', 'stream=width,height', '-of', 'csv=s=x:p=0',
+                file_path
+            ]
+            video_dimensions = subprocess.check_output(probe_cmd, universal_newlines=True).strip()
+            if 'x' in video_dimensions:
+                video_width, video_height = map(int, video_dimensions.split('x'))
+                print(f"Video dimensions for subtitle calculation: {video_width}x{video_height}")
+            else:
+                video_width = 1920  # Default
+        except Exception as e:
+            print(f"Could not determine video dimensions, using default: {e}")
+            video_width = 1920
+
+         # Importăm noile funcții
+        from subtitles_utils import format_srt_with_auto_lines
         
-        # Pasul 1: Împărțim subtitrările lungi în segmente separate cu maxim max_words_per_line cuvinte
-        segmented_subtitles = break_long_subtitles(raw_subtitles, max_words_per_line)
-        
-        # Pasul 2: Formatăm fiecare segment pentru a respecta numărul maxim de linii
-        formatted_subtitles = []
-        for subtitle in segmented_subtitles:
-            formatted_text = split_subtitle_into_lines(
-                subtitle['text'], 
-                max_lines, 
-                max_width_percent,
-                max_words_per_line
-            )
-            
-            formatted_subtitle = {
-                'start': subtitle['start'],
-                'end': subtitle['end'],
-                'text': formatted_text
-            }
-            
-            # Păstrăm timing-ul word-level dacă există
-            if 'words' in subtitle:
-                formatted_subtitle['words'] = subtitle['words']
-            
-            formatted_subtitles.append(formatted_subtitle)
+        # Aplicăm noua formatare automată
+        formatted_subtitles = format_srt_with_auto_lines(
+            raw_subtitles, 
+            max_lines=max_lines,           # FIX #8: Configurabil
+            max_width_percent=max_width_percent,  # FIX #9: 70% în loc de 50%
+            video_width=video_width        # FIX #9: Dimensiuni reale video
+        )
         
         # Create subtitle file in VTT format
         subtitle_path = os.path.join(UPLOAD_FOLDER, f"{os.path.splitext(filename)[0]}.vtt")
@@ -521,9 +523,9 @@ def create_video_with_subtitles():
             'useKaraoke': bool(style.get('useKaraoke', False)),
             'currentWordColor': style.get('currentWordColor', '#FFFF00'),
             'currentWordBorderColor': style.get('currentWordBorderColor', '#000000'),
-            'maxLines': int(style.get('maxLines', 1)),
-            'maxWordsPerLine': int(style.get('maxWordsPerLine', 4)),
-            'maxWidth': int(style.get('maxWidth', 50))
+            'maxLines': int(style.get('maxLines', 2)),  # FIX #8: Include maxLines
+            'maxWidth': int(style.get('maxWidth', 50))   # FIX #9: Folosim 70% implicit
+            # FIX #9: Nu mai includem maxWordsPerLine
         }
         
         print('Validated and normalized style:', json.dumps(validated_style, indent=2))
@@ -558,16 +560,19 @@ def create_video_with_subtitles():
         update_task_status(task_id, "processing", 10, "Creare fișier temporar de subtitrări")
         
         # Extragem parametrii de stil din stilul validat
+        # FIX #8 & #9: Folosim noile funcții cu calculare automată
         max_lines = validated_style['maxLines']
         max_width = validated_style['maxWidth']
-        max_words_per_line = validated_style['maxWordsPerLine']
         
-        # Deja s-a aplicat limitarea la generare, dar o aplicăm din nou pentru siguranță
-        formatted_subtitles = format_srt_with_line_limits(
+        # Importăm noile funcții
+        from subtitles_utils import format_srt_with_auto_lines
+        
+        # Aplicăm formatarea automată pentru video final
+        formatted_subtitles = format_srt_with_auto_lines(
             subtitles, 
-            max_lines, 
-            max_width, 
-            max_words_per_line
+            max_lines=max_lines,
+            max_width_percent=max_width,
+            video_width=video_width
         )
         
         # Create a temporary SRT file with the subtitles
@@ -632,23 +637,20 @@ def create_video_with_subtitles():
 
         update_task_status(task_id, "processing", 30, "Aplicare subtitrări cu stil personalizat")
         
-        # Folosim un fișier ASS cu evidențiere precisă a cuvântului curent
+        # Create ASS file with precise word highlighting
         ass_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.ass")
         
-        # Folosim direct subtitrările formatate, fără întârziere suplimentară
-        print("Using original subtitle timings without additional delay")
+        print("Using formatted subtitles with auto-calculated word distribution")
         
-        # Alegem metoda potrivită în funcție de poziție și compatibilitate
+        # Alegem metoda potrivită pentru karaoke
         if use_custom_position:
-            # Folosim metoda word_by_word pentru poziționare personalizată
             if use_karaoke:
-                # FOLOSIM NOUA FUNCȚIE CU TIMING PRECIS
                 create_precise_word_highlighting_ass(
                     temp_srt_path,
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,  # Folosim mărimea pre-calculată
+                        'fontSize': font_size,
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -659,19 +661,18 @@ def create_video_with_subtitles():
                         'currentWordBorderColor': current_word_border_color,
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
-                        'useKaraoke': True,  # Activăm evidențierea
-                        'textAlign': 2  # Centrat pentru poziție personalizată
+                        'useKaraoke': True,
+                        'textAlign': 2
                     },
-                    formatted_subtitles  # Folosim subtitrările cu timing word-level
+                    formatted_subtitles
                 )
             else:
-                # Dacă nu folosim karaoke, creăm un fișier ASS simplu cu poziție personalizată
                 create_ass_file_with_custom_position(
                     temp_srt_path,
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,  # Folosim mărimea pre-calculată
+                        'fontSize': font_size,
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -684,15 +685,13 @@ def create_video_with_subtitles():
                     formatted_subtitles
                 )
         else:
-            # Poziționare standard
             if use_karaoke:
-                # FOLOSIM NOUA FUNCȚIE CU TIMING PRECIS pentru poziționare normală
                 create_precise_word_highlighting_ass(
                     temp_srt_path,
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,  # Folosim mărimea pre-calculată
+                        'fontSize': font_size,
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -701,19 +700,17 @@ def create_video_with_subtitles():
                         'currentWordBorderColor': current_word_border_color,
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
-                        'useKaraoke': True  # Activăm evidențierea
+                        'useKaraoke': True
                     },
                     formatted_subtitles
                 )
             else:
-                # Poziționare standard fără karaoke
-                # Cream un fișier ASS simplu
                 create_ass_file_with_custom_position(
                     temp_srt_path,
                     ass_path,
                     {
                         'fontFamily': font_family,
-                        'fontSize': font_size,  # Folosim mărimea pre-calculată
+                        'fontSize': font_size,
                         'fontColor': font_color,
                         'borderColor': border_color,
                         'borderWidth': border_width,
@@ -724,7 +721,6 @@ def create_video_with_subtitles():
                     formatted_subtitles
                 )
         
-        # Log pentru debugging
         print(f"Created ASS file at {ass_path}")
         
         # Folosim filtrul 'ass' direct
