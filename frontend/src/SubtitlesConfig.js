@@ -31,6 +31,29 @@ const predefinedColors = {
 
 // DEMO PRESETS - EXTINS cu presetări noi
 const DEMO_PRESETS = {
+  'default': {
+    name: 'Default',
+    description: 'Setările recomandate pentru majoritatea videoclipurilor - verde deschis cu evidențiere galbenă',
+    icon: '⭐',
+    style: {
+      fontSize: 48,
+      fontFamily: 'Bebas Neue',
+      fontColor: '#90EE90', // Verde deschis (Light Green)
+      borderColor: '#000000',
+      borderWidth: 2,
+      position: 'bottom',
+      useCustomPosition: true,
+      customX: 50,
+      customY: 90,
+      allCaps: true,
+      removePunctuation: false,
+      useKaraoke: true,
+      maxLines: 1,
+      maxWordsPerLine: 4,
+      currentWordColor: '#FFFF00', // Galben pentru evidențiere
+      currentWordBorderColor: '#000000'
+    }
+  },  
   'cinema_classic': {
     name: 'Cinema Clasic',
     description: 'Stil clasic de cinema cu font mare și contur pronunțat',

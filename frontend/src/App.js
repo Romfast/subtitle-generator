@@ -517,6 +517,24 @@ function App() {
   // DEMO PRESETS - aplicare presetare demo EXTINS
   const applyDemoPreset = (presetName) => {
     const demoPresets = {
+      'default': {
+        fontSize: 48,
+        fontFamily: 'Bebas Neue',
+        fontColor: '#90EE90',
+        borderColor: '#000000',
+        borderWidth: 3,
+        position: 'bottom',
+        useCustomPosition: true,
+        customX: 50,
+        customY: 90,
+        allCaps: true,
+        removePunctuation: false,
+        useKaraoke: false,
+        maxLines: 1,
+        maxWordsPerLine: 4,
+        currentWordColor: '#FFFF00',
+        currentWordBorderColor: '#000000'
+      },
       'cinema_classic': {
         fontSize: 32,
         fontFamily: 'Bebas Neue',
@@ -778,6 +796,24 @@ function App() {
                 paddingTop: '12px',
                 borderTop: '1px solid rgba(148, 163, 184, 0.2)'
               }}>
+                <button 
+                  onClick={() => applyDemoPreset('default_preset')}
+                  className="demo-preset-button"
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: '0.75rem',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title="Setările recomandate - verde deschis cu evidențiere galbenă"
+                >
+                  ⭐ Default
+                </button>                
                 <button 
                   onClick={() => applyDemoPreset('cinema_classic')}
                   className="demo-preset-button"
