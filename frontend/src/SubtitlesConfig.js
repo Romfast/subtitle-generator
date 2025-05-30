@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SubtitlesConfig.css';
 
 // Lista extinsă de culori predefinite pentru design modern
@@ -99,6 +99,18 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
   const [presets, setPresets] = useState([]);
   const [presetName, setPresetName] = useState('');
   const [showSavePreset, setShowSavePreset] = useState(false);
+  
+  // FIX: State local pentru slidere pentru a evita re-renderurile imediate
+  const [localSliderValues, setLocalSliderValues] = useState({
+    fontSize: subtitleStyle.fontSize || 48,
+    borderWidth: subtitleStyle.borderWidth || 2,
+    maxLines: subtitleStyle.maxLines || 1,
+    customX: subtitleStyle.customX || 50,
+    customY: subtitleStyle.customY || 90
+  });
+  
+  // FIX: Refs pentru debouncing
+  const debounceTimeouts = useRef({});
 
   // Detectare mobil
   useEffect(() => {
@@ -111,8 +123,23 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     
     return () => {
       window.removeEventListener('resize', checkMobile);
+      // Cleanup timeouts
+      Object.values(debounceTimeouts.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
     };
   }, []);
+
+  // FIX: Sincronizare cu props când se schimbă din exterior
+  useEffect(() => {
+    setLocalSliderValues({
+      fontSize: subtitleStyle.fontSize || 48,
+      borderWidth: subtitleStyle.borderWidth || 2,
+      maxLines: subtitleStyle.maxLines || 1,
+      customX: subtitleStyle.customX || 50,
+      customY: subtitleStyle.customY || 90
+    });
+  }, [subtitleStyle.fontSize, subtitleStyle.borderWidth, subtitleStyle.maxLines, subtitleStyle.customX, subtitleStyle.customY]);
 
   // Încarcă presetările la pornire
   useEffect(() => {
@@ -282,16 +309,36 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     });
   };
 
-  // FIX #4 & #7: Range input cu suport complet pentru drag
-  const handleRangeChange = (e) => {
+  // FIX: Handler optimizat pentru slidere cu debouncing
+  const handleSliderChange = useCallback((name, value) => {
+    // Actualizare imediată a stării locale pentru feedback vizual
+    setLocalSliderValues(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Debounce pentru actualizarea stării principale
+    if (debounceTimeouts.current[name]) {
+      clearTimeout(debounceTimeouts.current[name]);
+    }
+    
+    debounceTimeouts.current[name] = setTimeout(() => {
+      console.log(`Debounced slider change: ${name} = ${value}`);
+      handleStyleChange({
+        target: {
+          name,
+          value: parseInt(value, 10)
+        }
+      });
+    }, 150); // 150ms debounce
+  }, [handleStyleChange]);
+
+  // FIX: Handler pentru input direct (fără debounce)
+  const handleDirectChange = useCallback((e) => {
     const { name, value } = e.target;
-    handleStyleChange({
-      target: {
-        name,
-        value: parseInt(value, 10)
-      }
-    });
-  };
+    console.log(`Direct change: ${name} = ${value}`);
+    handleStyleChange(e);
+  }, [handleStyleChange]);
 
   // Componentă pentru selectorul de culori cu design modern
   const ModernColorSelector = ({ colorType, currentColor, colorName }) => {
@@ -302,7 +349,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             type="color" 
             name={colorName} 
             value={currentColor} 
-            onChange={handleStyleChange}
+            onChange={handleDirectChange}
             className="modern-color-picker"
           />
           <span className="color-value">{currentColor}</span>
@@ -324,13 +371,16 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     );
   };
 
-  // FIX #7: Range slider cu drag complet
+  // FIX: Range slider OPTIMIZAT fără refresh excesiv
   const ModernRangeSlider = ({ name, value, min, max, label, unit = '', step = 1 }) => {
+    // Folosim valoarea locală pentru afișare
+    const displayValue = localSliderValues[name] !== undefined ? localSliderValues[name] : value;
+    
     return (
       <div className="modern-range-container">
         <div className="range-header">
           <span className="range-label">{label}</span>
-          <span className="range-value-display">{value}{unit}</span>
+          <span className="range-value-display">{displayValue}{unit}</span>
         </div>
         <input 
           type="range" 
@@ -338,11 +388,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           min={min} 
           max={max}
           step={step}
-          value={value} 
-          onChange={handleRangeChange}
+          value={displayValue} 
+          onChange={(e) => handleSliderChange(name, e.target.value)}
           className="modern-range-slider"
           style={{
-            background: `linear-gradient(to right, #667eea 0%, #667eea ${((value - min) / (max - min)) * 100}%, #e2e8f0 ${((value - min) / (max - min)) * 100}%, #e2e8f0 100%)`
+            background: `linear-gradient(to right, #667eea 0%, #667eea ${((displayValue - min) / (max - min)) * 100}%, #e2e8f0 ${((displayValue - min) / (max - min)) * 100}%, #e2e8f0 100%)`
           }}
         />
       </div>
@@ -423,7 +473,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               name="fontFamily"
               value={subtitleStyle.fontFamily}
               label="Font"
-              onChange={handleStyleChange}
+              onChange={handleDirectChange}
               options={[
                 { value: 'Poppins', label: 'Poppins (Modern)' },
                 { value: 'Inter', label: 'Inter (Clean)' },
@@ -522,7 +572,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               name="position"
               value={subtitleStyle.position}
               label="Poziție Predefinită"
-              onChange={handleStyleChange}
+              onChange={handleDirectChange}
               options={[
                 { value: 'bottom', label: 'Jos (90%)' },
                 { value: 'bottom-20', label: 'Jos-20% (80%)' },

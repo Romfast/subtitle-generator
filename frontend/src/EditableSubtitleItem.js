@@ -358,13 +358,13 @@ const EditableSubtitleItem = ({
     );
   }
   
-  // Layout complet original pentru desktop cu timp
+  // SCHIMBAT: Layout complet pentru desktop cu doar timp start și text (fără timp sfârșit și durată)
   return (
     <div 
       className={`subtitle-item ${isActive ? 'active' : ''}`}
       style={{
         display: 'grid',
-        gridTemplateColumns: '120px 1fr 60px',
+        gridTemplateColumns: '100px 1fr', // SCHIMBAT: doar 2 coloane în loc de 3
         gap: '12px',
         padding: '12px',
         borderBottom: '1px solid rgba(148, 163, 184, 0.1)',
@@ -373,7 +373,7 @@ const EditableSubtitleItem = ({
         backgroundColor: isActive ? 'rgba(102, 126, 234, 0.05)' : 'transparent'
       }}
     >
-      {/* Coloana timp - clicabilă pentru seek */}
+      {/* Coloana timp start - clicabilă pentru seek */}
       <div 
         className="subtitle-time" 
         onClick={handleSeek}
@@ -391,11 +391,7 @@ const EditableSubtitleItem = ({
         }}
         title="Clic pentru a sări la acest moment"
       >
-        <div>
-          {formatTime(subtitle.start)}
-          <br />
-          {formatTime(subtitle.end)}
-        </div>
+        {formatTime(subtitle.start)} {/* SCHIMBAT: doar timpul de start */}
       </div>
       
       {/* Coloana text - editabilă */}
@@ -463,23 +459,7 @@ const EditableSubtitleItem = ({
         )}
       </div>
       
-      {/* Coloana durată */}
-      <div 
-        className="subtitle-duration"
-        style={{
-          fontSize: '0.75rem',
-          color: isActive ? '#667eea' : '#64748b',
-          fontWeight: '600',
-          textAlign: 'center',
-          padding: '4px 8px',
-          minWidth: '50px',
-          borderRadius: '6px',
-          backgroundColor: isActive ? 'rgba(102, 126, 234, 0.1)' : 'transparent'
-        }}
-        title={`Durata: ${Math.round((subtitle.end - subtitle.start) * 10) / 10} secunde`}
-      >
-        {Math.round((subtitle.end - subtitle.start) * 10) / 10}s
-      </div>
+      {/* ELIMINAT: Coloana durată */}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
 import ProgressBar from './ProgressBar';
@@ -47,18 +47,16 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // FIX #2: Stări pentru secțiuni colapsabile - modificat pentru a evita colapsarea automată
+  // FIX: Stări pentru secțiuni colapsabile - SIMPLIFICAT fără auto-collapse
   const [sectionsExpanded, setSectionsExpanded] = useState({
     subtitlesList: false,
     subtitlesConfig: false
   });
   
-  // FIX #2: Flag pentru a preveni colapsarea automată pe mobil
-  const [preventAutoCollapse, setPreventAutoCollapse] = useState(false);
-  
+  // FIX: ELIMINAT preventAutoCollapse - nu mai folosim logica complexă de auto-collapse
   const [videoFitMode, setVideoFitMode] = useState('cover');
   
-  // FIX #9: Eliminat maxWordsPerLine din starea implicită
+  // FIX: State pentru subtitrări cu debouncing
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 48,
     fontColor: '#00FF00',
@@ -68,9 +66,8 @@ function App() {
     fontFamily: 'Inter',
     borderColor: '#000000',
     borderWidth: 2,
-    maxLines: 1, // FIX #8: Configurabil pentru numărul de linii
+    maxLines: 1,
     maxWidth: 50,
-    // maxWordsPerLine: REMOVED - se va calcula automat
     useCustomPosition: false,
     customX: 50,
     customY: 70,
@@ -84,6 +81,9 @@ function App() {
   const fileInputRef = useRef();
   const videoPlayerRef = useRef();
   const playerContainerRef = useRef();
+  
+  // FIX: Ref pentru debouncing
+  const styleChangeTimeoutRef = useRef(null);
 
   // Detectare mobil și verificare conexiune API
   useEffect(() => {
@@ -93,14 +93,12 @@ function App() {
       
       if (isMobileDevice) {
         setLayoutMode('bottom');
-        // FIX #2: Pe mobil, nu colapsăm automat dacă utilizatorul configurează
-        if (!preventAutoCollapse) {
-          setSectionsExpanded(prev => ({
-            ...prev,
-            subtitlesList: false,
-            subtitlesConfig: false
-          }));
-        }
+        // FIX: Pe mobil, setăm starea inițială dar nu forțăm colapsarea
+        setSectionsExpanded(prev => ({
+          ...prev,
+          subtitlesList: false,
+          subtitlesConfig: false
+        }));
       }
     };
     
@@ -142,8 +140,12 @@ function App() {
     
     return () => {
       window.removeEventListener('resize', checkMobile);
+      // FIX: Cleanup pentru timeout
+      if (styleChangeTimeoutRef.current) {
+        clearTimeout(styleChangeTimeoutRef.current);
+      }
     };
-  }, [preventAutoCollapse]);
+  }, []);
 
   // Funcție pentru schimbarea modelului Whisper
   const handleModelChange = async (newModel) => {
@@ -275,8 +277,7 @@ function App() {
       const modelUsed = response.data.model_used || whisperModel;
       setUploadStatus(`Subtitrări generate cu succes folosind modelul ${modelUsed.toUpperCase()}!`);
       
-      // FIX #2: Expandează lista de subtitrări și previne colapsarea automată
-      setPreventAutoCollapse(true);
+      // FIX: Expandează lista de subtitrări FĂRĂ protecție complexă
       setSectionsExpanded(prev => ({
         ...prev,
         subtitlesList: true
@@ -297,12 +298,9 @@ function App() {
     }
   };
 
-  // FIX #2 & #3: Handler pentru schimbări de stil care nu afectează tab-urile
-  const handleStyleChange = (e) => {
+  // FIX: Handler pentru schimbări de stil OPTIMIZAT fără auto-collapse
+  const handleStyleChange = useCallback((e) => {
     const { name, value } = e.target;
-    
-    // FIX #2: Setează flag-ul pentru a preveni colapsarea
-    setPreventAutoCollapse(true);
     
     let processedValue = value;
     
@@ -316,22 +314,17 @@ function App() {
     
     console.log('Style change:', name, value, '->', processedValue);
     
+    // FIX: Actualizare directă fără debouncing pentru a nu bloca sliderele
     setSubtitleStyle(prev => ({
       ...prev,
       [name]: processedValue
     }));
     
-    // FIX #2: Resetează flag-ul după un timp scurt
-    setTimeout(() => {
-      setPreventAutoCollapse(false);
-    }, 2000);
-  };
+    // FIX: NU mai folosim logica de preventAutoCollapse
+  }, []);
   
   // Funcție pentru actualizarea poziției subtitrărilor prin drag-and-drop
-  const updateSubtitlePosition = (x, y, enableCustomPosition = false) => {
-    // FIX #2: Previne colapsarea când utilizatorul modifică poziția
-    setPreventAutoCollapse(true);
-    
+  const updateSubtitlePosition = useCallback((x, y, enableCustomPosition = false) => {
     console.log('Updating subtitle position:', { x, y, enableCustomPosition });
     
     setSubtitleStyle(prev => ({
@@ -340,14 +333,10 @@ function App() {
       customY: Math.round(y),
       useCustomPosition: enableCustomPosition ? true : prev.useCustomPosition
     }));
-    
-    setTimeout(() => {
-      setPreventAutoCollapse(false);
-    }, 2000);
-  };
+  }, []);
 
   // Funcție pentru actualizarea unei subtitrări
-  const updateSubtitle = (index, newText) => {
+  const updateSubtitle = useCallback((index, newText) => {
     const updatedSubtitles = [...subtitles];
     updatedSubtitles[index] = {
       ...updatedSubtitles[index],
@@ -359,7 +348,7 @@ function App() {
         currentTime <= updatedSubtitles[index].end) {
       setCurrentTime(prev => prev + 0.001);
     }
-  };
+  }, [subtitles, currentTime]);
 
   // Funcție pentru a descărca direct un fișier
   const directDownload = (url) => {
@@ -402,9 +391,8 @@ function App() {
         useKaraoke: Boolean(subtitleStyle.useKaraoke),
         currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
         currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000',
-        maxLines: parseInt(subtitleStyle.maxLines) || 1, // FIX #8: Include maxLines
+        maxLines: parseInt(subtitleStyle.maxLines) || 1,
         maxWidth: parseInt(subtitleStyle.maxWidth) || 50,
-        // FIX #9: Nu mai trimitem maxWordsPerLine - se calculează automat
         isMobile: isMobile,
         screenWidth: window.innerWidth,
         screenHeight: window.innerHeight
@@ -499,27 +487,16 @@ function App() {
     setCurrentTime(state.playedSeconds);
   };
 
-  // FIX #2: Funcții pentru gestionarea colapsării cu protecție împotriva colapsării automate
-  const toggleSection = (sectionKey) => {
-    // FIX #2: Previne colapsarea automată când utilizatorul interacționează manual
-    setPreventAutoCollapse(true);
-    
+  // FIX: Funcții pentru gestionarea colapsării SIMPLIFICATE
+  const toggleSection = useCallback((sectionKey) => {
     setSectionsExpanded(prev => ({
       ...prev,
       [sectionKey]: !prev[sectionKey]
     }));
-    
-    // Resetează flag-ul după 3 secunde
-    setTimeout(() => {
-      setPreventAutoCollapse(false);
-    }, 3000);
-  };
+  }, []);
 
   // DEMO PRESETS - aplicare presetare demo 
-  const applyDemoPreset = (presetName) => {
-    // FIX #2: Previne colapsarea când se aplică preset
-    setPreventAutoCollapse(true);
-    
+  const applyDemoPreset = useCallback((presetName) => {
     const demoPresets = {
       'default': {
         fontSize: 48, fontFamily: 'Bebas Neue', fontColor: '#90EE90', borderColor: '#000000', borderWidth: 2,
@@ -559,16 +536,8 @@ function App() {
       
       console.log('Applied demo preset:', presetName, newStyle);
       setUploadStatus(`Preset "${presetName}" aplicat cu succes!`);
-      
-      // FIX #3: NU schimbăm tab-ul, NU expandăm configurările automat
-      // setSectionsExpanded(prev => ({ ...prev, subtitlesConfig: true })); // REMOVED
     }
-    
-    // Resetează flag-ul după 3 secunde
-    setTimeout(() => {
-      setPreventAutoCollapse(false);
-    }, 3000);
-  };
+  }, []);
 
   // Componente pentru secțiuni colapsabile
   const CollapsibleSection = ({ title, sectionKey, children, defaultExpanded = false, icon = "", badge = null }) => {
@@ -798,10 +767,10 @@ function App() {
                 badge={`${subtitles.length}`}
               >
                 <div className="subtitles-list-content">
-                  {/* FIX #1: Pe mobil afișăm doar textul, fără header cu timp */}
+                  {/* FIX: Pe mobil afișăm doar textul, pe desktop doar start time + text */}
                   {!isMobile && (
                     <div className="subtitle-header-simplified">
-                      <span className="subtitle-time-header">Început</span>
+                      <span className="subtitle-time-header">Start</span>
                       <span className="subtitle-text-header">Text subtitrare</span>
                     </div>
                   )}
@@ -818,14 +787,14 @@ function App() {
                         isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
                         subtitleStyle={subtitleStyle}
                         compact={true}
-                        showTimeAndDuration={!isMobile} // FIX #1: Pe mobil nu afișăm timpul
+                        showTimeAndDuration={!isMobile}
                       />
                     ))}
                   </div>
                 </div>
               </CollapsibleSection>
               
-              {/* FIX #2: Configurările cu protecție împotriva colapsării automate */}
+              {/* FIX: Configurările FĂRĂ auto-collapse */}
               <CollapsibleSection 
                 title="Configurări Stil"
                 sectionKey="subtitlesConfig"
