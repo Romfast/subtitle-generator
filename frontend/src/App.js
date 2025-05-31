@@ -691,106 +691,85 @@ function App() {
           </div>
         </section>
 
-        {/* VIDEO SECTION - Layout desktop îmbunătățit */}
+        {/* VIDEO SECTION - DOAR VIDEO, fără configurări */}
         {videoUrl && (
           <section className="video-section">
             <h2>Preview Video</h2>
             
-            {/* Container pentru video și configurări side-by-side pe desktop */}
-            <div className={`video-and-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
-              
-              {/* Partea stângă - Video */}
-              <div className="video-wrapper">
-                <div className="video-preview-container">
-                  <div className="player-wrapper" ref={playerContainerRef}>
-                    <ReactPlayer 
-                      ref={videoPlayerRef}
-                      url={videoUrl} 
-                      controls 
-                      width="100%" 
-                      height="100%" 
-                      className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
-                      playing={playing}
-                      onProgress={handleProgress}
-                      onPause={() => setPlaying(false)}
-                      onPlay={() => setPlaying(true)}
-                    />
-                    
-                    {/* Overlay pentru subtitrări peste video */}
-                    {subtitles.length > 0 && (
-                      <SubtitlePreview 
-                        subtitles={subtitles}
-                        currentTime={currentTime}
-                        subtitleStyle={subtitleStyle}
-                        updatePosition={updateSubtitlePosition}
-                        updateSubtitle={updateSubtitle}
-                      />
-                    )}
-                  </div>
+            {/* Container pentru DOAR video - fără configurări */}
+            <div className="video-container-standalone">
+              <div className="video-preview-container">
+                <div className="player-wrapper" ref={playerContainerRef}>
+                  <ReactPlayer 
+                    ref={videoPlayerRef}
+                    url={videoUrl} 
+                    controls 
+                    width="100%" 
+                    height="100%" 
+                    className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
+                    playing={playing}
+                    onProgress={handleProgress}
+                    onPause={() => setPlaying(false)}
+                    onPlay={() => setPlaying(true)}
+                  />
                   
-                  {/* Instrucțiuni mobile compacte */}
-                  {isMobile && subtitles.length > 0 && (
-                    <div className="mobile-instructions compact">
-                      <span className="emoji">💡</span>
-                      <span style={{ fontSize: '0.8rem' }}>Drag subtitrarea pentru poziționare</span>
-                      <button
-                        onClick={() => {
-                          const newMode = videoFitMode === 'cover' ? 'contain' : 'cover';
-                          setVideoFitMode(newMode);
-                          if (videoPlayerRef.current) {
-                            const videoEl = videoPlayerRef.current.getInternalPlayer();
-                            if (videoEl && videoEl.style) {
-                              videoEl.style.objectFit = newMode;
-                            }
-                          }
-                        }}
-                        style={{
-                          padding: '4px 8px', fontSize: '0.7rem', background: 'rgba(102, 126, 234, 0.8)',
-                          color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'
-                        }}
-                        title={videoFitMode === 'cover' ? 'Arată tot video-ul' : 'Umple ecranul'}
-                      >
-                        {videoFitMode === 'cover' ? '📐' : '📱'}
-                      </button>
-                    </div>
+                  {/* Overlay pentru subtitrări peste video */}
+                  {subtitles.length > 0 && (
+                    <SubtitlePreview 
+                      subtitles={subtitles}
+                      currentTime={currentTime}
+                      subtitleStyle={subtitleStyle}
+                      updatePosition={updateSubtitlePosition}
+                      updateSubtitle={updateSubtitle}
+                    />
                   )}
                 </div>
+                
+                {/* Instrucțiuni mobile compacte */}
+                {isMobile && subtitles.length > 0 && (
+                  <div className="mobile-instructions compact">
+                    <span className="emoji">💡</span>
+                    <span style={{ fontSize: '0.8rem' }}>Drag subtitrarea pentru poziționare</span>
+                    <button
+                      onClick={() => {
+                        const newMode = videoFitMode === 'cover' ? 'contain' : 'cover';
+                        setVideoFitMode(newMode);
+                        if (videoPlayerRef.current) {
+                          const videoEl = videoPlayerRef.current.getInternalPlayer();
+                          if (videoEl && videoEl.style) {
+                            videoEl.style.objectFit = newMode;
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: '4px 8px', fontSize: '0.7rem', background: 'rgba(102, 126, 234, 0.8)',
+                        color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'
+                      }}
+                      title={videoFitMode === 'cover' ? 'Arată tot video-ul' : 'Umple ecranul'}
+                    >
+                      {videoFitMode === 'cover' ? '📐' : '📱'}
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* Partea dreaptă - Configurări pe desktop */}
-              {!isMobile && subtitles.length > 0 && (
-                <div className="config-sidebar">
-                  <CollapsibleSection 
-                    title="Configurări Stil"
-                    sectionKey="subtitlesConfig"
-                    defaultExpanded={true}
-                    icon="🎨"
-                  >
-                    <SubtitlesConfig 
-                      subtitleStyle={subtitleStyle}
-                      handleStyleChange={handleStyleChange}
-                      compact={true}
-                    />
-                  </CollapsibleSection>
-                </div>
-              )}
             </div>
           </section>
         )}
 
-        {/* SUBTITLES PANEL - pe mobil sub video, pe desktop sub video+config */}
+        {/* SUBTITLES & CONFIG PANEL - SIDE BY SIDE */}
         {subtitles.length > 0 && (
-          <section className="subtitles-management-section">
-            <h2>Subtitrări {isMobile ? 'și Configurări' : ''}</h2>
+          <section className="subtitles-and-config-section">
+            <h2>Subtitrări și Configurări</h2>
             
-            <div className={`subtitles-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
+            {/* Container principal pentru subtitrări + configurări side-by-side */}
+            <div className={`subtitles-and-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
               
-              {/* Lista subtitrări */}
-              <div className="subtitles-list-wrapper">
+              {/* Panel stâng - Lista subtitrări */}
+              <div className="subtitles-panel">
                 <CollapsibleSection 
-                  title="Subtitrări"
+                  title="Lista Subtitrări"
                   sectionKey="subtitlesList"
-                  defaultExpanded={!isMobile}
+                  defaultExpanded={true}
                   icon="📝"
                   badge={`${subtitles.length}`}
                 >
@@ -822,23 +801,21 @@ function App() {
                 </CollapsibleSection>
               </div>
               
-              {/* Pe mobil, configurările sunt aici */}
-              {isMobile && (
-                <div className="config-panel-wrapper">
-                  <CollapsibleSection 
-                    title="Configurări Stil"
-                    sectionKey="subtitlesConfig"
-                    defaultExpanded={false}
-                    icon="🎨"
-                  >
-                    <SubtitlesConfig 
-                      subtitleStyle={subtitleStyle}
-                      handleStyleChange={handleStyleChange}
-                      compact={true}
-                    />
-                  </CollapsibleSection>
-                </div>
-              )}
+              {/* Panel drept - Configurări stil */}
+              <div className="config-panel">
+                <CollapsibleSection 
+                  title="Configurări Stil"
+                  sectionKey="subtitlesConfig"
+                  defaultExpanded={true}
+                  icon="🎨"
+                >
+                  <SubtitlesConfig 
+                    subtitleStyle={subtitleStyle}
+                    handleStyleChange={handleStyleChange}
+                    compact={true}
+                  />
+                </CollapsibleSection>
+              </div>
             </div>
           </section>
         )}

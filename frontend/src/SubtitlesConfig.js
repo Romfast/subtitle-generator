@@ -760,56 +760,84 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           </div>
         </div>
 
-        {/* Salvare presetări */}
+        {/* Salvare presetări - SECȚIUNE COMPLETĂ SIMPLIFICATĂ */}
         <div className="control-group">
           <h4 className="group-title">💾 Presetări Personale</h4>
-          <div className="controls-grid">
-            
+          
+          {/* Buton salvare centralizat și mare */}
+          <div style={{ 
+            textAlign: 'center',
+            marginBottom: '20px'
+          }}>
             {!showSavePreset ? (
               <button 
-                className="preset-button save"
                 onClick={() => setShowSavePreset(true)}
                 style={{
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  padding: '16px 32px',
                   cursor: 'pointer',
-                  fontWeight: '600'
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+                  transition: 'all 0.3s ease',
+                  width: '100%',
+                  maxWidth: '300px'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 24px rgba(16, 185, 129, 0.4)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3)';
                 }}
               >
-                + Salvează Configurația Curentă
+                💾 Salvează Configurația Curentă
               </button>
             ) : (
-              <div className="save-preset-form" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '12px',
+                alignItems: 'center',
+                maxWidth: '300px',
+                margin: '0 auto'
+              }}>
                 <input
                   type="text"
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
                   placeholder="Numele presetării"
                   style={{
-                    padding: '12px',
+                    width: '100%',
+                    padding: '12px 16px',
                     border: '2px solid #e2e8f0',
                     borderRadius: '8px',
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    textAlign: 'center',
+                    outline: 'none'
                   }}
                   onKeyPress={(e) => e.key === 'Enter' && savePreset()}
                 />
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                   <button 
                     onClick={savePreset}
+                    disabled={!presetName.trim()}
                     style={{
-                      background: '#10b981',
-                      color: 'white',
+                      flex: 1,
+                      background: presetName.trim() ? '#10b981' : '#e5e7eb',
+                      color: presetName.trim() ? 'white' : '#9ca3af',
                       border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 16px',
-                      cursor: 'pointer',
-                      flex: 1
+                      borderRadius: '8px',
+                      padding: '10px 16px',
+                      cursor: presetName.trim() ? 'pointer' : 'not-allowed',
+                      fontWeight: '600'
                     }}
                   >
-                    Salvează
+                    ✅ Salvează
                   </button>
                   <button 
                     onClick={() => {
@@ -817,46 +845,88 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                       setPresetName('');
                     }}
                     style={{
-                      background: '#e5e7eb',
+                      flex: 1,
+                      background: '#f3f4f6',
                       color: '#374151',
                       border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 16px',
-                      cursor: 'pointer'
+                      borderRadius: '8px',
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      fontWeight: '600'
                     }}
                   >
-                    Anulează
+                    ❌ Anulează
                   </button>
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Lista presetărilor salvate și demo */}
-            {presets.length > 0 && (
-              <div style={{ gridColumn: '1 / -1' }}>
-                <h5 style={{ margin: '16px 0 12px 0', fontSize: '0.9rem', color: '#6b7280' }}>
-                  Presetări disponibile ({presets.length}):
-                </h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
-                  {presets.map((preset) => (
-                    <div key={preset.id} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px',
-                      background: preset.isDemo ? 'rgba(102, 126, 234, 0.05)' : 'rgba(248, 250, 252, 0.8)',
-                      border: preset.isDemo ? '1px solid rgba(102, 126, 234, 0.2)' : '1px solid #e2e8f0',
-                      borderRadius: '8px'
-                    }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>
-                          {preset.name}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                          {preset.style?.fontFamily} {preset.style?.fontSize}px
-                          {preset.isDemo && ' • Demo'}
-                        </div>
+          {/* Lista simplificată de presetări */}
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            padding: '16px'
+          }}>
+            <div style={{
+              fontWeight: '700',
+              fontSize: '0.9rem',
+              color: '#1e293b',
+              marginBottom: '12px',
+              textAlign: 'center'
+            }}>
+              📋 Presetări Disponibile ({presets.length})
+            </div>
+            
+            {presets.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                color: '#64748b',
+                padding: '20px'
+              }}>
+                Nu există presetări salvate
+              </div>
+            ) : (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '8px',
+                maxHeight: '300px',
+                overflowY: 'auto'
+              }}>
+                {presets.map((preset) => (
+                  <div key={preset.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px',
+                    background: preset.isDemo ? 
+                      'rgba(102, 126, 234, 0.1)' : 
+                      'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ 
+                        fontWeight: '600', 
+                        fontSize: '0.9rem',
+                        color: preset.isDemo ? '#4f46e5' : '#1e293b',
+                        marginBottom: '4px'
+                      }}>
+                        {preset.name}
                       </div>
+                      <div style={{ 
+                        fontSize: '0.75rem', 
+                        color: '#64748b'
+                      }}>
+                        {preset.style?.fontFamily} {preset.style?.fontSize}px
+                        {preset.isDemo && ' • Demo'}
+                        {preset.style?.useKaraoke && ' • 🎤'}
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '6px' }}>
                       <button 
                         onClick={() => loadPreset(preset)}
                         style={{
@@ -864,13 +934,15 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
-                          padding: '6px 12px',
+                          padding: '8px 12px',
                           cursor: 'pointer',
-                          fontSize: '0.8rem'
+                          fontSize: '0.75rem',
+                          fontWeight: '600'
                         }}
                       >
-                        Încarcă
+                        📥
                       </button>
+                      
                       {!preset.isDemo && (
                         <button 
                           onClick={() => deletePreset(preset.id)}
@@ -879,20 +951,20 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
-                            padding: '6px 8px',
+                            padding: '8px 10px',
                             cursor: 'pointer',
-                            fontSize: '0.8rem'
+                            fontSize: '0.75rem',
+                            fontWeight: '600'
                           }}
                         >
-                          ✕
+                          🗑️
                         </button>
                       )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             )}
-
           </div>
         </div>
 
@@ -904,11 +976,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           </div>
           <div className="status-row">
             <span className="status-label">Contur:</span>
-            <span className="status-value">{localStyle.borderWidth}px rotunjit</span>
+            <span className="status-value">{localStyle.borderWidth}px</span>
           </div>
           <div className="status-row">
             <span className="status-label">Linii:</span>
-            <span className="status-value">{localStyle.maxLines || 2} (auto-calculate cuvinte)</span>
+            <span className="status-value">{localStyle.maxLines || 2}</span>
           </div>
           <div className="status-row">
             <span className="status-label">Karaoke:</span>
