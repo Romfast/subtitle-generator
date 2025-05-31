@@ -47,9 +47,6 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // FIX #1: State pentru aplicarea manuală a setărilor
-  const [pendingStyleChanges, setPendingStyleChanges] = useState(false);
-  
   // FIX: Stări pentru secțiuni colapsabile - SIMPLIFICAT fără auto-collapse
   const [sectionsExpanded, setSectionsExpanded] = useState({
     subtitlesList: false,
@@ -58,7 +55,7 @@ function App() {
   
   const [videoFitMode, setVideoFitMode] = useState('cover');
   
-  // FIX: State pentru subtitrări - ÎMBUNATĂȚIT cu state local pentru configurare
+  // FIX: DOAR un state pentru subtitrări - ELIMINAT state local duplicat
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 48,
     fontColor: '#00FF00',
@@ -80,9 +77,6 @@ function App() {
     useKaraoke: true
   });
 
-  // FIX #1: State local pentru configurări care nu sunt aplicate încă
-  const [localSubtitleStyle, setLocalSubtitleStyle] = useState(subtitleStyle);
-
   const fileInputRef = useRef();
   const videoPlayerRef = useRef();
   const playerContainerRef = useRef();
@@ -95,7 +89,7 @@ function App() {
       
       if (isMobileDevice) {
         setLayoutMode('bottom');
-        // FIX: Pe mobil, setăm starea inițială dar nu forțăm colapsarea
+        // Pe mobil, setăm starea inițială dar nu forțăm colapsarea
         setSectionsExpanded(prev => ({
           ...prev,
           subtitlesList: false,
@@ -304,8 +298,8 @@ function App() {
     }
   };
 
-  // FIX #1: Handler pentru schimbări de stil LOCAL (nu se aplică automat)
-  const handleLocalStyleChange = useCallback((e) => {
+  // FIX: Handler SIMPLIFICAT pentru schimbări de stil - SE APLICĂ DIRECT
+  const handleStyleChange = useCallback((e) => {
     const { name, value } = e.target;
     
     let processedValue = value;
@@ -318,46 +312,20 @@ function App() {
       processedValue = Boolean(value);
     }
     
-    console.log('Local style change:', name, value, '->', processedValue);
+    console.log('Style change applied immediately:', name, value, '->', processedValue);
     
-    // Actualizăm doar state-ul local, nu se aplică în preview
-    setLocalSubtitleStyle(prev => ({
+    // FIX: Aplicăm direct modificarea - fără pending
+    setSubtitleStyle(prev => ({
       ...prev,
       [name]: processedValue
     }));
-    
-    // Marcăm că avem modificări în așteptare
-    setPendingStyleChanges(true);
   }, []);
-
-  // FIX #1: Funcție pentru aplicarea setărilor manual
-  const applyStyleSettings = useCallback(() => {
-    setSubtitleStyle(localSubtitleStyle);
-    setPendingStyleChanges(false);
-    setUploadStatus('Setări aplicate cu succes!');
-    console.log('Applied style settings:', localSubtitleStyle);
-  }, [localSubtitleStyle]);
-
-  // FIX #1: Funcție pentru resetarea setărilor la valorile aplicate
-  const resetStyleSettings = useCallback(() => {
-    setLocalSubtitleStyle(subtitleStyle);
-    setPendingStyleChanges(false);
-    console.log('Reset style settings to applied values');
-  }, [subtitleStyle]);
   
   // Funcție pentru actualizarea poziției subtitrărilor prin drag-and-drop
   const updateSubtitlePosition = useCallback((x, y, enableCustomPosition = false) => {
     console.log('Updating subtitle position:', { x, y, enableCustomPosition });
     
     setSubtitleStyle(prev => ({
-      ...prev,
-      customX: Math.round(x),
-      customY: Math.round(y),
-      useCustomPosition: enableCustomPosition ? true : prev.useCustomPosition
-    }));
-
-    // Sincronizăm și state-ul local
-    setLocalSubtitleStyle(prev => ({
       ...prev,
       customX: Math.round(x),
       customY: Math.round(y),
@@ -565,10 +533,8 @@ function App() {
     if (demoPresets[presetName]) {
       const newStyle = { ...demoPresets[presetName] };
       
-      // FIX #1: Aplicăm direct (demo presets se aplică imediat)
+      // FIX: Aplicăm direct (demo presets se aplică imediat)
       setSubtitleStyle(newStyle);
-      setLocalSubtitleStyle(newStyle);
-      setPendingStyleChanges(false);
       
       console.log('Applied demo preset:', presetName, newStyle);
       setUploadStatus(`Preset "${presetName}" aplicat cu succes!`);
@@ -695,32 +661,6 @@ function App() {
                 </button>
               </div>
             )}
-
-            {/* FIX #1: Buton aplicare setări și status modificări */}
-            {pendingStyleChanges && (
-              <div className="pending-changes-panel">
-                <div className="pending-changes-info">
-                  <span className="changes-icon">⚠️</span>
-                  <span>Aveți modificări neaplicate la configurarea subtitrărilor</span>
-                </div>
-                <div className="changes-buttons">
-                  <button 
-                    onClick={applyStyleSettings}
-                    className="apply-changes-button"
-                    disabled={isProcessing}
-                  >
-                    ✅ Aplică Setările
-                  </button>
-                  <button 
-                    onClick={resetStyleSettings}
-                    className="reset-changes-button"
-                    disabled={isProcessing}
-                  >
-                    ↶ Resetează
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
           
           {/* Bare de progres compacte */}
@@ -751,12 +691,12 @@ function App() {
           </div>
         </section>
 
-        {/* VIDEO SECTION - FIX #5: Layout desktop îmbunătățit */}
+        {/* VIDEO SECTION - Layout desktop îmbunătățit */}
         {videoUrl && (
           <section className="video-section">
             <h2>Preview Video</h2>
             
-            {/* FIX #5: Container pentru video și configurări side-by-side pe desktop */}
+            {/* Container pentru video și configurări side-by-side pe desktop */}
             <div className={`video-and-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
               
               {/* Partea stângă - Video */}
@@ -817,7 +757,7 @@ function App() {
                 </div>
               </div>
 
-              {/* FIX #5: Partea dreaptă - Configurări pe desktop */}
+              {/* Partea dreaptă - Configurări pe desktop */}
               {!isMobile && subtitles.length > 0 && (
                 <div className="config-sidebar">
                   <CollapsibleSection 
@@ -827,8 +767,8 @@ function App() {
                     icon="🎨"
                   >
                     <SubtitlesConfig 
-                      subtitleStyle={localSubtitleStyle}
-                      handleStyleChange={handleLocalStyleChange}
+                      subtitleStyle={subtitleStyle}
+                      handleStyleChange={handleStyleChange}
                       compact={true}
                     />
                   </CollapsibleSection>
@@ -838,7 +778,7 @@ function App() {
           </section>
         )}
 
-        {/* FIX: SUBTITLES PANEL - pe mobil sub video, pe desktop sub video+config */}
+        {/* SUBTITLES PANEL - pe mobil sub video, pe desktop sub video+config */}
         {subtitles.length > 0 && (
           <section className="subtitles-management-section">
             <h2>Subtitrări {isMobile ? 'și Configurări' : ''}</h2>
@@ -892,8 +832,8 @@ function App() {
                     icon="🎨"
                   >
                     <SubtitlesConfig 
-                      subtitleStyle={localSubtitleStyle}
-                      handleStyleChange={handleLocalStyleChange}
+                      subtitleStyle={subtitleStyle}
+                      handleStyleChange={handleStyleChange}
                       compact={true}
                     />
                   </CollapsibleSection>

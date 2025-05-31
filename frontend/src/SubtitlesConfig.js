@@ -94,6 +94,10 @@ const DEMO_PRESETS = {
 };
 
 const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) => {
+  // FIX: State local pentru toate configurările - NU se aplică automat
+  const [localStyle, setLocalStyle] = useState(subtitleStyle);
+  const [hasChanges, setHasChanges] = useState(false);
+  
   const [useCustomPosition, setUseCustomPosition] = useState(subtitleStyle.useCustomPosition || false);
   const [isMobile, setIsMobile] = useState(false);
   const [presets, setPresets] = useState([]);
@@ -114,15 +118,101 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     };
   }, []);
 
+  // FIX: Actualizăm state-ul local când se schimbă style-ul extern (ex. preset aplicat)
+  useEffect(() => {
+    setLocalStyle(subtitleStyle);
+    setUseCustomPosition(subtitleStyle.useCustomPosition || false);
+    setHasChanges(false);
+  }, [subtitleStyle]);
+
   // Încarcă presetările la pornire
   useEffect(() => {
     loadPresets();
   }, []);
 
+  // FIX: Handler pentru modificări LOCALE - nu trimite la parent
+  const handleLocalChange = useCallback((e) => {
+    const { name, value, type } = e.target;
+    
+    let processedValue = value;
+    if (type === 'number' || type === 'range') {
+      processedValue = parseInt(value, 10);
+    } else if (type === 'checkbox') {
+      processedValue = e.target.checked;
+    }
+    
+    console.log(`Local change: ${name} = ${processedValue}`);
+    
+    setLocalStyle(prev => ({
+      ...prev,
+      [name]: processedValue
+    }));
+    
+    // Marcăm că avem modificări
+    setHasChanges(true);
+  }, []);
+
+  // FIX: Handler pentru toggle-uri
+  const handleLocalToggle = useCallback((name) => {
+    const newValue = !localStyle[name];
+    
+    setLocalStyle(prev => ({
+      ...prev,
+      [name]: newValue
+    }));
+    
+    setHasChanges(true);
+  }, [localStyle]);
+
+  // FIX: Handler pentru poziționare personalizată
+  const handleCustomPositionToggle = useCallback(() => {
+    const newValue = !useCustomPosition;
+    setUseCustomPosition(newValue);
+    
+    setLocalStyle(prev => ({
+      ...prev,
+      useCustomPosition: newValue
+    }));
+    
+    setHasChanges(true);
+  }, [useCustomPosition]);
+
+  // FIX: Handler pentru culorile predefinite
+  const handlePredefinedColorSelect = useCallback((name, colorValue) => {
+    setLocalStyle(prev => ({
+      ...prev,
+      [name]: colorValue
+    }));
+    
+    setHasChanges(true);
+  }, []);
+
+  // FIX: Funcții pentru aplicarea și resetarea modificărilor
+  const applyChanges = useCallback(() => {
+    // Trimitem toate modificările la parent
+    Object.keys(localStyle).forEach(key => {
+      handleStyleChange({
+        target: {
+          name: key,
+          value: localStyle[key]
+        }
+      });
+    });
+    
+    setHasChanges(false);
+    console.log('Applied local changes:', localStyle);
+  }, [localStyle, handleStyleChange]);
+
+  const resetChanges = useCallback(() => {
+    setLocalStyle(subtitleStyle);
+    setUseCustomPosition(subtitleStyle.useCustomPosition || false);
+    setHasChanges(false);
+    console.log('Reset to original style:', subtitleStyle);
+  }, [subtitleStyle]);
+
   // Funcții pentru presetări
   const loadPresets = () => {
     try {
-      // FIX #4: Îmbunătățim încărcarea presetărilor
       let savedPresets = [];
       
       if (typeof localStorage !== 'undefined') {
@@ -172,7 +262,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     const newPreset = {
       id: Date.now(),
       name: presetName.trim(),
-      style: { ...subtitleStyle },
+      style: { ...localStyle }, // FIX: Salvăm state-ul local
       createdAt: new Date().toISOString(),
       isDemo: false
     };
@@ -202,23 +292,16 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     }
   };
 
+  // FIX: Încărcare preset - actualizează local style
   const loadPreset = (preset) => {
     const newStyle = { ...preset.style };
     
-    Object.keys(newStyle).forEach(key => {
-      handleStyleChange({
-        target: {
-          name: key,
-          value: newStyle[key]
-        }
-      });
-    });
-    
+    setLocalStyle(newStyle);
     setUseCustomPosition(newStyle.useCustomPosition || false);
+    setHasChanges(true); // Marcăm că avem modificări de aplicat
     
-    console.log(`Preset "${preset.name}" loaded with full sync`, newStyle);
-    
-    alert(`Presetarea "${preset.name}" a fost aplicată!`);
+    console.log(`Preset "${preset.name}" loaded into local state`, newStyle);
+    alert(`Presetarea "${preset.name}" a fost încărcată! Apăsați "Aplică Setările" pentru a vizualiza.`);
   };
 
   // FIX: Aplică preset demo direct
@@ -227,18 +310,11 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     if (preset) {
       const newStyle = { ...preset.style };
       
-      Object.keys(newStyle).forEach(key => {
-        handleStyleChange({
-          target: {
-            name: key,
-            value: newStyle[key]
-          }
-        });
-      });
-      
+      setLocalStyle(newStyle);
       setUseCustomPosition(newStyle.useCustomPosition || false);
+      setHasChanges(true);
       
-      console.log(`Demo preset "${preset.name}" applied with full sync`, newStyle);
+      console.log(`Demo preset "${preset.name}" loaded into local state`, newStyle);
     }
   };
 
@@ -268,63 +344,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       }
     }
   };
-
-  const toggleCustomPosition = () => {
-    const newValue = !useCustomPosition;
-    setUseCustomPosition(newValue);
-    
-    const event = {
-      target: {
-        name: 'useCustomPosition',
-        value: newValue
-      }
-    };
-    handleStyleChange(event);
-  };
-
-  const handleToggleChange = (name) => {
-    const newValue = !subtitleStyle[name];
-    handleStyleChange({
-      target: {
-        name,
-        value: newValue
-      }
-    });
-  };
-
-  const handlePositionChange = (e) => {
-    const { name, value } = e.target;
-    handleStyleChange({
-      target: {
-        name,
-        value: parseInt(value, 10)
-      }
-    });
-  };
-
-  const handlePredefinedColorSelect = (name, colorValue) => {
-    handleStyleChange({
-      target: {
-        name,
-        value: colorValue
-      }
-    });
-  };
-
-  // Handler simplu pentru toate controalele
-  const handleDirectChange = useCallback((e) => {
-    const { name, value, type } = e.target;
-    
-    let processedValue = value;
-    if (type === 'number' || type === 'range') {
-      processedValue = parseInt(value, 10);
-    }
-    
-    console.log(`Direct change: ${name} = ${processedValue}`);
-    handleStyleChange({
-      target: { name, value: processedValue }
-    });
-  }, [handleStyleChange]);
 
   // FIX: Spinner Component pentru fontSize
   const FontSizeSpinner = ({ value, onChange }) => {
@@ -374,7 +393,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     );
   };
 
-  // FIX #2: Spinner Component pentru borderWidth
+  // BorderWidth Spinner
   const BorderWidthSpinner = ({ value, onChange }) => {
     return (
       <div className="border-width-spinner">
@@ -437,7 +456,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           max={max}
           step={step}
           value={value} 
-          onChange={handleDirectChange}
+          onChange={handleLocalChange}
           className="modern-range-slider"
           style={{
             background: `linear-gradient(to right, #667eea 0%, #667eea ${((value - min) / (max - min)) * 100}%, #e2e8f0 ${((value - min) / (max - min)) * 100}%, #e2e8f0 100%)`
@@ -456,7 +475,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             type="color" 
             name={colorName} 
             value={currentColor} 
-            onChange={handleDirectChange}
+            onChange={handleLocalChange}
             className="modern-color-picker"
           />
           <span className="color-value">{currentColor}</span>
@@ -539,6 +558,30 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
         </div>
       </div>
 
+      {/* FIX: Butonul de aplicare setări în header-ul configurărilor */}
+      {hasChanges && (
+        <div className="pending-changes-panel">
+          <div className="pending-changes-info">
+            <span className="changes-icon">⚠️</span>
+            <span>Aveți modificări neaplicate la configurarea subtitrărilor</span>
+          </div>
+          <div className="changes-buttons">
+            <button 
+              onClick={applyChanges}
+              className="apply-changes-button"
+            >
+              ✅ Aplică Setările
+            </button>
+            <button 
+              onClick={resetChanges}
+              className="reset-changes-button"
+            >
+              ↶ Resetează
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Toate configurațiile într-un singur container fără tab-uri */}
       <div className="unified-controls-container">
         
@@ -549,9 +592,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             
             <ModernSelect 
               name="fontFamily"
-              value={subtitleStyle.fontFamily}
+              value={localStyle.fontFamily}
               label="Font"
-              onChange={handleDirectChange}
+              onChange={handleLocalChange}
               options={[
                 { value: 'Poppins', label: 'Poppins (Modern)' },
                 { value: 'Inter', label: 'Inter (Clean)' },
@@ -564,17 +607,16 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               ]}
             />
 
-            {/* Spinner pentru fontSize */}
             <FontSizeSpinner 
-              value={subtitleStyle.fontSize || 48}
-              onChange={handleDirectChange}
+              value={localStyle.fontSize || 48}
+              onChange={handleLocalChange}
             />
 
             <div className="control-item">
               <span className="control-label">Culoare Text</span>
               <ModernColorSelector 
                 colorType="text"
-                currentColor={subtitleStyle.fontColor}
+                currentColor={localStyle.fontColor}
                 colorName="fontColor"
               />
             </div>
@@ -583,15 +625,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               <span className="control-label">Culoare Contur</span>
               <ModernColorSelector 
                 colorType="border"
-                currentColor={subtitleStyle.borderColor}
+                currentColor={localStyle.borderColor}
                 colorName="borderColor"
               />
             </div>
 
-            {/* FIX #2: Înlocuim cu BorderWidthSpinner */}
             <BorderWidthSpinner 
-              value={subtitleStyle.borderWidth || 2}
-              onChange={handleDirectChange}
+              value={localStyle.borderWidth || 2}
+              onChange={handleLocalChange}
             />
 
           </div>
@@ -604,18 +645,18 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             
             <ModernToggle 
               name="useKaraoke"
-              checked={subtitleStyle.useKaraoke === true}
+              checked={localStyle.useKaraoke === true}
               label="Activează Karaoke"
-              onChange={handleToggleChange}
+              onChange={handleLocalToggle}
             />
 
-            {subtitleStyle.useKaraoke && (
+            {localStyle.useKaraoke && (
               <>
                 <div className="control-item">
                   <span className="control-label">Culoare Evidențiere</span>
                   <ModernColorSelector 
                     colorType="highlight"
-                    currentColor={subtitleStyle.currentWordColor || '#FFFF00'}
+                    currentColor={localStyle.currentWordColor || '#FFFF00'}
                     colorName="currentWordColor"
                   />
                 </div>
@@ -624,7 +665,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                   <span className="control-label">Contur Evidențiere</span>
                   <ModernColorSelector 
                     colorType="border"
-                    currentColor={subtitleStyle.currentWordBorderColor || '#000000'}
+                    currentColor={localStyle.currentWordBorderColor || '#000000'}
                     colorName="currentWordBorderColor"
                   />
                 </div>
@@ -641,9 +682,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             
             <ModernSelect 
               name="position"
-              value={subtitleStyle.position}
+              value={localStyle.position}
               label="Poziție Predefinită"
-              onChange={handleDirectChange}
+              onChange={handleLocalChange}
               options={[
                 { value: 'bottom', label: 'Jos (90%)' },
                 { value: 'bottom-20', label: 'Jos-20% (80%)' },
@@ -661,14 +702,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               name="useCustomPosition"
               checked={useCustomPosition}
               label="Poziție Manuală"
-              onChange={() => toggleCustomPosition()}
+              onChange={handleCustomPositionToggle}
             />
 
             {useCustomPosition && (
               <>
                 <SimpleRangeSlider 
                   name="customX"
-                  value={subtitleStyle.customX || 50}
+                  value={localStyle.customX || 50}
                   min={0}
                   max={100}
                   label="Poziție X"
@@ -677,7 +718,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
 
                 <SimpleRangeSlider 
                   name="customY"
-                  value={subtitleStyle.customY || 90}
+                  value={localStyle.customY || 90}
                   min={0}
                   max={100}
                   label="Poziție Y"
@@ -696,7 +737,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             
             <SimpleRangeSlider 
               name="maxLines"
-              value={subtitleStyle.maxLines || 2}
+              value={localStyle.maxLines || 2}
               min={1}
               max={4}
               label="Linii Maxime"
@@ -704,16 +745,16 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
 
             <ModernToggle 
               name="allCaps"
-              checked={subtitleStyle.allCaps || false}
+              checked={localStyle.allCaps || false}
               label="ALL CAPS"
-              onChange={handleToggleChange}
+              onChange={handleLocalToggle}
             />
 
             <ModernToggle 
               name="removePunctuation"
-              checked={subtitleStyle.removePunctuation || false}
+              checked={localStyle.removePunctuation || false}
               label="Fără Punctuație"
-              onChange={handleToggleChange}
+              onChange={handleLocalToggle}
             />
 
           </div>
@@ -790,7 +831,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               </div>
             )}
 
-            {/* FIX #4: Lista presetărilor salvate și demo - FIXED */}
+            {/* Lista presetărilor salvate și demo */}
             {presets.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
                 <h5 style={{ margin: '16px 0 12px 0', fontSize: '0.9rem', color: '#6b7280' }}>
@@ -828,7 +869,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                           fontSize: '0.8rem'
                         }}
                       >
-                        Aplică
+                        Încarcă
                       </button>
                       {!preset.isDemo && (
                         <button 
@@ -859,31 +900,39 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
         <div className="status-info-box">
           <div className="status-row">
             <span className="status-label">Font:</span>
-            <span className="status-value">{subtitleStyle.fontFamily} {subtitleStyle.fontSize}px</span>
+            <span className="status-value">{localStyle.fontFamily} {localStyle.fontSize}px</span>
           </div>
           <div className="status-row">
             <span className="status-label">Contur:</span>
-            <span className="status-value">{subtitleStyle.borderWidth}px rotunjit</span>
+            <span className="status-value">{localStyle.borderWidth}px rotunjit</span>
           </div>
           <div className="status-row">
             <span className="status-label">Linii:</span>
-            <span className="status-value">{subtitleStyle.maxLines || 2} (auto-calculate cuvinte)</span>
+            <span className="status-value">{localStyle.maxLines || 2} (auto-calculate cuvinte)</span>
           </div>
           <div className="status-row">
             <span className="status-label">Karaoke:</span>
-            <span className={`status-value ${subtitleStyle.useKaraoke ? 'active' : 'inactive'}`}>
-              {subtitleStyle.useKaraoke ? 'ACTIV' : 'DEZACTIVAT'}
+            <span className={`status-value ${localStyle.useKaraoke ? 'active' : 'inactive'}`}>
+              {localStyle.useKaraoke ? 'ACTIV' : 'DEZACTIVAT'}
             </span>
           </div>
           <div className="status-row">
             <span className="status-label">Poziție:</span>
             <span className="status-value">
               {useCustomPosition ? 
-                `Manual (${subtitleStyle.customX}%, ${subtitleStyle.customY}%)` : 
-                subtitleStyle.position
+                `Manual (${localStyle.customX}%, ${localStyle.customY}%)` : 
+                localStyle.position
               }
             </span>
           </div>
+          {hasChanges && (
+            <div className="status-row">
+              <span className="status-label">Status:</span>
+              <span className="status-value" style={{ color: '#f59e0b' }}>
+                MODIFICĂRI NEAPLICATE
+              </span>
+            </div>
+          )}
         </div>
 
       </div>
