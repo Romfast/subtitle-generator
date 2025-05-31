@@ -23,13 +23,13 @@ body {
 
 .header {
   text-align: center;
-  margin-bottom: 24px; /* Reduced from 40px */
-  padding: 0; /* Removed background container */
-  background: none; /* No background */
-  backdrop-filter: none; /* No blur */
-  border-radius: 0; /* No rounded corners */
-  box-shadow: none; /* No shadow */
-  border: none; /* No border */
+  margin-bottom: 24px;
+  padding: 0;
+  background: none;
+  backdrop-filter: none;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
 }
 
 h1, h2, h3, h4 {
@@ -39,16 +39,15 @@ h1, h2, h3, h4 {
 }
 
 h1 {
-  font-size: 2.2rem; /* Slightly smaller */
-  font-weight: 800; /* Bolder */
+  font-size: 2.2rem;
+  font-weight: 800;
   background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 8px; /* Much smaller margin */
-  letter-spacing: -0.5px; /* Tighter letter spacing */
-  text-shadow: 0 2px 8px rgba(255, 255, 255, 0.8); /* White glow for visibility */
-  /* Fallback pentru browsere care nu suportă background-clip: text */
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(255, 255, 255, 0.8);
   color: #ffffff;
 }
 
@@ -65,14 +64,14 @@ h3 {
 .main-container {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* REDUCED for more compact layout */
+  gap: 20px;
 }
 
 section {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 20px;
-  padding: 24px; /* REDUCED from 32px */
+  padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -223,6 +222,109 @@ section:hover {
   margin-top: 16px;
 }
 
+/* ========== FIX #1: PENDING CHANGES PANEL ========== */
+.pending-changes-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  margin-top: 16px;
+  animation: pending-changes-appear 0.3s ease-in-out;
+}
+
+@keyframes pending-changes-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pending-changes-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.changes-icon {
+  font-size: 1.2rem;
+  animation: warning-pulse 2s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.changes-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.apply-changes-button {
+  flex: 1;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.apply-changes-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+}
+
+.apply-changes-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.reset-changes-button {
+  flex: 0.6;
+  padding: 12px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-changes-button:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.reset-changes-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ========== DEMO PRESETS ROW - EXTENDED ========== */
 .demo-presets-row {
   display: grid;
@@ -258,9 +360,42 @@ section:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+/* ========== FIX #5: VIDEO AND CONFIG CONTAINER - DESKTOP LAYOUT ========== */
+.video-and-config-container {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.video-and-config-container.desktop-layout {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.video-and-config-container.mobile-layout {
+  flex-direction: column;
+}
+
+/* FIX #5: Video wrapper - ocupa 2/3 din spațiu pe desktop */
+.video-wrapper {
+  flex: 2;
+  min-width: 0; /* Important pentru flexbox */
+}
+
+/* FIX #5: Config sidebar - ocupa 1/3 din spațiu pe desktop */
+.config-sidebar {
+  flex: 1;
+  min-width: 350px; /* Lățime minimă pentru configurări */
+  max-width: 400px; /* Lățime maximă */
+  position: sticky;
+  top: 20px; /* Sticky positioning */
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
 /* ========== VIDEO SECTION - FIX PENTRU MOBIL ========== */
 .video-section {
-  padding: 20px; /* REDUCED from 24px */
+  padding: 20px;
 }
 
 .video-preview-container {
@@ -285,7 +420,7 @@ section:hover {
 
 /* ========== SUBTITLES MANAGEMENT SECTION ========== */
 .subtitles-management-section {
-  padding: 20px; /* REDUCED */
+  padding: 20px;
 }
 
 .subtitles-config-container {
@@ -302,42 +437,82 @@ section:hover {
   flex-direction: column;
 }
 
-/* ========== FIX: LAYOUT DESKTOP - CONFIGURĂRI ÎN DREAPTA ========== */
+/* ========== FIX #2: SPINNER COMPONENTS - BORDER WIDTH ========== */
+.border-width-spinner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-/* Containerul principal pe desktop */
-@media (min-width: 769px) {
-  .subtitles-management-section {
-    padding: 20px;
-  }
-  
-  .subtitles-config-container.desktop-layout {
-    display: grid;
-    grid-template-columns: 2fr 1fr; /* Video + subtitrări = 2/3, configurări = 1/3 */
-    gap: 24px;
-    align-items: start;
-  }
-  
-  /* Configurările în partea dreaptă */
-  .desktop-layout .config-panel-wrapper {
-    order: 2; /* Configurările la sfârșit */
-  }
-  
-  .desktop-layout .subtitles-list-wrapper {
-    order: 1; /* Lista subtitrări prima */
-  }
-  
-  /* Panel de configurări fix în dreapta */
-  .desktop-config-panel {
-    position: sticky;
-    top: 20px;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-  }
-  
-  /* Lista subtitrări mai înaltă pe desktop */
-  .desktop-layout .subtitles-list-content {
-    max-height: 500px; /* Mai mult spațiu pentru lista subtitrări */
-  }
+.border-spinner-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.border-number-input {
+  width: 80px;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  background: white;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.border-number-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.border-size-unit {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.border-spinner-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.border-spinner-btn {
+  width: 24px;
+  height: 16px;
+  border: 1px solid #d1d5db;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  color: #374151;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+}
+
+.border-spinner-btn:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.border-spinner-btn:active {
+  transform: scale(0.95);
+}
+
+.border-spinner-btn.up {
+  border-radius: 4px 4px 0 0;
+}
+
+.border-spinner-btn.down {
+  border-radius: 0 0 4px 4px;
 }
 
 /* ========== FONT SIZE SPINNER - FIX COMPLET ========== */
@@ -427,7 +602,7 @@ section:hover {
   -webkit-appearance: none;
   appearance: none;
   cursor: pointer;
-  transition: all 0.1s ease; /* Tranziție mai rapidă pentru responsivitate */
+  transition: all 0.1s ease;
 }
 
 .modern-range-slider::-webkit-slider-thumb {
@@ -440,7 +615,7 @@ section:hover {
   cursor: grab;
   border: 2px solid white;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-  transition: all 0.1s ease; /* Tranziție mai rapidă */
+  transition: all 0.1s ease;
 }
 
 .modern-range-slider::-webkit-slider-thumb:hover {
@@ -536,7 +711,6 @@ section:hover {
   opacity: 0.8;
 }
 
-/* ========== SECTION BADGE - NEW ========== */
 .section-badge {
   display: inline-flex;
   align-items: center;
@@ -582,7 +756,7 @@ section:hover {
 }
 
 .collapsible-content.expanded {
-  max-height: 2000px; /* Large enough for content */
+  max-height: 2000px;
   opacity: 1;
 }
 
@@ -660,8 +834,136 @@ section:hover {
   overflow: hidden;
 }
 
+/* ========== ENHANCED SUBTITLE PREVIEW STYLES ========== */
+
+/* Subtitle Preview - PERFECT MOBILE POSITIONING */
+.subtitle-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.subtitle-overlay {
+  pointer-events: auto;
+  cursor: move;
+  z-index: 25;
+  position: absolute;
+  /* FIX #3: Rounded border */
+  border-radius: 12px !important;
+}
+
+.subtitle-overlay.mobile-mode {
+  cursor: move !important;
+  z-index: 999 !important;
+  padding: 12px 16px !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  border-radius: 16px !important; /* FIX #3: More rounded on mobile */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+  border: 2px solid transparent !important;
+  transition: all 0.3s ease !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.subtitle-overlay.mobile-mode:hover,
+.subtitle-overlay.mobile-mode.dragging {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-color: rgba(102, 126, 234, 0.8) !important;
+  transform: scale(1.02) !important;
+}
+
+/* NEW: Enhanced Word Highlighting Styles with rounded borders */
+.subtitle-word {
+  display: inline-block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  /* FIX #3: Rounded corners for words */
+  border-radius: 6px;
+}
+
+.subtitle-word.highlighted {
+  animation: word-highlight-pulse 0.6s ease-in-out;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+  /* FIX #3: Rounded background highlight */
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 2px 6px !important;
+}
+
+@keyframes word-highlight-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* Special styling for single word mode */
+.subtitle-overlay.single-word-mode {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 2px solid rgba(102, 126, 234, 0.6) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+  border-radius: 20px !important; /* FIX #3: Extra rounded for single word */
+}
+
+.subtitle-overlay.single-word-mode .subtitle-word {
+  font-size: 1.2em !important;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.8) !important;
+  border-radius: 12px !important; /* FIX #3: Rounded single words */
+}
+
+.single-word-line {
+  text-align: center;
+  margin: 0;
+}
+
+.subtitle-word.single-word {
+  display: block;
+  padding: 12px 20px !important; /* FIX #3: More padding for rounded look */
+  border-radius: 16px !important; /* FIX #3: Very rounded for single words */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(4px);
+}
+
+/* Enhanced karaoke effects with rounded styling */
+.subtitle-overlay[data-karaoke="true"] .subtitle-word:not(.highlighted) {
+  opacity: 0.75;
+  filter: brightness(0.8);
+  border-radius: 4px; /* FIX #3: Subtle rounding for non-highlighted */
+}
+
+.subtitle-overlay[data-karaoke="true"] .subtitle-word.highlighted {
+  opacity: 1;
+  filter: brightness(1.2) drop-shadow(0 0 12px currentColor);
+  text-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
+  border-radius: 8px !important; /* FIX #3: More rounded when highlighted */
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Mobile specific collapsible styling */
 @media (max-width: 768px) {
+  /* FIX #5: Mobile layout adjustments */
+  .video-and-config-container.mobile-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .config-sidebar {
+    position: static;
+    min-width: auto;
+    max-width: none;
+    max-height: none;
+  }
+
   .collapsible-header {
     padding: 16px 20px;
     font-size: 1rem;
@@ -712,19 +1014,126 @@ section:hover {
   }
   
   /* Mobile spinner adjustments */
-  .spinner-container {
+  .spinner-container, .border-spinner-container {
     gap: 6px;
   }
   
-  .modern-number-input {
+  .modern-number-input, .border-number-input {
     width: 70px;
     padding: 10px 12px;
   }
   
-  .spinner-btn {
+  .spinner-btn, .border-spinner-btn {
     width: 20px;
     height: 14px;
     font-size: 9px;
+  }
+
+  /* FIX #5: Video wrapper full width on mobile */
+  .video-wrapper {
+    flex: none;
+    width: 100%;
+  }
+
+  /* Video section - FIX PENTRU MOBIL */
+  .video-section {
+    padding: 0 !important;
+    margin: 16px 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  .video-preview-container {
+    width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw !important;
+    margin-right: -50vw !important;
+    background: #000 !important;
+  }
+  
+  .player-wrapper {
+    /* FIX #6: Calculare înălțime completă pentru mobile */
+    height: 56.25vw !important;
+    max-height: 80vh !important;
+    min-height: 250px !important;
+    padding-top: 0 !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5) !important;
+    background: #000 !important;
+  }
+  
+  .react-player {
+    border-radius: 0 !important;
+    background: #000 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  .react-player video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    background: #000 !important;
+  }
+  
+  .react-player.contain-video video {
+    object-fit: contain !important;
+    background: #000 !important;
+  }
+
+  /* Subtitle management - add margins back */
+  .subtitles-management-section {
+    margin: 0 12px !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Mobile instructions */
+  .mobile-instructions {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 16px 12px 0 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: #1e293b;
+    backdrop-filter: blur(20px);
+    flex-wrap: wrap;
+  }
+
+  /* Pending changes panel - mobile adjustments */
+  .pending-changes-panel {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .pending-changes-info {
+    font-size: 0.85rem;
+    gap: 10px;
+  }
+
+  .changes-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .apply-changes-button,
+  .reset-changes-button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
   }
 }
 
@@ -760,27 +1169,16 @@ section:hover {
     grid-template-columns: 70px 1fr;
     padding: 8px 10px;
   }
-}
 
-/* Mobile instructions - COMPACT */
-.mobile-instructions.compact {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 16px 12px 0 12px;
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  border-radius: 12px;
-  font-size: 0.85rem;
-  color: #1e293b;
-  backdrop-filter: blur(20px);
-  flex-wrap: wrap;
-}
+  /* Smaller pending changes panel */
+  .pending-changes-info {
+    font-size: 0.8rem;
+    gap: 8px;
+  }
 
-.mobile-instructions.compact .emoji {
-  font-size: 1.2rem;
-  flex-shrink: 0;
+  .changes-icon {
+    font-size: 1rem;
+  }
 }
 
 /* Status messages - COMPACT AND MOVED TO BOTTOM */
@@ -856,443 +1254,16 @@ section:hover {
   100% { transform: rotate(360deg); }
 }
 
-/* ========== ENHANCED SUBTITLE PREVIEW STYLES ========== */
-
-/* Subtitle Preview - PERFECT MOBILE POSITIONING */
-.subtitle-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 20;
-}
-
-.subtitle-overlay {
-  pointer-events: auto;
-  cursor: move;
-  z-index: 25;
-  position: absolute;
-}
-
-.subtitle-overlay.mobile-mode {
-  cursor: move !important;
-  z-index: 999 !important; /* Very high for mobile */
-  padding: 12px 16px !important;
-  background: rgba(0, 0, 0, 0.85) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
-  border: 2px solid transparent !important;
-  transition: all 0.3s ease !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-.subtitle-overlay.mobile-mode:hover,
-.subtitle-overlay.mobile-mode.dragging {
-  background: rgba(0, 0, 0, 0.9) !important;
-  border-color: rgba(102, 126, 234, 0.8) !important;
-  transform: scale(1.02) !important;
-}
-
-/* NEW: Enhanced Word Highlighting Styles */
-.subtitle-word {
-  display: inline-block;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-}
-
-.subtitle-word.highlighted {
-  /* Enhanced highlighting effects */
-  animation: word-highlight-pulse 0.6s ease-in-out;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-}
-
-@keyframes word-highlight-pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
-  100% {
-    transform: scale(1.05);
-  }
-}
-
-/* Special styling for single word mode */
-.subtitle-overlay.single-word-mode {
-  background: rgba(0, 0, 0, 0.9) !important;
-  border: 2px solid rgba(102, 126, 234, 0.6) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8) !important;
-}
-
-.subtitle-overlay.single-word-mode .subtitle-word {
-  font-size: 1.2em !important;
-  letter-spacing: 1px;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.8) !important;
-}
-
-.single-word-line {
-  text-align: center;
-  margin: 0;
-}
-
-.subtitle-word.single-word {
-  display: block;
-  padding: 8px 16px !important;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  backdrop-filter: blur(4px);
-}
-
-/* Enhanced karaoke effects */
-.subtitle-overlay[data-karaoke="true"] .subtitle-word:not(.highlighted) {
-  opacity: 0.75;
-  filter: brightness(0.8);
-}
-
-.subtitle-overlay[data-karaoke="true"] .subtitle-word.highlighted {
-  opacity: 1;
-  filter: brightness(1.2) drop-shadow(0 0 12px currentColor);
-  text-shadow: 0 0 8px currentColor, 0 0 16px currentColor;
-}
-
-/* ========== TABLET RESPONSIVE STYLES ========== */
-@media (max-width: 992px) {
-  .control-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .action-buttons-row {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .subtitles-config-container.desktop-layout {
-    flex-direction: column;
-  }
-  
-  .subtitles-list-panel,
-  .subtitles-config-panel {
-    max-height: 400px;
-  }
-}
-
-/* ========== MOBILE OPTIMIZATIONS - FIX COMPLET PENTRU VIDEO ========== */
-@media (max-width: 768px) {
-  body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-  
-  .App {
-    padding: 12px 0; /* Remove side padding for full width */
-  }
-  
-  .header {
-    margin: 0 12px 16px 12px; /* Reduced bottom margin from 20px */
-    padding: 0; /* No padding needed */
-  }
-  
-  h1 {
-    font-size: 1.6rem; /* Smaller on mobile */
-    letter-spacing: -0.3px;
-    color: #ffffff; /* Solid white fallback for mobile */
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 16px rgba(255, 255, 255, 0.4); /* Stronger shadow for contrast */
-  }
-  
-  h2 {
-    font-size: 1.4rem;
-  }
-  
-  /* Control Panel - keeps margins */
-  .unified-control-panel {
-    margin: 0 12px;
-    padding: 16px;
-    border-radius: 16px;
-  }
-  
-  /* ========== FIX COMPLET PENTRU VIDEO PE MOBIL ========== */
-  .video-section {
-    padding: 0 !important; /* Remove ALL padding */
-    margin: 16px 0 !important; /* No side margins */
-    background: transparent !important; /* Remove background */
-    box-shadow: none !important; /* Remove shadow */
-    border: none !important; /* Remove border */
-  }
-  
-  /* ========== FULL WIDTH VIDEO CONTAINER - INALTIME COMPLETA ========== */
-  .video-preview-container {
-    width: 100vw !important; /* Full viewport width */
-    margin: 0 !important;
-    padding: 0 !important;
-    position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw !important;
-    margin-right: -50vw !important;
-    background: #000 !important; /* Black background for proper video display */
-  }
-  
-  .player-wrapper {
-    /* ========== FIX MAJOR: CALCULARE INALTIME COMPLETA ========== */
-    /* Folosim viewport height pentru a avea control complet asupra înălțimii */
-    height: 56.25vw !important; /* 16:9 aspect ratio: (9/16) * 100vw */
-    max-height: 80vh !important; /* Maxim 80% din înălțimea ecranului pentru siguranță */
-    min-height: 250px !important; /* Înălțime minimă pentru ecrane foarte mici */
-    
-    /* Resetam complet padding-top care interferea cu calculul */
-    padding-top: 0 !important;
-    
-    /* Full width styling */
-    width: 100% !important;
-    border-radius: 0 !important; /* Square corners for full width */
-    margin: 0 !important;
-    position: relative !important;
-    overflow: hidden !important;
-    
-    /* Shadow pentru depth */
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5) !important;
-    background: #000 !important; /* Black background to fill any gaps */
-  }
-  
-  .react-player {
-    border-radius: 0 !important; /* Square corners */
-    background: #000 !important;
-    width: 100% !important;
-    height: 100% !important;
-  }
-  
-  /* ========== FORCE VIDEO TO FILL COMPLETE CONTAINER ========== */
-  .react-player video {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important; /* Fill entire container */
-    object-position: center !important;
-    background: #000 !important;
-  }
-  
-  /* Alternative: dacă cover taie prea mult, folosește contain */
-  .react-player.contain-video video {
-    object-fit: contain !important;
-    background: #000 !important;
-  }
-  
-  /* ========== FORCE EXACT ASPECT RATIO ========== */
-  /* Pentru a ne asigura că video-ul ocupă exact spațiul calculat */
-  .player-wrapper::before {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 0;
-    /* Acest padding va fi override de height-ul explicit */
-    padding-bottom: 0 !important;
-  }
-  
-  /* ========== MOBILE UNIFIED CONTROLS ========== */
-  .control-row {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  
-  .action-buttons-row {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  
-  .compact-action-button {
-    padding: 16px 24px !important;
-    font-size: 1rem !important;
-    font-weight: 700 !important;
-    border-radius: 12px !important;
-    width: 100% !important;
-    min-width: auto !important;
-  }
-  
-  /* ========== MOBILE INSTRUCTIONS ========== */
-  .mobile-instructions {
-    display: flex !important;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    margin: 16px 12px 0 12px; /* Add side margins back */
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.3);
-    border-radius: 12px;
-    font-size: 0.85rem;
-    color: #1e293b;
-    backdrop-filter: blur(20px);
-    flex-wrap: wrap;
-  }
-  
-  .mobile-instructions .emoji {
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-  
-  .mobile-instructions button:hover {
-    background: rgba(102, 126, 234, 1) !important;
-    transform: scale(1.05) !important;
-  }
-  
-  /* ========== SUBTITLES MANAGEMENT - MOBILE LAYOUT ========== */
-  .subtitles-management-section {
-    margin: 0 12px !important; /* Add side margins back */
-    padding: 16px !important;
-    border-radius: 16px !important;
-  }
-  
-  .subtitles-config-container.mobile-layout {
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  
-  .subtitles-list-panel,
-  .subtitles-config-panel {
-    max-height: 350px !important; /* Reasonable height for mobile */
-  }
-  
-  .subtitle-item-simplified {
-    grid-template-columns: 80px 1fr !important; /* Narrower time column on mobile */
-    padding: 10px 12px !important;
-    font-size: 0.85rem !important;
-  }
-  
-  .subtitle-header-simplified {
-    grid-template-columns: 80px 1fr !important;
-    padding: 10px 12px !important;
-    font-size: 0.75rem !important;
-  }
-  
-  /* ========== PERFECT MOBILE SUBTITLE OVERLAY ========== */
-  .subtitle-overlay.mobile-mode {
-    z-index: 1000 !important; /* Highest possible */
-    position: fixed !important; /* Fixed to viewport */
-    /* Will be positioned via JavaScript */
-  }
-  
-  /* Enhanced mobile word highlighting */
-  .subtitle-overlay.mobile-mode .subtitle-word.highlighted {
-    transform: scale(1.1) !important;
-    text-shadow: 0 0 12px currentColor, 0 0 20px currentColor !important;
-    filter: brightness(1.3) drop-shadow(0 0 8px currentColor) !important;
-  }
-  
-  .subtitle-overlay.mobile-mode.single-word-mode .subtitle-word {
-    font-size: 1.4em !important;
-    padding: 12px 20px !important;
-    text-shadow: 0 0 16px rgba(255, 255, 255, 0.9) !important;
-  }
-  
-  /* Make sure video controls don't interfere */
-  .react-player video::-webkit-media-controls-panel {
-    z-index: 100 !important;
-  }
-  
-  .react-player video::-webkit-media-controls {
-    z-index: 100 !important;
-  }
-}
-
-/* Very small mobile devices */
-@media (max-width: 480px) {
-  .App {
-    padding: 8px 0;
-  }
-  
-  .header {
-    margin: 0 8px 12px 8px; /* Reduced bottom margin even more */
-    padding: 0;
-  }
-  
-  .unified-control-panel {
-    margin: 0 8px;
-    padding: 12px;
-  }
-  
-  .subtitles-management-section {
-    margin: 0 8px !important;
-    padding: 12px !important;
-  }
-  
-  h1 {
-    font-size: 1.4rem; /* Even smaller on very small devices */
-    letter-spacing: -0.2px;
-    color: #ffffff; /* Solid white for maximum contrast */
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.6); /* Very strong shadow */
-  }
-  
-  .compact-action-button {
-    font-size: 0.95rem !important;
-    padding: 14px 20px !important;
-  }
-  
-  .subtitle-item-simplified {
-    grid-template-columns: 70px 1fr !important;
-    padding: 8px 10px !important;
-  }
-  
-  .subtitle-header-simplified {
-    grid-template-columns: 70px 1fr !important;
-    padding: 8px 10px !important;
-  }
-  
-  .mobile-instructions {
-    margin: 12px 8px 0 8px !important;
-    padding: 10px 12px !important;
-    font-size: 0.8rem !important;
-  }
-  
-  /* Enhanced word highlighting for very small screens */
-  .subtitle-overlay .subtitle-word.highlighted {
-    transform: scale(1.15) !important;
-    padding: 2px 4px !important;
-    border-radius: 4px !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-  }
-  
-  /* Ensure minimum touch targets on very small screens */
-  .compact-action-button {
-    min-height: 48px !important;
-  }
-  
-  .compact-select,
-  .compact-file-input {
-    min-height: 44px !important;
-    font-size: 0.9rem !important;
-  }
-}
-
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .subtitle-overlay {
-    cursor: move !important;
-  }
-  
-  .compact-action-button {
-    min-height: 48px !important; /* Minimum touch target */
-  }
-  
-  .compact-select,
-  .compact-file-input {
-    min-height: 44px !important; /* Touch-friendly inputs */
-  }
-  
-  /* Enhanced touch feedback for word highlighting */
-  .subtitle-word.highlighted {
-    animation: touch-highlight-pulse 0.8s ease-in-out infinite alternate;
-  }
-  
-  @keyframes touch-highlight-pulse {
-    0% {
-      text-shadow: 0 0 8px currentColor;
-    }
-    100% {
-      text-shadow: 0 0 16px currentColor, 0 0 24px currentColor;
-    }
-  }
-}
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
 
 /* ========== ACCESSIBILITY ENHANCEMENTS ========== */
 
@@ -1303,6 +1274,7 @@ section:hover {
     color: black !important;
     text-shadow: none !important;
     border: 2px solid black !important;
+    border-radius: 4px !important;
   }
   
   .subtitle-overlay {
@@ -1316,7 +1288,8 @@ section:hover {
   .subtitle-word,
   .subtitle-overlay,
   .demo-preset-button,
-  .compact-action-button {
+  .compact-action-button,
+  .pending-changes-panel {
     animation: none !important;
     transition: none !important;
   }
@@ -1338,6 +1311,8 @@ section:hover {
   
   .subtitle-word.highlighted {
     text-shadow: 0 0 12px currentColor, 0 0 20px currentColor, 0 0 2px white !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 6px !important;
   }
 }
 
@@ -1347,7 +1322,8 @@ section:hover {
 .subtitle-word,
 .subtitle-overlay,
 .demo-preset-button,
-.compact-action-button {
+.compact-action-button,
+.pending-changes-panel {
   transform: translateZ(0);
   will-change: transform;
 }
@@ -1363,105 +1339,4 @@ section:hover {
 .react-player video {
   transform: translateZ(0);
   backface-visibility: hidden;
-}
-
-/* Import Google Fonts - EXTENDED cu fonturi rotunjite */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
-
-/* ========== ENHANCED CONFIGURATION DISPLAY STYLES ========== */
-
-.active-configuration-display {
-  animation: config-fade-in 0.5s ease-in-out;
-}
-
-@keyframes config-fade-in {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.config-section {
-  transition: all 0.3s ease;
-}
-
-.config-section:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Status indicators for configuration */
-.config-status-active {
-  color: #059669 !important;
-  font-weight: 700;
-}
-
-.config-status-inactive {
-  color: #dc2626 !important;
-  font-weight: 700;
-}
-
-/* Enhanced preset styling */
-.demo-preset-card.applied {
-  border-color: #10b981 !important;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%) !important;
-  transform: scale(1.02);
-}
-
-.demo-preset-card.applied::before {
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%) !important;
-  transform: scaleX(1) !important;
-}
-
-/* Enhanced feedback for user actions */
-.style-item.updated {
-  animation: setting-updated 0.6s ease-in-out;
-}
-
-@keyframes setting-updated {
-  0% {
-    background: rgba(16, 185, 129, 0.1);
-    transform: scale(1);
-  }
-  50% {
-    background: rgba(16, 185, 129, 0.2);
-    transform: scale(1.02);
-  }
-  100% {
-    background: rgba(16, 185, 129, 0.1);
-    transform: scale(1);
-  }
-}
-
-/* Loading states */
-.config-loading {
-  opacity: 0.6;
-  pointer-events: none;
-  position: relative;
-}
-
-.config-loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }

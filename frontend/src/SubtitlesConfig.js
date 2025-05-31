@@ -122,31 +122,50 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
   // Funcții pentru presetări
   const loadPresets = () => {
     try {
+      // FIX #4: Îmbunătățim încărcarea presetărilor
+      let savedPresets = [];
+      
       if (typeof localStorage !== 'undefined') {
-        const savedPresets = localStorage.getItem('subtitlePresets');
-        if (savedPresets) {
-          setPresets(JSON.parse(savedPresets));
+        const storedPresets = localStorage.getItem('subtitlePresets');
+        if (storedPresets) {
+          savedPresets = JSON.parse(storedPresets);
+          console.log('Loaded presets from localStorage:', savedPresets);
         }
-      } else {
-        // Fallback pentru Claude artifacts - presetări demo convertite
-        const demoPresets = Object.entries(DEMO_PRESETS).map(([key, preset], index) => ({
-          id: index + 1,
-          name: preset.name,
-          description: `Presetare ${preset.name}`,
-          style: preset.style,
-          createdAt: new Date().toISOString(),
-          isDemo: true
-        }));
-        setPresets(demoPresets);
       }
+      
+      // Adăugăm presetările demo ca fallback și exemple
+      const demoPresets = Object.entries(DEMO_PRESETS).map(([key, preset], index) => ({
+        id: `demo_${key}`,
+        name: `${preset.icon} ${preset.name}`,
+        description: `Presetare ${preset.name}`,
+        style: preset.style,
+        createdAt: new Date().toISOString(),
+        isDemo: true
+      }));
+      
+      // Combinăm presetările demo cu cele salvate
+      const allPresets = [...demoPresets, ...savedPresets];
+      setPresets(allPresets);
+      
+      console.log('All presets loaded:', allPresets);
     } catch (error) {
       console.error('Error loading presets:', error);
+      // Fallback doar cu presetări demo
+      const demoPresets = Object.entries(DEMO_PRESETS).map(([key, preset], index) => ({
+        id: `demo_${key}`,
+        name: `${preset.icon} ${preset.name}`,
+        description: `Presetare ${preset.name}`,
+        style: preset.style,
+        createdAt: new Date().toISOString(),
+        isDemo: true
+      }));
+      setPresets(demoPresets);
     }
   };
 
   const savePreset = () => {
     if (!presetName.trim()) {
-      window.alert('Vă rugăm să introduceți un nume pentru presetare');
+      alert('Vă rugăm să introduceți un nume pentru presetare');
       return;
     }
 
@@ -158,21 +177,28 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       isDemo: false
     };
 
-    const updatedPresets = [...presets, newPreset];
-    setPresets(updatedPresets);
+    // Filtrăm doar presetările salvate de utilizator (nu demo)
+    const userPresets = presets.filter(p => !p.isDemo);
+    const updatedUserPresets = [...userPresets, newPreset];
+    
+    // Actualizăm lista completă
+    const demoPresets = presets.filter(p => p.isDemo);
+    const allPresets = [...demoPresets, ...updatedUserPresets];
+    setPresets(allPresets);
     
     try {
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('subtitlePresets', JSON.stringify(updatedPresets));
-        window.alert(`Presetarea "${newPreset.name}" a fost salvată cu succes!`);
+        // Salvăm doar presetările utilizatorului, nu pe cele demo
+        localStorage.setItem('subtitlePresets', JSON.stringify(updatedUserPresets));
+        alert(`Presetarea "${newPreset.name}" a fost salvată cu succes!`);
       } else {
-        window.alert(`Presetarea "${newPreset.name}" a fost salvată temporar!`);
+        alert(`Presetarea "${newPreset.name}" a fost salvată temporar!`);
       }
       setPresetName('');
       setShowSavePreset(false);
     } catch (error) {
       console.error('Error saving preset:', error);
-      window.alert('Eroare la salvarea presetării');
+      alert('Eroare la salvarea presetării');
     }
   };
 
@@ -192,7 +218,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     
     console.log(`Preset "${preset.name}" loaded with full sync`, newStyle);
     
-    window.alert(`Presetarea "${preset.name}" a fost aplicată!`);
+    alert(`Presetarea "${preset.name}" a fost aplicată!`);
   };
 
   // FIX: Aplică preset demo direct
@@ -220,7 +246,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     const presetToDelete = presets.find(p => p.id === presetId);
     
     if (presetToDelete && presetToDelete.isDemo) {
-      window.alert('Presetările demo nu pot fi șterse.');
+      alert('Presetările demo nu pot fi șterse.');
       return;
     }
     
@@ -228,14 +254,17 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       const updatedPresets = presets.filter(p => p.id !== presetId);
       setPresets(updatedPresets);
       
+      // Salvăm doar presetările utilizatorului
+      const userPresets = updatedPresets.filter(p => !p.isDemo);
+      
       try {
         if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('subtitlePresets', JSON.stringify(updatedPresets));
+          localStorage.setItem('subtitlePresets', JSON.stringify(userPresets));
         }
-        window.alert('Presetarea a fost ștearsă cu succes!');
+        alert('Presetarea a fost ștearsă cu succes!');
       } catch (error) {
         console.error('Error deleting preset:', error);
-        window.alert('Eroare la ștergerea presetării');
+        alert('Eroare la ștergerea presetării');
       }
     }
   };
@@ -282,7 +311,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     });
   };
 
-  // FIX: Handler simplu pentru toate controalele - fără debouncing
+  // Handler simplu pentru toate controalele
   const handleDirectChange = useCallback((e) => {
     const { name, value, type } = e.target;
     
@@ -345,7 +374,55 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     );
   };
 
-  // FIX: Range slider simplificat fără state local
+  // FIX #2: Spinner Component pentru borderWidth
+  const BorderWidthSpinner = ({ value, onChange }) => {
+    return (
+      <div className="border-width-spinner">
+        <label className="control-label">Grosime Contur</label>
+        <div className="border-spinner-container">
+          <input 
+            type="number"
+            name="borderWidth"
+            value={value}
+            min="0"
+            max="8"
+            step="0.5"
+            onChange={onChange}
+            className="border-number-input"
+          />
+          <span className="border-size-unit">px</span>
+          <div className="border-spinner-buttons">
+            <button 
+              type="button"
+              onClick={() => onChange({
+                target: { 
+                  name: 'borderWidth', 
+                  value: Math.min(8, value + 0.5) 
+                }
+              })}
+              className="border-spinner-btn up"
+            >
+              ▲
+            </button>
+            <button 
+              type="button"
+              onClick={() => onChange({
+                target: { 
+                  name: 'borderWidth', 
+                  value: Math.max(0, value - 0.5) 
+                }
+              })}
+              className="border-spinner-btn down"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Range slider simplificat fără state local
   const SimpleRangeSlider = ({ name, value, min, max, label, unit = '', step = 1 }) => {
     return (
       <div className="modern-range-container">
@@ -385,7 +462,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           <span className="color-value">{currentColor}</span>
         </div>
         
-        {/* FIX: Mai multe culori predefinite în grid compact */}
         <div className="predefined-colors-grid">
           {predefinedColors[colorType].map((color, index) => (
             <button 
@@ -444,7 +520,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
 
   return (
     <div className="subtitle-style-controls-modern">
-      {/* FIX: Demo Presets la început pentru acces rapid */}
+      {/* Demo Presets la început pentru acces rapid */}
       <div className="demo-presets-section">
         <h4 className="section-title">⚡ Preseturi Rapide</h4>
         <div className="demo-presets-grid-modern">
@@ -463,7 +539,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
         </div>
       </div>
 
-      {/* FIX: Toate configurațiile într-un singur container fără tab-uri */}
+      {/* Toate configurațiile într-un singur container fără tab-uri */}
       <div className="unified-controls-container">
         
         {/* Secțiunea Font și Dimensiuni */}
@@ -488,7 +564,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               ]}
             />
 
-            {/* FIX: Înlocuim slider-ul cu spinner pentru fontSize */}
+            {/* Spinner pentru fontSize */}
             <FontSizeSpinner 
               value={subtitleStyle.fontSize || 48}
               onChange={handleDirectChange}
@@ -512,15 +588,10 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               />
             </div>
 
-            {/* FIX: Înlocuim cu SimpleRangeSlider */}
-            <SimpleRangeSlider 
-              name="borderWidth"
+            {/* FIX #2: Înlocuim cu BorderWidthSpinner */}
+            <BorderWidthSpinner 
               value={subtitleStyle.borderWidth || 2}
-              min={0}
-              max={5}
-              step={0.5}
-              label="Grosime Contur"
-              unit="px"
+              onChange={handleDirectChange}
             />
 
           </div>
@@ -623,7 +694,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           <h4 className="group-title">📐 Layout și Opțiuni</h4>
           <div className="controls-grid">
             
-            {/* FIX: Configurare funcțională pentru numărul de linii cu SimpleRangeSlider */}
             <SimpleRangeSlider 
               name="maxLines"
               value={subtitleStyle.maxLines || 2}
@@ -720,29 +790,30 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               </div>
             )}
 
-            {/* Lista presetărilor salvate */}
+            {/* FIX #4: Lista presetărilor salvate și demo - FIXED */}
             {presets.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <h5 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', color: '#6b7280' }}>
-                  Presetări salvate ({presets.length}):
+                <h5 style={{ margin: '16px 0 12px 0', fontSize: '0.9rem', color: '#6b7280' }}>
+                  Presetări disponibile ({presets.length}):
                 </h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
                   {presets.map((preset) => (
                     <div key={preset.id} style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
                       padding: '12px',
-                      background: 'rgba(248, 250, 252, 0.8)',
-                      border: '1px solid #e2e8f0',
+                      background: preset.isDemo ? 'rgba(102, 126, 234, 0.05)' : 'rgba(248, 250, 252, 0.8)',
+                      border: preset.isDemo ? '1px solid rgba(102, 126, 234, 0.2)' : '1px solid #e2e8f0',
                       borderRadius: '8px'
                     }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>
-                          {preset.isDemo && '🌟 '}{preset.name}
+                          {preset.name}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
                           {preset.style?.fontFamily} {preset.style?.fontSize}px
+                          {preset.isDemo && ' • Demo'}
                         </div>
                       </div>
                       <button 
@@ -789,6 +860,10 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           <div className="status-row">
             <span className="status-label">Font:</span>
             <span className="status-value">{subtitleStyle.fontFamily} {subtitleStyle.fontSize}px</span>
+          </div>
+          <div className="status-row">
+            <span className="status-label">Contur:</span>
+            <span className="status-value">{subtitleStyle.borderWidth}px rotunjit</span>
           </div>
           <div className="status-row">
             <span className="status-label">Linii:</span>

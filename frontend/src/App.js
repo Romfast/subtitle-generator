@@ -47,6 +47,9 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
+  // FIX #1: State pentru aplicarea manuală a setărilor
+  const [pendingStyleChanges, setPendingStyleChanges] = useState(false);
+  
   // FIX: Stări pentru secțiuni colapsabile - SIMPLIFICAT fără auto-collapse
   const [sectionsExpanded, setSectionsExpanded] = useState({
     subtitlesList: false,
@@ -55,7 +58,7 @@ function App() {
   
   const [videoFitMode, setVideoFitMode] = useState('cover');
   
-  // FIX: State pentru subtitrări - SIMPLIFICAT
+  // FIX: State pentru subtitrări - ÎMBUNATĂȚIT cu state local pentru configurare
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 48,
     fontColor: '#00FF00',
@@ -76,6 +79,9 @@ function App() {
     removePunctuation: false,
     useKaraoke: true
   });
+
+  // FIX #1: State local pentru configurări care nu sunt aplicate încă
+  const [localSubtitleStyle, setLocalSubtitleStyle] = useState(subtitleStyle);
 
   const fileInputRef = useRef();
   const videoPlayerRef = useRef();
@@ -298,8 +304,8 @@ function App() {
     }
   };
 
-  // FIX: Handler pentru schimbări de stil SIMPLIFICAT fără auto-collapse
-  const handleStyleChange = useCallback((e) => {
+  // FIX #1: Handler pentru schimbări de stil LOCAL (nu se aplică automat)
+  const handleLocalStyleChange = useCallback((e) => {
     const { name, value } = e.target;
     
     let processedValue = value;
@@ -312,22 +318,46 @@ function App() {
       processedValue = Boolean(value);
     }
     
-    console.log('Style change:', name, value, '->', processedValue);
+    console.log('Local style change:', name, value, '->', processedValue);
     
-    // FIX: Actualizare directă fără debouncing pentru a nu bloca interfața
-    setSubtitleStyle(prev => ({
+    // Actualizăm doar state-ul local, nu se aplică în preview
+    setLocalSubtitleStyle(prev => ({
       ...prev,
       [name]: processedValue
     }));
     
-    // FIX: ELIMINĂM logica de preventAutoCollapse
+    // Marcăm că avem modificări în așteptare
+    setPendingStyleChanges(true);
   }, []);
+
+  // FIX #1: Funcție pentru aplicarea setărilor manual
+  const applyStyleSettings = useCallback(() => {
+    setSubtitleStyle(localSubtitleStyle);
+    setPendingStyleChanges(false);
+    setUploadStatus('Setări aplicate cu succes!');
+    console.log('Applied style settings:', localSubtitleStyle);
+  }, [localSubtitleStyle]);
+
+  // FIX #1: Funcție pentru resetarea setărilor la valorile aplicate
+  const resetStyleSettings = useCallback(() => {
+    setLocalSubtitleStyle(subtitleStyle);
+    setPendingStyleChanges(false);
+    console.log('Reset style settings to applied values');
+  }, [subtitleStyle]);
   
   // Funcție pentru actualizarea poziției subtitrărilor prin drag-and-drop
   const updateSubtitlePosition = useCallback((x, y, enableCustomPosition = false) => {
     console.log('Updating subtitle position:', { x, y, enableCustomPosition });
     
     setSubtitleStyle(prev => ({
+      ...prev,
+      customX: Math.round(x),
+      customY: Math.round(y),
+      useCustomPosition: enableCustomPosition ? true : prev.useCustomPosition
+    }));
+
+    // Sincronizăm și state-ul local
+    setLocalSubtitleStyle(prev => ({
       ...prev,
       customX: Math.round(x),
       customY: Math.round(y),
@@ -390,7 +420,7 @@ function App() {
         removePunctuation: Boolean(subtitleStyle.removePunctuation),
         useKaraoke: Boolean(subtitleStyle.useKaraoke),
         currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
-        currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000', // FIX: Include conturul personalizat
+        currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000',
         maxLines: parseInt(subtitleStyle.maxLines) || 1,
         maxWidth: parseInt(subtitleStyle.maxWidth) || 50,
         isMobile: isMobile,
@@ -513,7 +543,7 @@ function App() {
         position: 'bottom-30', useCustomPosition: false, customX: 50, customY: 50, allCaps: true,
         removePunctuation: false, useKaraoke: true, maxLines: 1, 
         currentWordColor: '#FF3366', 
-        currentWordBorderColor: '#FFFFFF'  // FIX: Contur alb pentru FOCUS
+        currentWordBorderColor: '#FFFFFF'
       },
       'rounded_soft': {
         fontSize: 28, fontFamily: 'Nunito', fontColor: '#F8F9FA', borderColor: '#E5E7EB', borderWidth: 1,
@@ -534,7 +564,11 @@ function App() {
     
     if (demoPresets[presetName]) {
       const newStyle = { ...demoPresets[presetName] };
+      
+      // FIX #1: Aplicăm direct (demo presets se aplică imediat)
       setSubtitleStyle(newStyle);
+      setLocalSubtitleStyle(newStyle);
+      setPendingStyleChanges(false);
       
       console.log('Applied demo preset:', presetName, newStyle);
       setUploadStatus(`Preset "${presetName}" aplicat cu succes!`);
@@ -661,6 +695,32 @@ function App() {
                 </button>
               </div>
             )}
+
+            {/* FIX #1: Buton aplicare setări și status modificări */}
+            {pendingStyleChanges && (
+              <div className="pending-changes-panel">
+                <div className="pending-changes-info">
+                  <span className="changes-icon">⚠️</span>
+                  <span>Aveți modificări neaplicate la configurarea subtitrărilor</span>
+                </div>
+                <div className="changes-buttons">
+                  <button 
+                    onClick={applyStyleSettings}
+                    className="apply-changes-button"
+                    disabled={isProcessing}
+                  >
+                    ✅ Aplică Setările
+                  </button>
+                  <button 
+                    onClick={resetStyleSettings}
+                    className="reset-changes-button"
+                    disabled={isProcessing}
+                  >
+                    ↶ Resetează
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Bare de progres compacte */}
@@ -691,76 +751,101 @@ function App() {
           </div>
         </section>
 
-        {/* VIDEO SECTION */}
+        {/* VIDEO SECTION - FIX #5: Layout desktop îmbunătățit */}
         {videoUrl && (
           <section className="video-section">
             <h2>Preview Video</h2>
             
-            <div className="video-preview-container">
-              <div className="player-wrapper" ref={playerContainerRef}>
-                <ReactPlayer 
-                  ref={videoPlayerRef}
-                  url={videoUrl} 
-                  controls 
-                  width="100%" 
-                  height="100%" 
-                  className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
-                  playing={playing}
-                  onProgress={handleProgress}
-                  onPause={() => setPlaying(false)}
-                  onPlay={() => setPlaying(true)}
-                />
-                
-                {/* Overlay pentru subtitrări peste video */}
-                {subtitles.length > 0 && (
-                  <SubtitlePreview 
-                    subtitles={subtitles}
-                    currentTime={currentTime}
-                    subtitleStyle={subtitleStyle}
-                    updatePosition={updateSubtitlePosition}
-                    updateSubtitle={updateSubtitle}
-                  />
-                )}
-              </div>
+            {/* FIX #5: Container pentru video și configurări side-by-side pe desktop */}
+            <div className={`video-and-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
               
-              {/* Instrucțiuni mobile compacte */}
-              {isMobile && subtitles.length > 0 && (
-                <div className="mobile-instructions compact">
-                  <span className="emoji">💡</span>
-                  <span style={{ fontSize: '0.8rem' }}>Drag subtitrarea pentru poziționare</span>
-                  <button
-                    onClick={() => {
-                      const newMode = videoFitMode === 'cover' ? 'contain' : 'cover';
-                      setVideoFitMode(newMode);
-                      if (videoPlayerRef.current) {
-                        const videoEl = videoPlayerRef.current.getInternalPlayer();
-                        if (videoEl && videoEl.style) {
-                          videoEl.style.objectFit = newMode;
-                        }
-                      }
-                    }}
-                    style={{
-                      padding: '4px 8px', fontSize: '0.7rem', background: 'rgba(102, 126, 234, 0.8)',
-                      color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'
-                    }}
-                    title={videoFitMode === 'cover' ? 'Arată tot video-ul' : 'Umple ecranul'}
+              {/* Partea stângă - Video */}
+              <div className="video-wrapper">
+                <div className="video-preview-container">
+                  <div className="player-wrapper" ref={playerContainerRef}>
+                    <ReactPlayer 
+                      ref={videoPlayerRef}
+                      url={videoUrl} 
+                      controls 
+                      width="100%" 
+                      height="100%" 
+                      className={`react-player ${isMobile && videoFitMode === 'contain' ? 'contain-video' : ''}`}
+                      playing={playing}
+                      onProgress={handleProgress}
+                      onPause={() => setPlaying(false)}
+                      onPlay={() => setPlaying(true)}
+                    />
+                    
+                    {/* Overlay pentru subtitrări peste video */}
+                    {subtitles.length > 0 && (
+                      <SubtitlePreview 
+                        subtitles={subtitles}
+                        currentTime={currentTime}
+                        subtitleStyle={subtitleStyle}
+                        updatePosition={updateSubtitlePosition}
+                        updateSubtitle={updateSubtitle}
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Instrucțiuni mobile compacte */}
+                  {isMobile && subtitles.length > 0 && (
+                    <div className="mobile-instructions compact">
+                      <span className="emoji">💡</span>
+                      <span style={{ fontSize: '0.8rem' }}>Drag subtitrarea pentru poziționare</span>
+                      <button
+                        onClick={() => {
+                          const newMode = videoFitMode === 'cover' ? 'contain' : 'cover';
+                          setVideoFitMode(newMode);
+                          if (videoPlayerRef.current) {
+                            const videoEl = videoPlayerRef.current.getInternalPlayer();
+                            if (videoEl && videoEl.style) {
+                              videoEl.style.objectFit = newMode;
+                            }
+                          }
+                        }}
+                        style={{
+                          padding: '4px 8px', fontSize: '0.7rem', background: 'rgba(102, 126, 234, 0.8)',
+                          color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'
+                        }}
+                        title={videoFitMode === 'cover' ? 'Arată tot video-ul' : 'Umple ecranul'}
+                      >
+                        {videoFitMode === 'cover' ? '📐' : '📱'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* FIX #5: Partea dreaptă - Configurări pe desktop */}
+              {!isMobile && subtitles.length > 0 && (
+                <div className="config-sidebar">
+                  <CollapsibleSection 
+                    title="Configurări Stil"
+                    sectionKey="subtitlesConfig"
+                    defaultExpanded={true}
+                    icon="🎨"
                   >
-                    {videoFitMode === 'cover' ? '📐' : '📱'}
-                  </button>
+                    <SubtitlesConfig 
+                      subtitleStyle={localSubtitleStyle}
+                      handleStyleChange={handleLocalStyleChange}
+                      compact={true}
+                    />
+                  </CollapsibleSection>
                 </div>
               )}
             </div>
           </section>
         )}
 
-        {/* FIX: SUBTITLES PANEL CU CONFIGURĂRI - LAYOUT DESKTOP ÎMBUNĂTĂȚIT */}
+        {/* FIX: SUBTITLES PANEL - pe mobil sub video, pe desktop sub video+config */}
         {subtitles.length > 0 && (
           <section className="subtitles-management-section">
-            <h2>Subtitrări și Configurări</h2>
+            <h2>Subtitrări {isMobile ? 'și Configurări' : ''}</h2>
             
             <div className={`subtitles-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
               
-              {/* FIX: Pe desktop, lista subtitrări în stânga */}
+              {/* Lista subtitrări */}
               <div className="subtitles-list-wrapper">
                 <CollapsibleSection 
                   title="Subtitrări"
@@ -770,7 +855,6 @@ function App() {
                   badge={`${subtitles.length}`}
                 >
                   <div className="subtitles-list-content">
-                    {/* FIX: Pe mobil afișăm doar textul, pe desktop doar start time + text */}
                     {!isMobile && (
                       <div className="subtitle-header-simplified">
                         <span className="subtitle-time-header">Start</span>
@@ -798,21 +882,23 @@ function App() {
                 </CollapsibleSection>
               </div>
               
-              {/* FIX: Pe desktop, configurările în partea dreaptă ca panel fix */}
-              <div className={`config-panel-wrapper ${!isMobile ? 'desktop-config-panel' : ''}`}>
-                <CollapsibleSection 
-                  title="Configurări Stil"
-                  sectionKey="subtitlesConfig"
-                  defaultExpanded={!isMobile}
-                  icon="🎨"
-                >
-                  <SubtitlesConfig 
-                    subtitleStyle={subtitleStyle}
-                    handleStyleChange={handleStyleChange}
-                    compact={true}
-                  />
-                </CollapsibleSection>
-              </div>
+              {/* Pe mobil, configurările sunt aici */}
+              {isMobile && (
+                <div className="config-panel-wrapper">
+                  <CollapsibleSection 
+                    title="Configurări Stil"
+                    sectionKey="subtitlesConfig"
+                    defaultExpanded={false}
+                    icon="🎨"
+                  >
+                    <SubtitlesConfig 
+                      subtitleStyle={localSubtitleStyle}
+                      handleStyleChange={handleLocalStyleChange}
+                      compact={true}
+                    />
+                  </CollapsibleSection>
+                </div>
+              )}
             </div>
           </section>
         )}

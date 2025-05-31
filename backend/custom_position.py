@@ -2,6 +2,7 @@
 # VERSIUNEA ÎMBUNĂTĂȚITĂ pentru evidențiere cuvinte cu mărime mărită
 # Synchronizes perfectly with frontend highlighting effects
 # FIX COMPLET: Include conturul personalizat pentru cuvântul evidențiat
+# FIX #6: Suport pentru scalarea corectă a fontului pe mobil
 
 import re
 
@@ -19,13 +20,15 @@ def hex_to_ass_color(hex_color):
     
     return '&H00FFFFFF'  # Default to white if invalid
 
-def calculate_highlighted_font_size(base_font_size):
+def calculate_highlighted_font_size(base_font_size, is_mobile=False):
     """
     Calculează mărimea fontului pentru cuvântul evidențiat.
     Folosește aceeași logică ca în frontend pentru sincronizare perfectă.
+    FIX #6: Ajustări speciale pentru mobil.
     
     Args:
         base_font_size (int): Mărimea de bază a fontului
+        is_mobile (bool): Dacă este pe mobil
     
     Returns:
         int: Mărimea mărită pentru cuvântul evidențiat
@@ -41,9 +44,14 @@ def calculate_highlighted_font_size(base_font_size):
     elif base_font_size > 48:
         highlight_factor = 1.1   # 10% mai mare pentru fonturi mari (să nu devină excesiv de mari)
     
+    # FIX #6: Pe mobil, reducem puțin factorul de highlighting pentru a nu fi excesiv
+    if is_mobile:
+        highlight_factor = highlight_factor * 0.95  # Reducem cu 5% pe mobil
+        print(f"Mobile highlight factor adjustment: {highlight_factor}")
+    
     highlighted_size = int(round(base_font_size * highlight_factor))
     
-    print(f"Highlighted font size calculation: base={base_font_size}, factor={highlight_factor}, highlighted={highlighted_size}")
+    print(f"Highlighted font size calculation: base={base_font_size}, factor={highlight_factor}, highlighted={highlighted_size}, mobile={is_mobile}")
     
     return highlighted_size
 
@@ -171,46 +179,58 @@ def get_ass_alignment_from_position(position, useCustomPosition=False):
     
     return position_align_map.get(position, 2)  # Default: centru-jos
 
-def calculate_ass_margins_from_position(position, useCustomPosition=False, customX=50, customY=90):
+def calculate_ass_margins_from_position(position, useCustomPosition=False, customX=50, customY=90, is_mobile=False):
     """
     Calculează marginile ASS corecte pentru poziția specificată.
+    FIX #6: Ajustări pentru mobil.
     
     Args:
         position: Poziția predefinită
         useCustomPosition: Dacă se folosește poziționarea personalizată
         customX: Poziția X personalizată (procent)
         customY: Poziția Y personalizată (procent)
+        is_mobile: Dacă este pe mobil
     
     Returns:
         dict: Marginile pentru ASS (MarginL, MarginR, MarginV)
     """
     # Pentru poziționarea personalizată, nu folosim margini clasice
     if useCustomPosition:
-        return {'MarginL': 10, 'MarginR': 10, 'MarginV': 10}
+        base_margin = 15 if is_mobile else 10  # FIX #6: Margini mai mari pe mobil
+        return {'MarginL': base_margin, 'MarginR': base_margin, 'MarginV': base_margin}
     
-    # Mapare poziții la margini în pixeli (pentru 1920x1080)
+    # FIX #6: Ajustăm marginile pentru mobil
+    mobile_multiplier = 1.5 if is_mobile else 1.0
+    
+    # Mapare poziții la margini în pixeli (pentru 1920x1080, ajustate pentru mobil)
     position_margins = {
-        'top': {'MarginL': 10, 'MarginR': 10, 'MarginV': 50},
-        'top-20': {'MarginL': 10, 'MarginR': 10, 'MarginV': 150},
-        'top-30': {'MarginL': 10, 'MarginR': 10, 'MarginV': 250},
-        'top-40': {'MarginL': 10, 'MarginR': 10, 'MarginV': 350},
-        'middle': {'MarginL': 10, 'MarginR': 10, 'MarginV': 10},
-        'bottom-40': {'MarginL': 10, 'MarginR': 10, 'MarginV': 250},
-        'bottom-30': {'MarginL': 10, 'MarginR': 10, 'MarginV': 200},
-        'bottom-20': {'MarginL': 10, 'MarginR': 10, 'MarginV': 150},
-        'bottom': {'MarginL': 10, 'MarginR': 10, 'MarginV': 100},
-        'top-left': {'MarginL': 50, 'MarginR': 10, 'MarginV': 50},
-        'top-right': {'MarginL': 10, 'MarginR': 50, 'MarginV': 50},
-        'bottom-left': {'MarginL': 50, 'MarginR': 10, 'MarginV': 100},
-        'bottom-right': {'MarginL': 10, 'MarginR': 50, 'MarginV': 100}
+        'top': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(50 * mobile_multiplier)},
+        'top-20': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(150 * mobile_multiplier)},
+        'top-30': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(250 * mobile_multiplier)},
+        'top-40': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(350 * mobile_multiplier)},
+        'middle': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(10 * mobile_multiplier)},
+        'bottom-40': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(250 * mobile_multiplier)},
+        'bottom-30': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(200 * mobile_multiplier)},
+        'bottom-20': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(150 * mobile_multiplier)},
+        'bottom': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(100 * mobile_multiplier)},
+        'top-left': {'MarginL': int(50 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(50 * mobile_multiplier)},
+        'top-right': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(50 * mobile_multiplier), 'MarginV': int(50 * mobile_multiplier)},
+        'bottom-left': {'MarginL': int(50 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(100 * mobile_multiplier)},
+        'bottom-right': {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(50 * mobile_multiplier), 'MarginV': int(100 * mobile_multiplier)}
     }
     
-    return position_margins.get(position, {'MarginL': 10, 'MarginR': 10, 'MarginV': 100})
+    result = position_margins.get(position, {'MarginL': int(10 * mobile_multiplier), 'MarginR': int(10 * mobile_multiplier), 'MarginV': int(100 * mobile_multiplier)})
+    
+    if is_mobile:
+        print(f"Mobile margins for position {position}: {result}")
+    
+    return result
 
 def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS (Advanced SubStation Alpha) pentru subtitrări cu poziționare personalizată.
     VERSIUNEA COMPLETĂ FIX - poziționare corectă pe toate platformele + FONTURILE BOLD.
+    FIX #6: Suport pentru mobil cu scalare corectă.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -223,17 +243,21 @@ def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles
     """
     print(f"Creating ASS file with style: {style}")
     
+    # FIX #6: Extragem informațiile mobile
+    is_mobile = style.get('isMobile', False)
+    screen_width = style.get('screenWidth', 1920)
+    
     # Extragem parametrii de poziționare
     useCustomPosition = style.get('useCustomPosition', False)
     customX = style.get('customX', 50)
     customY = style.get('customY', 90)
     position = style.get('position', 'bottom')
     
-    print(f"Position settings: useCustom={useCustomPosition}, position={position}, X={customX}, Y={customY}")
+    print(f"Position settings: useCustom={useCustomPosition}, position={position}, X={customX}, Y={customY}, mobile={is_mobile}")
     
     # Calculăm poziția și coordonatele pentru ASS
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
-    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY, is_mobile)
     
     # Header ASS complet cu BOLD=1 pentru fonturile groase
     ass_header = """[Script Info]
@@ -253,12 +277,18 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     
     # Extragem parametrii de stil - folosim mărimea fontului deja calculată în app.py
     font_family = style.get('fontFamily', 'Arial')
-    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py conform dimensiunilor video
-    print(f"ASS: Using font: {font_family}, size: {font_size}")
+    font_size = style.get('fontSize', 24)  # Deja ajustată în app.py conform dimensiunilor video și mobile
+    
+    print(f"ASS: Using font: {font_family}, size: {font_size}, mobile: {is_mobile}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
     outline_width = style.get('borderWidth', 2)
+    
+    # FIX #6: Pe mobil, mărim puțin grosimea conturului pentru vizibilitate
+    if is_mobile:
+        outline_width = max(outline_width, outline_width * 1.2)
+        print(f"Mobile outline width adjustment: {outline_width}")
     
     # Completăm header-ul cu informațiile de stil
     ass_header = ass_header.format(
@@ -333,10 +363,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     print(f"ASS file created successfully: {output_path}")
     return output_path
 
-def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size, highlight_border_color=None):
+def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size, highlight_border_color=None, is_mobile=False):
     """
     FIX COMPLET: Creează textul cu un cuvânt evidențiat folosind tag-uri ASS inline.
     ÎMBUNĂTĂȚITĂ: Include mărirea fontului și CONTURUL PERSONALIZAT pentru cuvântul evidențiat.
+    FIX #6: Ajustări pentru mobil.
     
     Args:
         words: Lista de cuvinte
@@ -345,6 +376,7 @@ def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_co
         highlighted_font_size: Mărimea fontului pentru cuvântul evidențiat
         base_font_size: Mărimea fontului pentru cuvintele normale
         highlight_border_color: Culoarea conturului pentru cuvântul evidențiat (OPȚIONAL)
+        is_mobile: Dacă este pe mobil (pentru ajustări speciale)
     
     Returns:
         str: Textul formatat cu tag-uri ASS pentru evidențiere + mărire + contur personalizat
@@ -361,11 +393,11 @@ def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_co
             if highlight_border_color:
                 # \fs = font size, \c = primary color, \3c = outline color, \r = reset to style
                 result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&\\3c&H{highlight_border_color}&}}{word}{{\\r}}")
-                print(f"Applied highlight with custom border: color={highlight_color}, border={highlight_border_color}")
+                print(f"Applied highlight with custom border: color={highlight_color}, border={highlight_border_color}, mobile={is_mobile}")
             else:
                 # Fallback la conturul standard
                 result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&}}{word}{{\\r}}")
-                print(f"Applied highlight with standard border: color={highlight_color}")
+                print(f"Applied highlight with standard border: color={highlight_color}, mobile={is_mobile}")
         else:
             # Cuvânt normal - folosește setările din stil
             result_parts.append(word)
@@ -378,6 +410,7 @@ def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles
     folosind un singur layer cu tag-uri de culoare și mărime inline pentru fiecare cuvânt.
     INCLUDE MĂRIREA FONTULUI pentru cuvântul evidențiat - SYNCHRONIZED cu frontend!
     INCLUDE CONTURUL PERSONALIZAT pentru cuvântul evidențiat!
+    FIX #6: Optimizări pentru mobil.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -390,6 +423,10 @@ def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles
     """
     print(f"Creating ENHANCED Precise Word Highlighting ASS file with style: {style}")
     
+    # FIX #6: Extragem informațiile mobile
+    is_mobile = style.get('isMobile', False)
+    screen_width = style.get('screenWidth', 1920)
+    
     # Extragem parametrii de poziționare
     useCustomPosition = style.get('useCustomPosition', False)
     customX = style.get('customX', 50)
@@ -398,7 +435,7 @@ def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles
     
     # Calculăm poziția și coordonatele pentru ASS
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
-    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY, is_mobile)
     
     # Header ASS SIMPLIFICAT - doar un stil + BOLD=1
     ass_header = """[Script Info]
@@ -419,9 +456,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
     base_font_size = style.get('fontSize', 24)
-    highlighted_font_size = calculate_highlighted_font_size(base_font_size)
+    highlighted_font_size = calculate_highlighted_font_size(base_font_size, is_mobile)
     
-    print(f"Enhanced Precise Word Highlighting ASS: Using font: {font_family}, base size: {base_font_size}, highlighted size: {highlighted_font_size}")
+    print(f"Enhanced Precise Word Highlighting ASS: Using font: {font_family}, base size: {base_font_size}, highlighted size: {highlighted_font_size}, mobile: {is_mobile}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
@@ -436,6 +473,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         print("No custom highlight border color specified, using default")
     
     border_width = style.get('borderWidth', 2)
+    
+    # FIX #6: Pe mobil, mărim puțin grosimea conturului pentru vizibilitate
+    if is_mobile:
+        border_width = max(border_width, border_width * 1.2)
+        print(f"Mobile border width adjustment: {border_width}")
     
     # Formatăm header-ul cu mărimea de bază (highlight se face inline)
     ass_header = ass_header.format(
@@ -500,7 +542,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     
                     # Textul cu primul cuvânt evidențiat + mărit + contur personalizat
                     highlighted_text = create_enhanced_highlighted_text(
-                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size, highlight_border_color
+                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size, highlight_border_color, is_mobile
                     )
                     word_events.append((first_word_start, first_word_end, highlighted_text))
                 
@@ -512,7 +554,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     
                     if word_start < word_end:  # Doar dacă avem un interval valid
                         highlighted_text = create_enhanced_highlighted_text(
-                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size, highlight_border_color
+                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size, highlight_border_color, is_mobile
                         )
                         word_events.append((word_start, word_end, highlighted_text))
                 
@@ -536,7 +578,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             if i < 3:
                 word_count = len(sub.get('words', []))
                 karaoke_status = "enhanced_karaoke" if (style.get('useKaraoke', False) and word_count > 0) else "normal"
-                print(f"Subtitle {i+1}: {karaoke_status} | {position_tag} | {word_count} words | {text[:30]}...")
+                print(f"Subtitle {i+1}: {karaoke_status} | {position_tag} | {word_count} words | mobile: {is_mobile} | {text[:30]}...")
         
         print(f"Total dialogue lines created: {total_dialogue_lines}")
     
@@ -548,6 +590,7 @@ def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     """
     Creează un fișier ASS cu efect de karaoke îmbunătățit pentru a evidenția cuvintele
     pe măsură ce sunt pronunțate, cu poziționare corectă și FONTURILE BOLD.
+    FIX #6: Ajustări pentru mobil.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -560,6 +603,9 @@ def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     """
     print(f"Creating Karaoke ASS file with style: {style}")
     
+    # FIX #6: Extragem informațiile mobile
+    is_mobile = style.get('isMobile', False)
+    
     # Extragem parametrii de poziționare
     useCustomPosition = style.get('useCustomPosition', False)
     customX = style.get('customX', 50)
@@ -568,7 +614,7 @@ def create_karaoke_ass_file(srt_path, output_path, style, subtitles):
     
     # Calculăm poziția și coordonatele pentru ASS
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
-    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY, is_mobile)
     
     # Header ASS cu setări optime pentru karaoke și BOLD=1
     ass_header = """[Script Info]
@@ -590,12 +636,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
     font_size = style.get('fontSize', 24)
-    print(f"Karaoke ASS: Using font: {font_family}, size: {font_size}")
+    print(f"Karaoke ASS: Using font: {font_family}, size: {font_size}, mobile: {is_mobile}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]  # Fără &H prefix
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
     border_width = style.get('borderWidth', 2)
+    
+    # FIX #6: Pe mobil, mărim puțin grosimea conturului pentru vizibilitate
+    if is_mobile:
+        border_width = max(border_width, border_width * 1.2)
     
     # Formatăm header-ul
     ass_header = ass_header.format(
@@ -687,7 +737,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
-                print(f"Karaoke subtitle {i+1}: {start} -> {end} | {position_tag} | {len(words)} words | {text[:30]}...")
+                print(f"Karaoke subtitle {i+1}: {start} -> {end} | {position_tag} | {len(words)} words | mobile: {is_mobile} | {text[:30]}...")
     
     print(f"Karaoke ASS file created successfully: {output_path}")
     return output_path
@@ -697,6 +747,7 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     Alternativă îmbunătățită pentru efectul de karaoke care folosește multiple linii de dialog
     cu timpi calculați mai precis pentru a evidenția fiecare cuvânt în parte.
     VERSIUNEA CU BOLD=1 pentru fonturile groase.
+    FIX #6: Ajustări pentru mobil.
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -709,6 +760,9 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     """
     print(f"Creating Word-by-word ASS file with style: {style}")
     
+    # FIX #6: Extragem informațiile mobile
+    is_mobile = style.get('isMobile', False)
+    
     # Extragem parametrii de poziționare
     useCustomPosition = style.get('useCustomPosition', False)
     customX = style.get('customX', 50)
@@ -717,7 +771,7 @@ def create_word_by_word_karaoke(srt_path, output_path, style, subtitles):
     
     # Calculăm poziția și coordonatele pentru ASS
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
-    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY)
+    margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY, is_mobile)
     
     # Header ASS cu BOLD=1
     ass_header = """[Script Info]
@@ -739,15 +793,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     # Parametri de stil
     font_family = style.get('fontFamily', 'Arial')
     base_font_size = style.get('fontSize', 24)
-    highlight_font_size = calculate_highlighted_font_size(base_font_size)
+    highlight_font_size = calculate_highlighted_font_size(base_font_size, is_mobile)
     
-    print(f"Word-by-word ASS: Using font: {font_family}, base size: {base_font_size}, highlight size: {highlight_font_size}")
+    print(f"Word-by-word ASS: Using font: {font_family}, base size: {base_font_size}, highlight size: {highlight_font_size}, mobile: {is_mobile}")
     
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
     highlight_border = hex_to_ass_color(style.get('currentWordBorderColor', '#000000'))[2:]
     border_width = style.get('borderWidth', 2)
+    
+    # FIX #6: Pe mobil, mărim puțin grosimea conturului pentru vizibilitate
+    if is_mobile:
+        border_width = max(border_width, border_width * 1.2)
     
     # Formatăm header-ul
     ass_header = ass_header.format(
@@ -854,7 +912,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Log pentru debugging la primele câteva subtitrări
             if i < 3:
                 word_count = len(sub.get('words', []))
-                print(f"Word-by-word subtitle {i+1}: {fmt_start} -> {fmt_end} | {position_tag} | {len(words)} words | {text[:30]}...")
+                print(f"Word-by-word subtitle {i+1}: {fmt_start} -> {fmt_end} | {position_tag} | {len(words)} words | mobile: {is_mobile} | {text[:30]}...")
         
         print(f"Total highlighted words created: {total_highlighted_words}")
     
@@ -915,6 +973,7 @@ Enhanced Subtitle Statistics:
 - Subtitles with word-level timing: {subtitles_with_word_timing}/{len(subtitles)} ({(subtitles_with_word_timing/len(subtitles)*100):.1f}%)
 - Total words with precise timing: {total_words_with_timing}
 - Enhanced highlighting support: Available
+- Mobile optimizations: Enabled
 """
     
     return stats

@@ -204,36 +204,78 @@ def hex_to_ass_color(hex_color):
     
     return '&H00FFFFFF'  # Default to white if invalid
 
-def adjust_font_size_for_video(base_size, video_width=1280, reference_width=1920):
+# FIX #6: Funcție îmbunătățită pentru ajustarea fontului pe mobil
+def adjust_font_size_for_video(base_size, video_width=1280, reference_width=1920, is_mobile=False, screen_width=None):
     """
-    Ajustează dimensiunea fontului proporțional cu lățimea video-ului,
-    dar evită dimensiunile prea mici.
+    FIX #6: Ajustează dimensiunea fontului proporțional cu lățimea video-ului,
+    cu tratament special pentru dispozitivele mobile.
     
     Args:
         base_size: Dimensiunea de bază a fontului (ex: 24)
         video_width: Lățimea video-ului țintă
         reference_width: Lățimea de referință pentru dimensiunea fontului
+        is_mobile: Dacă cererea vine de pe mobil
+        screen_width: Lățimea ecranului utilizatorului
     
     Returns:
         int: Dimensiunea fontului ajustată
     """
-    # Factorul de scaling pentru dimensiunea fontului
-    # Folosim un factor minim de 0.75 pentru a evita fonturile prea mici
+    # FIX #6: Factorul de scaling pentru dimensiunea fontului
     scaling_factor = max(0.75, video_width / reference_width)
     
-    # Adăugăm și un bonus pentru dimensiunile mici
-    # pentru a asigura lizibilitatea
+    # FIX #6: TRATAMENT SPECIAL PENTRU MOBIL
+    if is_mobile:
+        # Pe mobil, fonturile trebuie să fie mai mari pentru lizibilitate
+        # dar proporțional cu lățimea ecranului utilizatorului
+        mobile_scaling_factor = 1.0
+        
+        if screen_width:
+            # Dacă avem lățimea ecranului, calculăm factorul de scalare
+            if screen_width <= 480:  # Telefoane foarte mici
+                mobile_scaling_factor = 1.8
+            elif screen_width <= 768:  # Telefoane normale
+                mobile_scaling_factor = 1.6
+            else:  # Tablete sau ecrane mai mari
+                mobile_scaling_factor = 1.4
+        else:
+            # Fallback pentru când nu avem informații despre ecran
+            mobile_scaling_factor = 1.6
+        
+        # Aplicăm factorul de scalare pentru mobil
+        scaling_factor = scaling_factor * mobile_scaling_factor
+        
+        print(f"Mobile font scaling: base_factor={scaling_factor/mobile_scaling_factor:.2f}, "
+              f"mobile_factor={mobile_scaling_factor}, combined={scaling_factor:.2f}")
+    
+    # Adăugăm un bonus pentru dimensiuni mai mici pentru lizibilitate
     size_bonus = 0
     if video_width < 1280:
-        size_bonus = 4  # Adăugăm bonus pentru rezoluții mai mici
+        size_bonus = 4 if not is_mobile else 6  # Bonus mai mare pe mobil
     
-    # Dimensiunea minima nu va fi mai mică de 18px pentru lizibilitate
-    adjusted_size = max(18, int(base_size * scaling_factor) + size_bonus)
+    # Pe mobil, adăugăm un bonus suplimentar pentru lizibilitate
+    mobile_bonus = 0
+    if is_mobile:
+        if base_size > 60:
+            mobile_bonus = 4  # Bonus redus pentru fonturi mari
+        elif base_size > 40:
+            mobile_bonus = 6  # Bonus mediu pentru fonturi mari
+        else:
+            mobile_bonus = 8  # Bonus mare pentru fonturi mici
     
-    print(f"Font size calculation: base={base_size}, video_width={video_width}, " 
-          f"factor={scaling_factor:.2f}, bonus={size_bonus}, result={adjusted_size}")
+    # Calculăm dimensiunea finală
+    adjusted_size = max(18, int(base_size * scaling_factor) + size_bonus + mobile_bonus)
     
-    return adjusted_size
+    # FIX #6: Ajustăm limitele pentru mobil
+    min_size = 24 if is_mobile else 18  # Minim mai mare pe mobil
+    max_size = min(150 if is_mobile else 120, video_height * 0.18 if 'video_height' in locals() else 200)
+    
+    final_size = max(min_size, min(max_size, adjusted_size))
+    
+    print(f"Font size calculation: base={base_size}, video_width={video_width}, "
+          f"factor={scaling_factor:.2f}, bonus={size_bonus}, mobile_bonus={mobile_bonus}, "
+          f"final={final_size}, is_mobile={is_mobile}")
+    
+    return final_size
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -507,6 +549,13 @@ def create_video_with_subtitles():
         print('=== VIDEO GENERATION DEBUG ===')
         print('Raw style received from frontend:', json.dumps(style, indent=2))
         
+        # FIX #6: Extragem informațiile despre dispozitivul mobil
+        is_mobile = style.get('isMobile', False)
+        screen_width = style.get('screenWidth', None)
+        screen_height = style.get('screenHeight', None)
+        
+        print(f'Mobile detection: is_mobile={is_mobile}, screen_width={screen_width}, screen_height={screen_height}')
+        
         # Validăm și normalizăm stilul primit
         validated_style = {
             'fontFamily': style.get('fontFamily', 'Arial'),
@@ -524,8 +573,11 @@ def create_video_with_subtitles():
             'currentWordColor': style.get('currentWordColor', '#FFFF00'),
             'currentWordBorderColor': style.get('currentWordBorderColor', '#000000'),
             'maxLines': int(style.get('maxLines', 2)),  # FIX #8: Include maxLines
-            'maxWidth': int(style.get('maxWidth', 50))   # FIX #9: Folosim 70% implicit
-            # FIX #9: Nu mai includem maxWordsPerLine
+            'maxWidth': int(style.get('maxWidth', 50)),   # FIX #9: Folosim 70% implicit
+            # FIX #6: Adăugăm informații mobile
+            'isMobile': is_mobile,
+            'screenWidth': screen_width,
+            'screenHeight': screen_height
         }
         
         print('Validated and normalized style:', json.dumps(validated_style, indent=2))
@@ -599,9 +651,18 @@ def create_video_with_subtitles():
         # Extract style parameters din stilul validat
         font_family = validated_style['fontFamily']
         base_font_size = validated_style['fontSize']
-        # Ajustăm dimensiunea fontului pentru video
-        font_size = adjust_font_size_for_video(base_font_size, video_width, 1920)
-        print(f"Font size adjusted from {base_font_size} to {font_size} for video width {video_width}px")
+        
+        # FIX #6: Ajustăm dimensiunea fontului pentru video cu tratament special pentru mobil
+        font_size = adjust_font_size_for_video(
+            base_font_size, 
+            video_width, 
+            1920, 
+            is_mobile=is_mobile,
+            screen_width=screen_width
+        )
+        
+        print(f"Font size adjusted from {base_font_size} to {font_size} for video width {video_width}px "
+              f"(mobile: {is_mobile}, screen: {screen_width}px)")
         
         font_color = validated_style['fontColor']
         border_color = validated_style['borderColor']
@@ -634,6 +695,7 @@ def create_video_with_subtitles():
         print(f"Applying subtitle style: font={font_family}, size={font_size}, color={font_color}, border={border_color}, width={border_width}")
         print(f"Position: {'custom' if use_custom_position else position}, X={custom_x}, Y={custom_y}")
         print(f"Word highlighting: {use_karaoke}, current word color: {current_word_color}")
+        print(f"Mobile optimizations: is_mobile={is_mobile}, screen_width={screen_width}")
 
         update_task_status(task_id, "processing", 30, "Aplicare subtitrări cu stil personalizat")
         
@@ -662,7 +724,10 @@ def create_video_with_subtitles():
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True,
-                        'textAlign': 2
+                        'textAlign': 2,
+                        # FIX #6: Transmitem informații mobile
+                        'isMobile': is_mobile,
+                        'screenWidth': screen_width
                     },
                     formatted_subtitles
                 )
@@ -680,7 +745,10 @@ def create_video_with_subtitles():
                         'customX': custom_x,
                         'customY': custom_y,
                         'allCaps': validated_style['allCaps'],
-                        'removePunctuation': validated_style['removePunctuation']
+                        'removePunctuation': validated_style['removePunctuation'],
+                        # FIX #6: Transmitem informații mobile
+                        'isMobile': is_mobile,
+                        'screenWidth': screen_width
                     },
                     formatted_subtitles
                 )
@@ -700,7 +768,10 @@ def create_video_with_subtitles():
                         'currentWordBorderColor': current_word_border_color,
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
-                        'useKaraoke': True
+                        'useKaraoke': True,
+                        # FIX #6: Transmitem informații mobile
+                        'isMobile': is_mobile,
+                        'screenWidth': screen_width
                     },
                     formatted_subtitles
                 )
@@ -716,7 +787,10 @@ def create_video_with_subtitles():
                         'borderWidth': border_width,
                         'position': position,
                         'allCaps': validated_style['allCaps'],
-                        'removePunctuation': validated_style['removePunctuation']
+                        'removePunctuation': validated_style['removePunctuation'],
+                        # FIX #6: Transmitem informații mobile
+                        'isMobile': is_mobile,
+                        'screenWidth': screen_width
                     },
                     formatted_subtitles
                 )
