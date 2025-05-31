@@ -1,6 +1,7 @@
 # backend/custom_position.py
 # VERSIUNEA ÎMBUNĂTĂȚITĂ pentru evidențiere cuvinte cu mărime mărită
 # Synchronizes perfectly with frontend highlighting effects
+# FIX COMPLET: Include conturul personalizat pentru cuvântul evidențiat
 
 import re
 
@@ -332,11 +333,51 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     print(f"ASS file created successfully: {output_path}")
     return output_path
 
+def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size, highlight_border_color=None):
+    """
+    FIX COMPLET: Creează textul cu un cuvânt evidențiat folosind tag-uri ASS inline.
+    ÎMBUNĂTĂȚITĂ: Include mărirea fontului și CONTURUL PERSONALIZAT pentru cuvântul evidențiat.
+    
+    Args:
+        words: Lista de cuvinte
+        highlighted_word_index: Indexul cuvântului de evidențiat (0-based)
+        highlight_color: Culoarea pentru evidențiere (fără &H prefix)
+        highlighted_font_size: Mărimea fontului pentru cuvântul evidențiat
+        base_font_size: Mărimea fontului pentru cuvintele normale
+        highlight_border_color: Culoarea conturului pentru cuvântul evidențiat (OPȚIONAL)
+    
+    Returns:
+        str: Textul formatat cu tag-uri ASS pentru evidențiere + mărire + contur personalizat
+    """
+    if not words or highlighted_word_index >= len(words):
+        return ' '.join(words) if words else ''
+    
+    result_parts = []
+    
+    for i, word in enumerate(words):
+        if i == highlighted_word_index:
+            # Cuvântul evidențiat: schimb culoarea, mărimea, conturul și revin la setările normale
+            # CRITICAL FIX: Adăugăm și conturul personalizat dacă este specificat
+            if highlight_border_color:
+                # \fs = font size, \c = primary color, \3c = outline color, \r = reset to style
+                result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&\\3c&H{highlight_border_color}&}}{word}{{\\r}}")
+                print(f"Applied highlight with custom border: color={highlight_color}, border={highlight_border_color}")
+            else:
+                # Fallback la conturul standard
+                result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&}}{word}{{\\r}}")
+                print(f"Applied highlight with standard border: color={highlight_color}")
+        else:
+            # Cuvânt normal - folosește setările din stil
+            result_parts.append(word)
+    
+    return ' '.join(result_parts)
+
 def create_precise_word_highlighting_ass(srt_path, output_path, style, subtitles):
     """
-    VERSIUNEA ÎMBUNĂTĂȚITĂ: Creează un fișier ASS cu evidențierea PRECISĂ a cuvântului curent
+    FIX COMPLET: Creează un fișier ASS cu evidențierea PRECISĂ a cuvântului curent
     folosind un singur layer cu tag-uri de culoare și mărime inline pentru fiecare cuvânt.
     INCLUDE MĂRIREA FONTULUI pentru cuvântul evidențiat - SYNCHRONIZED cu frontend!
+    INCLUDE CONTURUL PERSONALIZAT pentru cuvântul evidențiat!
     
     Args:
         srt_path: Calea către fișierul SRT original
@@ -385,6 +426,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     font_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]
     border_color = hex_to_ass_color(style.get('borderColor', '#000000'))[2:]
     highlight_color = hex_to_ass_color(style.get('currentWordColor', '#FFFF00'))[2:]
+    
+    # CRITICAL FIX: Obținem și procesăm conturul personalizat pentru cuvântul evidențiat
+    highlight_border_color = None
+    if 'currentWordBorderColor' in style and style['currentWordBorderColor']:
+        highlight_border_color = hex_to_ass_color(style['currentWordBorderColor'])[2:]
+        print(f"Using custom highlight border color: {style['currentWordBorderColor']} -> {highlight_border_color}")
+    else:
+        print("No custom highlight border color specified, using default")
+    
     border_width = style.get('borderWidth', 2)
     
     # Formatăm header-ul cu mărimea de bază (highlight se face inline)
@@ -448,9 +498,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     first_word_start = max(start_time, word_timings[0]['start'])
                     first_word_end = min(word_timings[0]['end'], end_time) if len(word_timings) > 1 else end_time
                     
-                    # Textul cu primul cuvânt evidențiat + mărit
+                    # Textul cu primul cuvânt evidențiat + mărit + contur personalizat
                     highlighted_text = create_enhanced_highlighted_text(
-                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size
+                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size, highlight_border_color
                     )
                     word_events.append((first_word_start, first_word_end, highlighted_text))
                 
@@ -462,7 +512,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     
                     if word_start < word_end:  # Doar dacă avem un interval valid
                         highlighted_text = create_enhanced_highlighted_text(
-                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size
+                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size, highlight_border_color
                         )
                         word_events.append((word_start, word_end, highlighted_text))
                 
@@ -492,37 +542,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     
     print(f"ENHANCED Precise Word Highlighting ASS file created successfully: {output_path}")
     return output_path
-
-def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size):
-    """
-    Creează textul cu un cuvânt evidențiat folosind tag-uri ASS inline.
-    ÎMBUNĂTĂȚITĂ: Include mărirea fontului pentru cuvântul evidențiat.
-    
-    Args:
-        words: Lista de cuvinte
-        highlighted_word_index: Indexul cuvântului de evidențiat (0-based)
-        highlight_color: Culoarea pentru evidențiere (fără &H prefix)
-        highlighted_font_size: Mărimea fontului pentru cuvântul evidențiat
-        base_font_size: Mărimea fontului pentru cuvintele normale
-    
-    Returns:
-        str: Textul formatat cu tag-uri ASS pentru evidențiere + mărire
-    """
-    if not words or highlighted_word_index >= len(words):
-        return ' '.join(words) if words else ''
-    
-    result_parts = []
-    
-    for i, word in enumerate(words):
-        if i == highlighted_word_index:
-            # Cuvântul evidențiat: schimb culoarea, mărimea și revin la setările normale
-            # \fs = font size, \c = primary color, \r = reset to style
-            result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&}}{word}{{\\r}}")
-        else:
-            # Cuvânt normal - folosește setările din stil
-            result_parts.append(word)
-    
-    return ' '.join(result_parts)
 
 # Păstrez celelalte funcții neschimbate pentru compatibilitate
 def create_karaoke_ass_file(srt_path, output_path, style, subtitles):

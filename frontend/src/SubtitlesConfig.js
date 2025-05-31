@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './SubtitlesConfig.css';
 
 // Lista extinsă de culori predefinite pentru design modern
@@ -99,18 +99,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
   const [presets, setPresets] = useState([]);
   const [presetName, setPresetName] = useState('');
   const [showSavePreset, setShowSavePreset] = useState(false);
-  
-  // FIX: State local pentru slidere pentru a evita re-renderurile imediate
-  const [localSliderValues, setLocalSliderValues] = useState({
-    fontSize: subtitleStyle.fontSize || 48,
-    borderWidth: subtitleStyle.borderWidth || 2,
-    maxLines: subtitleStyle.maxLines || 1,
-    customX: subtitleStyle.customX || 50,
-    customY: subtitleStyle.customY || 90
-  });
-  
-  // FIX: Refs pentru debouncing
-  const debounceTimeouts = useRef({});
 
   // Detectare mobil
   useEffect(() => {
@@ -123,23 +111,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     
     return () => {
       window.removeEventListener('resize', checkMobile);
-      // Cleanup timeouts
-      Object.values(debounceTimeouts.current).forEach(timeout => {
-        if (timeout) clearTimeout(timeout);
-      });
     };
   }, []);
-
-  // FIX: Sincronizare cu props când se schimbă din exterior
-  useEffect(() => {
-    setLocalSliderValues({
-      fontSize: subtitleStyle.fontSize || 48,
-      borderWidth: subtitleStyle.borderWidth || 2,
-      maxLines: subtitleStyle.maxLines || 1,
-      customX: subtitleStyle.customX || 50,
-      customY: subtitleStyle.customY || 90
-    });
-  }, [subtitleStyle.fontSize, subtitleStyle.borderWidth, subtitleStyle.maxLines, subtitleStyle.customX, subtitleStyle.customY]);
 
   // Încarcă presetările la pornire
   useEffect(() => {
@@ -222,7 +195,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     window.alert(`Presetarea "${preset.name}" a fost aplicată!`);
   };
 
-  // FIX #5: Aplică preset demo direct
+  // FIX: Aplică preset demo direct
   const applyDemoPreset = (presetKey) => {
     const preset = DEMO_PRESETS[presetKey];
     if (preset) {
@@ -309,36 +282,93 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     });
   };
 
-  // FIX: Handler optimizat pentru slidere cu debouncing
-  const handleSliderChange = useCallback((name, value) => {
-    // Actualizare imediată a stării locale pentru feedback vizual
-    setLocalSliderValues(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // FIX: Handler simplu pentru toate controalele - fără debouncing
+  const handleDirectChange = useCallback((e) => {
+    const { name, value, type } = e.target;
     
-    // Debounce pentru actualizarea stării principale
-    if (debounceTimeouts.current[name]) {
-      clearTimeout(debounceTimeouts.current[name]);
+    let processedValue = value;
+    if (type === 'number' || type === 'range') {
+      processedValue = parseInt(value, 10);
     }
     
-    debounceTimeouts.current[name] = setTimeout(() => {
-      console.log(`Debounced slider change: ${name} = ${value}`);
-      handleStyleChange({
-        target: {
-          name,
-          value: parseInt(value, 10)
-        }
-      });
-    }, 150); // 150ms debounce
+    console.log(`Direct change: ${name} = ${processedValue}`);
+    handleStyleChange({
+      target: { name, value: processedValue }
+    });
   }, [handleStyleChange]);
 
-  // FIX: Handler pentru input direct (fără debounce)
-  const handleDirectChange = useCallback((e) => {
-    const { name, value } = e.target;
-    console.log(`Direct change: ${name} = ${value}`);
-    handleStyleChange(e);
-  }, [handleStyleChange]);
+  // FIX: Spinner Component pentru fontSize
+  const FontSizeSpinner = ({ value, onChange }) => {
+    return (
+      <div className="font-size-spinner">
+        <label className="control-label">Mărime Font</label>
+        <div className="spinner-container">
+          <input 
+            type="number"
+            name="fontSize"
+            value={value}
+            min="12"
+            max="84"
+            step="2"
+            onChange={onChange}
+            className="modern-number-input"
+          />
+          <span className="font-size-unit">px</span>
+          <div className="spinner-buttons">
+            <button 
+              type="button"
+              onClick={() => onChange({
+                target: { 
+                  name: 'fontSize', 
+                  value: Math.min(84, value + 2) 
+                }
+              })}
+              className="spinner-btn up"
+            >
+              ▲
+            </button>
+            <button 
+              type="button"
+              onClick={() => onChange({
+                target: { 
+                  name: 'fontSize', 
+                  value: Math.max(12, value - 2) 
+                }
+              })}
+              className="spinner-btn down"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // FIX: Range slider simplificat fără state local
+  const SimpleRangeSlider = ({ name, value, min, max, label, unit = '', step = 1 }) => {
+    return (
+      <div className="modern-range-container">
+        <div className="range-header">
+          <span className="range-label">{label}</span>
+          <span className="range-value-display">{value}{unit}</span>
+        </div>
+        <input 
+          type="range" 
+          name={name} 
+          min={min} 
+          max={max}
+          step={step}
+          value={value} 
+          onChange={handleDirectChange}
+          className="modern-range-slider"
+          style={{
+            background: `linear-gradient(to right, #667eea 0%, #667eea ${((value - min) / (max - min)) * 100}%, #e2e8f0 ${((value - min) / (max - min)) * 100}%, #e2e8f0 100%)`
+          }}
+        />
+      </div>
+    );
+  };
 
   // Componentă pentru selectorul de culori cu design modern
   const ModernColorSelector = ({ colorType, currentColor, colorName }) => {
@@ -355,7 +385,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           <span className="color-value">{currentColor}</span>
         </div>
         
-        {/* FIX #6: Mai multe culori predefinite în grid compact */}
+        {/* FIX: Mai multe culori predefinite în grid compact */}
         <div className="predefined-colors-grid">
           {predefinedColors[colorType].map((color, index) => (
             <button 
@@ -367,34 +397,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             />
           ))}
         </div>
-      </div>
-    );
-  };
-
-  // FIX: Range slider OPTIMIZAT fără refresh excesiv
-  const ModernRangeSlider = ({ name, value, min, max, label, unit = '', step = 1 }) => {
-    // Folosim valoarea locală pentru afișare
-    const displayValue = localSliderValues[name] !== undefined ? localSliderValues[name] : value;
-    
-    return (
-      <div className="modern-range-container">
-        <div className="range-header">
-          <span className="range-label">{label}</span>
-          <span className="range-value-display">{displayValue}{unit}</span>
-        </div>
-        <input 
-          type="range" 
-          name={name} 
-          min={min} 
-          max={max}
-          step={step}
-          value={displayValue} 
-          onChange={(e) => handleSliderChange(name, e.target.value)}
-          className="modern-range-slider"
-          style={{
-            background: `linear-gradient(to right, #667eea 0%, #667eea ${((displayValue - min) / (max - min)) * 100}%, #e2e8f0 ${((displayValue - min) / (max - min)) * 100}%, #e2e8f0 100%)`
-          }}
-        />
       </div>
     );
   };
@@ -442,7 +444,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
 
   return (
     <div className="subtitle-style-controls-modern">
-      {/* FIX #5: Demo Presets la început pentru acces rapid */}
+      {/* FIX: Demo Presets la început pentru acces rapid */}
       <div className="demo-presets-section">
         <h4 className="section-title">⚡ Preseturi Rapide</h4>
         <div className="demo-presets-grid-modern">
@@ -461,7 +463,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
         </div>
       </div>
 
-      {/* FIX #10: Toate configurațiile într-un singur container fără tab-uri */}
+      {/* FIX: Toate configurațiile într-un singur container fără tab-uri */}
       <div className="unified-controls-container">
         
         {/* Secțiunea Font și Dimensiuni */}
@@ -486,13 +488,10 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               ]}
             />
 
-            <ModernRangeSlider 
-              name="fontSize"
-              value={subtitleStyle.fontSize}
-              min={12}
-              max={84}
-              label="Mărime Font"
-              unit="px"
+            {/* FIX: Înlocuim slider-ul cu spinner pentru fontSize */}
+            <FontSizeSpinner 
+              value={subtitleStyle.fontSize || 48}
+              onChange={handleDirectChange}
             />
 
             <div className="control-item">
@@ -513,9 +512,10 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               />
             </div>
 
-            <ModernRangeSlider 
+            {/* FIX: Înlocuim cu SimpleRangeSlider */}
+            <SimpleRangeSlider 
               name="borderWidth"
-              value={subtitleStyle.borderWidth}
+              value={subtitleStyle.borderWidth || 2}
               min={0}
               max={5}
               step={0.5}
@@ -595,7 +595,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
 
             {useCustomPosition && (
               <>
-                <ModernRangeSlider 
+                <SimpleRangeSlider 
                   name="customX"
                   value={subtitleStyle.customX || 50}
                   min={0}
@@ -604,7 +604,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                   unit="%"
                 />
 
-                <ModernRangeSlider 
+                <SimpleRangeSlider 
                   name="customY"
                   value={subtitleStyle.customY || 90}
                   min={0}
@@ -623,8 +623,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           <h4 className="group-title">📐 Layout și Opțiuni</h4>
           <div className="controls-grid">
             
-            {/* FIX #8: Configurare funcțională pentru numărul de linii */}
-            <ModernRangeSlider 
+            {/* FIX: Configurare funcțională pentru numărul de linii cu SimpleRangeSlider */}
+            <SimpleRangeSlider 
               name="maxLines"
               value={subtitleStyle.maxLines || 2}
               min={1}

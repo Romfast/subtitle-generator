@@ -53,10 +53,9 @@ function App() {
     subtitlesConfig: false
   });
   
-  // FIX: ELIMINAT preventAutoCollapse - nu mai folosim logica complexă de auto-collapse
   const [videoFitMode, setVideoFitMode] = useState('cover');
   
-  // FIX: State pentru subtitrări cu debouncing
+  // FIX: State pentru subtitrări - SIMPLIFICAT
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontSize: 48,
     fontColor: '#00FF00',
@@ -81,9 +80,6 @@ function App() {
   const fileInputRef = useRef();
   const videoPlayerRef = useRef();
   const playerContainerRef = useRef();
-  
-  // FIX: Ref pentru debouncing
-  const styleChangeTimeoutRef = useRef(null);
 
   // Detectare mobil și verificare conexiune API
   useEffect(() => {
@@ -140,10 +136,6 @@ function App() {
     
     return () => {
       window.removeEventListener('resize', checkMobile);
-      // FIX: Cleanup pentru timeout
-      if (styleChangeTimeoutRef.current) {
-        clearTimeout(styleChangeTimeoutRef.current);
-      }
     };
   }, []);
 
@@ -277,11 +269,19 @@ function App() {
       const modelUsed = response.data.model_used || whisperModel;
       setUploadStatus(`Subtitrări generate cu succes folosind modelul ${modelUsed.toUpperCase()}!`);
       
-      // FIX: Expandează lista de subtitrări FĂRĂ protecție complexă
-      setSectionsExpanded(prev => ({
-        ...prev,
-        subtitlesList: true
-      }));
+      // FIX: Expandează lista de subtitrări pe desktop
+      if (!isMobile) {
+        setSectionsExpanded(prev => ({
+          ...prev,
+          subtitlesList: true,
+          subtitlesConfig: true
+        }));
+      } else {
+        setSectionsExpanded(prev => ({
+          ...prev,
+          subtitlesList: true
+        }));
+      }
       
       if (response.data.task_id) {
         setTranscribeTaskId(response.data.task_id);
@@ -298,7 +298,7 @@ function App() {
     }
   };
 
-  // FIX: Handler pentru schimbări de stil OPTIMIZAT fără auto-collapse
+  // FIX: Handler pentru schimbări de stil SIMPLIFICAT fără auto-collapse
   const handleStyleChange = useCallback((e) => {
     const { name, value } = e.target;
     
@@ -314,13 +314,13 @@ function App() {
     
     console.log('Style change:', name, value, '->', processedValue);
     
-    // FIX: Actualizare directă fără debouncing pentru a nu bloca sliderele
+    // FIX: Actualizare directă fără debouncing pentru a nu bloca interfața
     setSubtitleStyle(prev => ({
       ...prev,
       [name]: processedValue
     }));
     
-    // FIX: NU mai folosim logica de preventAutoCollapse
+    // FIX: ELIMINĂM logica de preventAutoCollapse
   }, []);
   
   // Funcție pentru actualizarea poziției subtitrărilor prin drag-and-drop
@@ -390,7 +390,7 @@ function App() {
         removePunctuation: Boolean(subtitleStyle.removePunctuation),
         useKaraoke: Boolean(subtitleStyle.useKaraoke),
         currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
-        currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000',
+        currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000', // FIX: Include conturul personalizat
         maxLines: parseInt(subtitleStyle.maxLines) || 1,
         maxWidth: parseInt(subtitleStyle.maxWidth) || 50,
         isMobile: isMobile,
@@ -499,8 +499,8 @@ function App() {
   const applyDemoPreset = useCallback((presetName) => {
     const demoPresets = {
       'default': {
-        fontSize: 48, fontFamily: 'Bebas Neue', fontColor: '#90EE90', borderColor: '#000000', borderWidth: 2,
-        position: 'bottom', useCustomPosition: true, customX: 50, customY: 90, allCaps: true,
+        fontSize: 48, fontFamily: 'Inter', fontColor: '#00FF00', borderColor: '#000000', borderWidth: 2,
+        position: 'bottom-30', useCustomPosition: false, customX: 50, customY: 70, allCaps: true,
         removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FFFF00', currentWordBorderColor: '#000000'
       },
       'cinema_classic': {
@@ -509,9 +509,11 @@ function App() {
         removePunctuation: false, useKaraoke: false, maxLines: 1, currentWordColor: '#FFFF00', currentWordBorderColor: '#000000'
       },
       'single_word_focus': {
-        fontSize: 48, fontFamily: 'Poppins', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
-        position: 'middle', useCustomPosition: false, customX: 50, customY: 50, allCaps: true,
-        removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FF3366', currentWordBorderColor: '#FFFFFF'
+        fontSize: 56, fontFamily: 'Poppins', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
+        position: 'bottom-30', useCustomPosition: false, customX: 50, customY: 50, allCaps: true,
+        removePunctuation: false, useKaraoke: true, maxLines: 1, 
+        currentWordColor: '#FF3366', 
+        currentWordBorderColor: '#FFFFFF'  // FIX: Contur alb pentru FOCUS
       },
       'rounded_soft': {
         fontSize: 28, fontFamily: 'Nunito', fontColor: '#F8F9FA', borderColor: '#E5E7EB', borderWidth: 1,
@@ -751,62 +753,66 @@ function App() {
           </section>
         )}
 
-        {/* SUBTITLES PANEL CU CONFIGURĂRI */}
+        {/* FIX: SUBTITLES PANEL CU CONFIGURĂRI - LAYOUT DESKTOP ÎMBUNĂTĂȚIT */}
         {subtitles.length > 0 && (
           <section className="subtitles-management-section">
             <h2>Subtitrări și Configurări</h2>
             
             <div className={`subtitles-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
               
-              {/* Lista de subtitrări colapsabilă */}
-              <CollapsibleSection 
-                title="Subtitrări"
-                sectionKey="subtitlesList"
-                defaultExpanded={false}
-                icon="📝"
-                badge={`${subtitles.length}`}
-              >
-                <div className="subtitles-list-content">
-                  {/* FIX: Pe mobil afișăm doar textul, pe desktop doar start time + text */}
-                  {!isMobile && (
-                    <div className="subtitle-header-simplified">
-                      <span className="subtitle-time-header">Start</span>
-                      <span className="subtitle-text-header">Text subtitrare</span>
+              {/* FIX: Pe desktop, lista subtitrări în stânga */}
+              <div className="subtitles-list-wrapper">
+                <CollapsibleSection 
+                  title="Subtitrări"
+                  sectionKey="subtitlesList"
+                  defaultExpanded={!isMobile}
+                  icon="📝"
+                  badge={`${subtitles.length}`}
+                >
+                  <div className="subtitles-list-content">
+                    {/* FIX: Pe mobil afișăm doar textul, pe desktop doar start time + text */}
+                    {!isMobile && (
+                      <div className="subtitle-header-simplified">
+                        <span className="subtitle-time-header">Start</span>
+                        <span className="subtitle-text-header">Text subtitrare</span>
+                      </div>
+                    )}
+                    
+                    <div className="subtitle-items-container">
+                      {subtitles.map((subtitle, index) => (
+                        <EditableSubtitleItem
+                          key={index}
+                          subtitle={subtitle}
+                          index={index}
+                          formatTime={formatTime}
+                          updateSubtitle={updateSubtitle}
+                          seekToTime={seekToTime}
+                          isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
+                          subtitleStyle={subtitleStyle}
+                          compact={true}
+                          showTimeAndDuration={!isMobile}
+                        />
+                      ))}
                     </div>
-                  )}
-                  
-                  <div className="subtitle-items-container">
-                    {subtitles.map((subtitle, index) => (
-                      <EditableSubtitleItem
-                        key={index}
-                        subtitle={subtitle}
-                        index={index}
-                        formatTime={formatTime}
-                        updateSubtitle={updateSubtitle}
-                        seekToTime={seekToTime}
-                        isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
-                        subtitleStyle={subtitleStyle}
-                        compact={true}
-                        showTimeAndDuration={!isMobile}
-                      />
-                    ))}
                   </div>
-                </div>
-              </CollapsibleSection>
+                </CollapsibleSection>
+              </div>
               
-              {/* FIX: Configurările FĂRĂ auto-collapse */}
-              <CollapsibleSection 
-                title="Configurări Stil"
-                sectionKey="subtitlesConfig"
-                defaultExpanded={false}
-                icon="🎨"
-              >
-                <SubtitlesConfig 
-                  subtitleStyle={subtitleStyle}
-                  handleStyleChange={handleStyleChange}
-                  compact={true}
-                />
-              </CollapsibleSection>
+              {/* FIX: Pe desktop, configurările în partea dreaptă ca panel fix */}
+              <div className={`config-panel-wrapper ${!isMobile ? 'desktop-config-panel' : ''}`}>
+                <CollapsibleSection 
+                  title="Configurări Stil"
+                  sectionKey="subtitlesConfig"
+                  defaultExpanded={!isMobile}
+                  icon="🎨"
+                >
+                  <SubtitlesConfig 
+                    subtitleStyle={subtitleStyle}
+                    handleStyleChange={handleStyleChange}
+                    compact={true}
+                  />
+                </CollapsibleSection>
+              </div>
             </div>
           </section>
         )}
