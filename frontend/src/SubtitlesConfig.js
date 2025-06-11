@@ -549,8 +549,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       { id: 'style', label: '🎨 Stil', icon: '🎨' },
       { id: 'highlight', label: '✨ Evidențiere', icon: '✨' },
       { id: 'position', label: '📍 Poziție', icon: '📍' },
-      { id: 'layout', label: '📐 Layout', icon: '📐' },
-      { id: 'saved', label: '💾 Salvate', icon: '💾' }
+      { id: 'layout', label: '📐 Layout', icon: '📐' }
     ];
     
     return (
@@ -582,10 +581,12 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       {/* UX FIX #3: Mobile tab navigation */}
       <MobileTabNavigation />
       
-      {/* Demo Presets - shown on desktop always, on mobile only when presets tab active */}
+      {/* Unified Presets Section - shown on desktop always, on mobile only when presets tab active */}
       {(!isMobile || activeTab === 'presets') && (
-        <div className="demo-presets-section">
-          <h4 className="section-title">⚡ Preseturi Rapide</h4>
+        <div className="unified-presets-section">
+          <h4 className="section-title">⚡ Presetări</h4>
+          
+          {/* Demo Presets Grid */}
           <div className="demo-presets-grid-modern">
             {Object.entries(DEMO_PRESETS).map(([key, preset]) => (
               <button
@@ -599,6 +600,75 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
                 <span className="preset-name">{preset.name}</span>
               </button>
             ))}
+          </div>
+
+          {/* Saved Presets Grid */}
+          {presets.filter(p => !p.isDemo).length > 0 && (
+            <div className="saved-presets-grid-modern">
+              {presets.filter(p => !p.isDemo).map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => loadPreset(preset)}
+                  className="demo-preset-btn-modern saved-preset"
+                  style={{ backgroundColor: '#6366f1' }}
+                  title={`Aplicați presetul salvat ${preset.name}`}
+                >
+                  <span className="preset-icon">💾</span>
+                  <span className="preset-name">{preset.name}</span>
+                  <button
+                    className="delete-preset-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePreset(preset.id);
+                    }}
+                    title="Șterge presetarea"
+                  >
+                    ✕
+                  </button>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Save New Preset Section */}
+          <div className="save-preset-section">
+            {!showSavePreset ? (
+              <button 
+                onClick={() => setShowSavePreset(true)}
+                className="save-preset-trigger-btn"
+              >
+                💾 Salvează Configurația Curentă
+              </button>
+            ) : (
+              <div className="save-preset-form">
+                <input
+                  type="text"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  placeholder="Numele presetării"
+                  className="preset-name-input"
+                  onKeyPress={(e) => e.key === 'Enter' && savePreset()}
+                />
+                <div className="save-preset-buttons">
+                  <button 
+                    onClick={savePreset}
+                    disabled={!presetName.trim()}
+                    className="save-preset-confirm-btn"
+                  >
+                    ✅ Salvează
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowSavePreset(false);
+                      setPresetName('');
+                    }}
+                    className="save-preset-cancel-btn"
+                  >
+                    ❌ Anulează
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -813,215 +883,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
           </div>
         )}
 
-        {/* Salvare presetări - shown on desktop always, on mobile only when saved tab active */}
-        {(!isMobile || activeTab === 'saved') && (
-          <div className="control-group">
-            <h4 className="group-title">💾 Presetări Personale</h4>
-          
-          {/* Buton salvare centralizat și mare */}
-          <div style={{ 
-            textAlign: 'center',
-            marginBottom: '20px'
-          }}>
-            {!showSavePreset ? (
-              <button 
-                onClick={() => setShowSavePreset(true)}
-                style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '16px 32px',
-                  cursor: 'pointer',
-                  fontWeight: '700',
-                  fontSize: '1rem',
-                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
-                  transition: 'all 0.3s ease',
-                  width: '100%',
-                  maxWidth: '300px'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 24px rgba(16, 185, 129, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3)';
-                }}
-              >
-                💾 Salvează Configurația Curentă
-              </button>
-            ) : (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '12px',
-                alignItems: 'center',
-                maxWidth: '300px',
-                margin: '0 auto'
-              }}>
-                <input
-                  type="text"
-                  value={presetName}
-                  onChange={(e) => setPresetName(e.target.value)}
-                  placeholder="Numele presetării"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    textAlign: 'center',
-                    outline: 'none'
-                  }}
-                  onKeyPress={(e) => e.key === 'Enter' && savePreset()}
-                />
-                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                  <button 
-                    onClick={savePreset}
-                    disabled={!presetName.trim()}
-                    style={{
-                      flex: 1,
-                      background: presetName.trim() ? '#10b981' : '#e5e7eb',
-                      color: presetName.trim() ? 'white' : '#9ca3af',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '10px 16px',
-                      cursor: presetName.trim() ? 'pointer' : 'not-allowed',
-                      fontWeight: '600'
-                    }}
-                  >
-                    ✅ Salvează
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setShowSavePreset(false);
-                      setPresetName('');
-                    }}
-                    style={{
-                      flex: 1,
-                      background: '#f3f4f6',
-                      color: '#374151',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '10px 16px',
-                      cursor: 'pointer',
-                      fontWeight: '600'
-                    }}
-                  >
-                    ❌ Anulează
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Lista simplificată de presetări */}
-          <div style={{
-            background: '#f8fafc',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0',
-            padding: '16px'
-          }}>
-            <div style={{
-              fontWeight: '700',
-              fontSize: '0.9rem',
-              color: '#1e293b',
-              marginBottom: '12px',
-              textAlign: 'center'
-            }}>
-              📋 Presetări Disponibile ({presets.length})
-            </div>
-            
-            {presets.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                color: '#64748b',
-                padding: '20px'
-              }}>
-                Nu există presetări salvate
-              </div>
-            ) : (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '8px',
-                maxHeight: '300px',
-                overflowY: 'auto'
-              }}>
-                {presets.map((preset) => (
-                  <div key={preset.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    background: preset.isDemo ? 
-                      'rgba(102, 126, 234, 0.1)' : 
-                      'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px'
-                  }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ 
-                        fontWeight: '600', 
-                        fontSize: '0.9rem',
-                        color: preset.isDemo ? '#4f46e5' : '#1e293b',
-                        marginBottom: '4px'
-                      }}>
-                        {preset.name}
-                      </div>
-                      <div style={{ 
-                        fontSize: '0.75rem', 
-                        color: '#64748b'
-                      }}>
-                        {preset.style?.fontFamily} {preset.style?.fontSize}px
-                        {preset.isDemo && ' • Demo'}
-                        {preset.style?.useKaraoke && ' • 🎤'}
-                      </div>
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button 
-                        onClick={() => loadPreset(preset)}
-                        style={{
-                          background: '#3b82f6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          fontSize: '0.75rem',
-                          fontWeight: '600'
-                        }}
-                      >
-                        📥
-                      </button>
-                      
-                      {!preset.isDemo && (
-                        <button 
-                          onClick={() => deletePreset(preset.id)}
-                          style={{
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 10px',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            fontWeight: '600'
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        )}
 
         {/* Info Box - Status actual - always shown on desktop, shown on all tabs on mobile */}
         <div className="status-info-box">

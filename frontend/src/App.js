@@ -668,35 +668,6 @@ function App() {
               </button>
             </div>
             
-            {/* DEMO PRESETS */}
-            {!isMobile && (
-              <div className="demo-presets-row">
-                <button onClick={() => applyDemoPreset('default')} className="demo-preset-button" 
-                  style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
-                  ⭐ Default
-                </button>                
-                <button onClick={() => applyDemoPreset('cinema_classic')} className="demo-preset-button"
-                  style={{ background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)', color: 'white' }}>
-                  🎬 Cinema
-                </button>
-                <button onClick={() => applyDemoPreset('single_word_focus')} className="demo-preset-button"
-                  style={{ background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)', color: 'white' }}>
-                  🎯 Focus
-                </button>
-                <button onClick={() => applyDemoPreset('rounded_soft')} className="demo-preset-button"
-                  style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', color: 'white' }}>
-                  🌸 Soft
-                </button>
-                <button onClick={() => applyDemoPreset('bold_impact')} className="demo-preset-button"
-                  style={{ background: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)', color: 'white' }}>
-                  💥 Impact
-                </button>
-                <button onClick={() => applyDemoPreset('neon_futuristic')} className="demo-preset-button"
-                  style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: 'white' }}>
-                  ⚡ Neon
-                </button>
-              </div>
-            )}
           </div>
           
           {/* UX FIX #4: Enhanced progress bars with time estimation */}

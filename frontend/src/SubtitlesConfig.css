@@ -28,7 +28,7 @@
 
 .mobile-tab-list {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 4px;
   background: rgba(248, 250, 252, 0.8);
   border-radius: 12px;
@@ -79,7 +79,18 @@
   text-align: center;
 }
 
-/* ========== DEMO PRESETS SECTION ========== */
+/* ========== UNIFIED PRESETS SECTION ========== */
+
+/* Unified presets section */
+.unified-presets-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
 .demo-presets-section {
   margin-bottom: 24px;
   padding-bottom: 20px;
@@ -100,6 +111,15 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
+  margin-bottom: 20px;
+}
+
+/* Saved presets grid similar to demo presets */
+.saved-presets-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .demo-preset-btn-modern {
@@ -139,6 +159,138 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+/* Saved preset button styling */
+.demo-preset-btn-modern.saved-preset {
+  position: relative;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  overflow: visible;
+}
+
+/* Delete button for saved presets */
+.delete-preset-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: 2px solid white;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.delete-preset-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Save preset section */
+.save-preset-section {
+  text-align: center;
+  padding: 20px;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 12px;
+  border: 2px dashed rgba(102, 126, 234, 0.3);
+}
+
+.save-preset-trigger-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 32px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 300px;
+}
+
+.save-preset-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+}
+
+/* Save preset form */
+.save-preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.preset-name-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.preset-name-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.save-preset-buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.save-preset-confirm-btn {
+  flex: 1;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.save-preset-confirm-btn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.save-preset-confirm-btn:not(:disabled):hover {
+  background: #059669;
+}
+
+.save-preset-cancel-btn {
+  flex: 1;
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.save-preset-cancel-btn:hover {
+  background: #e5e7eb;
 }
 
 /* ========== UNIFIED CONTROLS CONTAINER ========== */
