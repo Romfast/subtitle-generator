@@ -47,7 +47,7 @@ function App() {
   const [processTaskId, setProcessTaskId] = useState(null);
   const [progressStatus, setProgressStatus] = useState('');
   
-  // FIX: Stări pentru secțiuni colapsabile - SIMPLIFICAT fără auto-collapse
+  // FIX: Stări pentru secțiuni colapsabile - SEPARATE pentru fiecare secțiune
   const [sectionsExpanded, setSectionsExpanded] = useState({
     subtitlesList: false,
     subtitlesConfig: false
@@ -269,7 +269,7 @@ function App() {
       const modelUsed = response.data.model_used || whisperModel;
       setUploadStatus(`Subtitrări generate cu succes folosind modelul ${modelUsed.toUpperCase()}!`);
       
-      // FIX: Expandează lista de subtitrări pe desktop
+      // FIX: Expandează secțiunile pe desktop
       if (!isMobile) {
         setSectionsExpanded(prev => ({
           ...prev,
@@ -756,67 +756,62 @@ function App() {
           </section>
         )}
 
-        {/* SUBTITLES & CONFIG PANEL - SIDE BY SIDE */}
+        {/* ===== SECȚIUNE SEPARATĂ - LISTA SUBTITRĂRI ===== */}
         {subtitles.length > 0 && (
-          <section className="subtitles-and-config-section">
-            <h2>Subtitrări și Configurări</h2>
-            
-            {/* Container principal pentru subtitrări + configurări side-by-side */}
-            <div className={`subtitles-and-config-container ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
-              
-              {/* Panel stâng - Lista subtitrări */}
-              <div className="subtitles-panel">
-                <CollapsibleSection 
-                  title="Lista Subtitrări"
-                  sectionKey="subtitlesList"
-                  defaultExpanded={true}
-                  icon="📝"
-                  badge={`${subtitles.length}`}
-                >
-                  <div className="subtitles-list-content">
-                    {!isMobile && (
-                      <div className="subtitle-header-simplified">
-                        <span className="subtitle-time-header">Start</span>
-                        <span className="subtitle-text-header">Text subtitrare</span>
-                      </div>
-                    )}
-                    
-                    <div className="subtitle-items-container">
-                      {subtitles.map((subtitle, index) => (
-                        <EditableSubtitleItem
-                          key={index}
-                          subtitle={subtitle}
-                          index={index}
-                          formatTime={formatTime}
-                          updateSubtitle={updateSubtitle}
-                          seekToTime={seekToTime}
-                          isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
-                          subtitleStyle={subtitleStyle}
-                          compact={true}
-                          showTimeAndDuration={!isMobile}
-                        />
-                      ))}
-                    </div>
+          <section className="subtitles-list-section">
+            <CollapsibleSection 
+              title="Lista Subtitrări"
+              sectionKey="subtitlesList"
+              defaultExpanded={true}
+              icon="📝"
+              badge={`${subtitles.length}`}
+            >
+              <div className="subtitles-list-content">
+                {!isMobile && (
+                  <div className="subtitle-header-simplified">
+                    <span className="subtitle-time-header">Start</span>
+                    <span className="subtitle-text-header">Text subtitrare</span>
                   </div>
-                </CollapsibleSection>
+                )}
+                
+                <div className="subtitle-items-container">
+                  {subtitles.map((subtitle, index) => (
+                    <EditableSubtitleItem
+                      key={index}
+                      subtitle={subtitle}
+                      index={index}
+                      formatTime={formatTime}
+                      updateSubtitle={updateSubtitle}
+                      seekToTime={seekToTime}
+                      isActive={currentTime >= subtitle.start && currentTime <= subtitle.end}
+                      subtitleStyle={subtitleStyle}
+                      compact={true}
+                      showTimeAndDuration={!isMobile}
+                    />
+                  ))}
+                </div>
               </div>
-              
-              {/* Panel drept - Configurări stil */}
-              <div className="config-panel">
-                <CollapsibleSection 
-                  title="Configurări Stil"
-                  sectionKey="subtitlesConfig"
-                  defaultExpanded={true}
-                  icon="🎨"
-                >
-                  <SubtitlesConfig 
-                    subtitleStyle={subtitleStyle}
-                    handleStyleChange={handleStyleChange}
-                    compact={true}
-                  />
-                </CollapsibleSection>
+            </CollapsibleSection>
+          </section>
+        )}
+
+        {/* ===== SECȚIUNE SEPARATĂ - CONFIGURĂRI STIL ===== */}
+        {subtitles.length > 0 && (
+          <section className="subtitles-config-section">
+            <CollapsibleSection 
+              title="Configurări Stil"
+              sectionKey="subtitlesConfig"
+              defaultExpanded={true}
+              icon="🎨"
+            >
+              <div className="config-content-unlimited">
+                <SubtitlesConfig 
+                  subtitleStyle={subtitleStyle}
+                  handleStyleChange={handleStyleChange}
+                  compact={true}
+                />
               </div>
-            </div>
+            </CollapsibleSection>
           </section>
         )}
 
