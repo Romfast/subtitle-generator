@@ -21,15 +21,17 @@ body {
   min-height: 100vh;
 }
 
+/* ===== HEADER - NORMAL POSITION ===== */
 .header {
   text-align: center;
   margin-bottom: 24px;
-  padding: 0;
-  background: none;
-  backdrop-filter: none;
-  border-radius: 0;
-  box-shadow: none;
-  border: none;
+  padding: 20px 24px;
+  position: relative;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.98) 0%, rgba(118, 75, 162, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 h1, h2, h3, h4 {
@@ -82,11 +84,16 @@ section:hover {
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== UNIFIED CONTROL PANEL - COMPACT DESIGN ========== */
+/* ========== UNIFIED CONTROL PANEL - NORMAL POSITION ========== */
 .unified-control-panel {
   background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
   border: 2px solid rgba(102, 126, 234, 0.2);
   padding: 20px;
+  position: relative;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  border-radius: 16px;
 }
 
 .unified-controls {
@@ -715,7 +722,7 @@ section:hover {
 .collapsible-header {
   width: 100%;
   padding: 20px 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.98) 0%, rgba(226, 232, 240, 0.98) 100%);
   border: none;
   cursor: pointer;
   display: flex;
@@ -726,6 +733,9 @@ section:hover {
   color: #1e293b;
   transition: all 0.3s ease;
   text-align: left;
+  position: relative;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .collapsible-header:hover {
@@ -733,7 +743,7 @@ section:hover {
 }
 
 .collapsible-header.expanded {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.98) 0%, rgba(118, 75, 162, 0.98) 100%);
   color: white;
 }
 
@@ -929,7 +939,7 @@ section:hover {
   /* FIX: Mobile layout adjustments */
   .subtitles-and-config-container.mobile-layout {
     flex-direction: column;
-    gap: 16px;
+    gap: 20px; /* UX FIX #1: More gap for easier scrolling */
   }
 
   .config-panel {
@@ -942,36 +952,38 @@ section:hover {
   }
 
   .collapsible-header {
-    padding: 16px 20px;
+    padding: 20px 24px; /* UX FIX #1: Much larger touch area */
     font-size: 1rem;
+    min-height: 64px; /* UX FIX #1: Comfortable touch target */
   }
   
   .collapsible-inner {
-    padding: 20px;
+    padding: 24px; /* UX FIX #1: More breathing room */
   }
   
   .section-icon {
-    font-size: 1.1rem;
+    font-size: 1.3rem; /* UX FIX #1: Larger icons for better visibility */
   }
   
   .section-badge {
-    font-size: 0.7rem;
-    padding: 1px 6px;
-    margin-left: 6px;
-    min-width: 20px;
-    height: 18px;
+    font-size: 0.75rem;
+    padding: 4px 8px; /* UX FIX #1: Larger badge touch area */
+    margin-left: 8px;
+    min-width: 28px;
+    height: 24px; /* UX FIX #1: Larger badge */
   }
   
   .subtitle-header-simplified {
     grid-template-columns: 80px 1fr;
-    padding: 10px 12px;
-    font-size: 0.75rem;
+    padding: 16px 20px; /* UX FIX #1: Much more padding */
+    font-size: 0.8rem;
   }
   
   .subtitle-item-simplified {
     grid-template-columns: 80px 1fr;
-    padding: 10px 12px;
-    font-size: 0.85rem;
+    padding: 20px; /* UX FIX #1: Large touch area for subtitle items */
+    font-size: 0.9rem;
+    min-height: 72px; /* UX FIX #1: Comfortable touch target for subtitle editing */
   }
   
   /* Hide demo presets on mobile and tablet */
@@ -979,31 +991,33 @@ section:hover {
     display: none;
   }
   
-  /* Adjust grid for smaller tablets */
+  /* UX FIX #1: Better grid spacing for touch */
   .control-row {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 20px !important; /* UX FIX #1: More gap between controls */
   }
   
   .action-buttons-row {
     grid-template-columns: 1fr !important;
-    gap: 12px !important;
+    gap: 16px !important; /* UX FIX #1: More space between action buttons */
   }
   
-  /* Mobile spinner adjustments */
+  /* UX FIX #1: Touch-friendly spinner adjustments */
   .spinner-container, .border-spinner-container {
-    gap: 6px;
+    gap: 12px; /* UX FIX #1: More space around spinners */
   }
   
   .modern-number-input, .border-number-input {
-    width: 70px;
-    padding: 10px 12px;
+    width: 80px; /* UX FIX #1: Wider input for easier touch */
+    padding: 16px; /* UX FIX #1: Much larger touch area */
+    min-height: 48px; /* UX FIX #1: Comfortable touch target */
+    font-size: 1rem;
   }
   
   .spinner-btn, .border-spinner-btn {
-    width: 20px;
-    height: 14px;
-    font-size: 9px;
+    width: 32px; /* UX FIX #1: Much larger touch area */
+    height: 24px; /* UX FIX #1: Taller buttons */
+    font-size: 12px; /* UX FIX #1: Larger text */
   }
 
   /* Video section - FIX PENTRU MOBIL */
@@ -1112,44 +1126,69 @@ section:hover {
 /* Very small mobile devices */
 @media (max-width: 480px) {
   .collapsible-header {
-    padding: 14px 16px;
+    padding: 18px 20px; /* UX FIX #1: Increased touch area */
     font-size: 0.95rem;
+    min-height: 56px; /* UX FIX #1: Minimum touch target 56px */
   }
   
   .collapsible-inner {
-    padding: 16px;
+    padding: 20px;
   }
   
   .collapsible-title {
-    gap: 8px;
+    gap: 12px; /* UX FIX #1: More spacing for easier reading */
   }
   
   .section-badge {
-    font-size: 0.65rem;
-    padding: 1px 4px;
-    margin-left: 4px;
-    min-width: 18px;
-    height: 16px;
+    font-size: 0.7rem;
+    padding: 4px 8px; /* UX FIX #1: Larger touch target */
+    margin-left: 8px;
+    min-width: 24px;
+    height: 24px; /* UX FIX #1: Larger badge for better visibility */
   }
   
   .subtitle-header-simplified {
     grid-template-columns: 70px 1fr;
-    padding: 8px 10px;
+    padding: 12px 16px; /* UX FIX #1: More padding for touch */
   }
   
   .subtitle-item-simplified {
     grid-template-columns: 70px 1fr;
-    padding: 8px 10px;
+    padding: 16px; /* UX FIX #1: Much more padding for comfortable touch */
+    min-height: 60px; /* UX FIX #1: Minimum touch target */
   }
 
-  /* Smaller pending changes panel */
+  /* UX FIX #1: Better touch targets for pending changes */
   .pending-changes-info {
-    font-size: 0.8rem;
-    gap: 8px;
+    font-size: 0.85rem;
+    gap: 12px;
+    padding: 4px 0; /* UX FIX #1: More vertical space */
   }
 
   .changes-icon {
-    font-size: 1rem;
+    font-size: 1.2rem; /* UX FIX #1: Larger icon */
+  }
+  
+  /* UX FIX #1: Touch-friendly action buttons */
+  .compact-action-button {
+    padding: 18px 24px !important; /* UX FIX #1: Much larger touch area */
+    font-size: 1rem !important;
+    min-height: 56px !important; /* UX FIX #1: Apple/Google recommended minimum */
+    border-radius: 12px !important;
+  }
+  
+  /* UX FIX #1: Larger file input area */
+  .compact-file-input {
+    padding: 18px 20px !important;
+    min-height: 56px !important;
+    font-size: 1rem !important;
+  }
+  
+  /* UX FIX #1: Better select dropdown */
+  .compact-select {
+    padding: 18px 20px !important;
+    min-height: 56px !important;
+    font-size: 1rem !important;
   }
 }
 
@@ -1311,4 +1350,32 @@ section:hover {
 .react-player video {
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+
+/* Enhanced mobile adjustments */
+@media (max-width: 768px) {
+  .header {
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  
+  .unified-control-panel {
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  
+  .unified-control-panel {
+    margin-bottom: 12px;
+    padding: 16px;
+  }
 }

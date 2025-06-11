@@ -1,0 +1,234 @@
+/* ========== UX FIX #5: TOAST NOTIFICATIONS ========== */
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 280px;
+  max-width: 400px;
+  pointer-events: auto;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-enter {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.toast-exit {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.toast-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Toast type variations */
+.toast-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%);
+  color: white;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.toast-error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(185, 28, 28, 0.95) 100%);
+  color: white;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.toast-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
+  color: white;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.toast-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(30, 64, 175, 0.95) 100%);
+  color: white;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .toast-container {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    align-items: center;
+  }
+  
+  .toast {
+    width: 100%;
+    max-width: none;
+    min-width: auto;
+    padding: 20px 24px;
+    font-size: 1rem;
+    border-radius: 16px;
+    transform: translateY(-100%);
+  }
+  
+  .toast-enter {
+    transform: translateY(0);
+  }
+  
+  .toast-exit {
+    transform: translateY(-100%);
+  }
+  
+  .toast-icon {
+    font-size: 1.4rem;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .toast-message {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .toast-container {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+  }
+  
+  .toast {
+    padding: 18px 20px;
+    border-radius: 12px;
+  }
+  
+  .toast-icon {
+    font-size: 1.3rem;
+    width: 26px;
+    height: 26px;
+  }
+  
+  .toast-message {
+    font-size: 0.95rem;
+  }
+}
+
+/* Animation keyframes */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: opacity 0.1s ease;
+    transform: none !important;
+  }
+  
+  .toast-enter {
+    opacity: 1;
+  }
+  
+  .toast-exit {
+    opacity: 0;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .toast {
+    border: 3px solid currentColor;
+    backdrop-filter: none;
+  }
+  
+  .toast-success {
+    background: #22c55e;
+    color: #000000;
+  }
+  
+  .toast-error {
+    background: #ef4444;
+    color: #ffffff;
+  }
+  
+  .toast-warning {
+    background: #f59e0b;
+    color: #000000;
+  }
+  
+  .toast-info {
+    background: #3b82f6;
+    color: #ffffff;
+  }
+}

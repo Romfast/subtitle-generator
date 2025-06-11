@@ -5,6 +5,7 @@ import ProgressBar from './ProgressBar';
 import SubtitlesConfig from './SubtitlesConfig';
 import SubtitlePreview from './SubtitlePreview';
 import EditableSubtitleItem from './EditableSubtitleItem';
+import { useToast } from './Toast'; // UX FIX #5: Import toast system
 import './App.css';
 import './ProgressBar.css';
 import './SubtitlesConfig.css';
@@ -28,6 +29,9 @@ function App() {
   const [layoutMode, setLayoutMode] = useState('side');
   const [isMobile, setIsMobile] = useState(false);
   const [loadingModel, setLoadingModel] = useState('');
+  
+  // UX FIX #5: Toast notification system
+  const { addToast, ToastManager } = useToast();
   
   // Stări pentru model Whisper
   const [whisperModel, setWhisperModel] = useState('small');
@@ -145,14 +149,26 @@ function App() {
     
     setModelLoading(true);
     setLoadingModel(newModel);
+    
+    // UX FIX #5: Toast for model loading
+    addToast(`Se încarcă modelul ${newModel.toUpperCase()}...`, 'info', 2000, '🔄');
+    
     try {
       const response = await axios.post(`${API_URL}/change-model`, { model: newModel });
       setWhisperModel(newModel);
       setUploadStatus(`Model schimbat la ${newModel.toUpperCase()} cu succes!`);
+      
+      // UX FIX #5: Success toast
+      addToast(`Model ${newModel.toUpperCase()} încărcat cu succes!`, 'success', 3000, '✨');
+      
       console.log('Model changed:', response.data);
     } catch (err) {
       console.error('Error changing model:', err);
-      setError(`Eroare la schimbarea modelului: ${err.response?.data?.error || err.message}`);
+      const errorMsg = `Eroare la schimbarea modelului: ${err.response?.data?.error || err.message}`;
+      setError(errorMsg);
+      
+      // UX FIX #5: Error toast
+      addToast('Eroare la încărcarea modelului', 'error', 4000);
     } finally {
       setModelLoading(false);
       setLoadingModel('');
@@ -233,6 +249,9 @@ function App() {
       setUploadStatus('Videoclip încărcat cu succes!');
       setUploadedFileName(response.data.filename);
       
+      // UX FIX #5: Success toast for upload
+      addToast('Video încărcat cu succes!', 'success', 3000, '📹');
+      
       if (response.data.task_id) {
         setUploadTaskId(response.data.task_id);
         pollTaskProgress(response.data.task_id, setUploadProgress, 'upload');
@@ -241,7 +260,12 @@ function App() {
       setIsProcessing(false);
     } catch (err) {
       console.error('Error uploading video:', err);
-      setError(`Eroare la încărcarea videoclipului: ${err.message || 'Eroare necunoscută'}`);
+      const errorMsg = `Eroare la încărcarea videoclipului: ${err.message || 'Eroare necunoscută'}`;
+      setError(errorMsg);
+      
+      // UX FIX #5: Error toast for upload
+      addToast('Eroare la încărcarea videoclipului', 'error', 4000);
+      
       setIsProcessing(false);
     }
   };
@@ -269,6 +293,9 @@ function App() {
       const modelUsed = response.data.model_used || whisperModel;
       setUploadStatus(`Subtitrări generate cu succes folosind modelul ${modelUsed.toUpperCase()}!`);
       
+      // UX FIX #5: Success toast for subtitle generation
+      addToast(`Subtitrări generate cu succes! (${response.data.subtitles.length} segmente)`, 'success', 4000, '🎵');
+      
       // FIX: Expandează secțiunile pe desktop
       if (!isMobile) {
         setSectionsExpanded(prev => ({
@@ -291,7 +318,12 @@ function App() {
       }
     } catch (err) {
       console.error('Error generating subtitles:', err);
-      setError(`Eroare la generarea subtitrărilor: ${err.response?.data?.error || err.message}`);
+      const errorMsg = `Eroare la generarea subtitrărilor: ${err.response?.data?.error || err.message}`;
+      setError(errorMsg);
+      
+      // UX FIX #5: Error toast for subtitle generation
+      addToast('Eroare la generarea subtitrărilor', 'error', 4000);
+      
       setTranscribeProgress(0);
     } finally {
       setIsProcessing(false);
@@ -422,6 +454,10 @@ function App() {
                 console.log("Download initiated for:", downloadUrl);
                 directDownload(downloadUrl);
                 setUploadStatus('Videoclip cu subtitrări creat și descărcat cu succes!');
+                
+                // UX FIX #5: Success toast for video completion
+                addToast('Video cu subtitrări creat cu succes!', 'success', 5000, '🎬');
+                
                 setIsProcessing(false);
                 return;
               } else if (statusResponse.data.status === 'error') {
@@ -663,29 +699,32 @@ function App() {
             )}
           </div>
           
-          {/* Bare de progres compacte */}
+          {/* UX FIX #4: Enhanced progress bars with time estimation */}
           <div className="compact-progress">
             {uploadProgress > 0 && uploadProgress < 100 && (
               <ProgressBar 
                 progress={uploadProgress} 
-                label="Încărcare" 
-                status={progressStatus || "Se încarcă..."}
+                label="Încărcare Video" 
+                status={progressStatus || "Se încarcă videoclipul..."}
+                showTime={true}
               />
             )}
             
             {transcribeProgress > 0 && transcribeProgress < 100 && (
               <ProgressBar 
                 progress={transcribeProgress} 
-                label={`Transcriere (${whisperModel.toUpperCase()})`}
-                status={progressStatus || "Se procesează..."}
+                label={`Transcriere Audio (Model: ${whisperModel.toUpperCase()})`}
+                status={progressStatus || "Se analizează conținutul audio..."}
+                showTime={true}
               />
             )}
             
             {processProgress > 0 && processProgress < 100 && (
               <ProgressBar 
                 progress={processProgress}
-                label="Creare video"
-                status={progressStatus || "Se procesează..."}
+                label="Generare Video Final"
+                status={progressStatus || "Se încorporează subtitrările..."}
+                showTime={true}
               />
             )}
           </div>
@@ -849,6 +888,9 @@ function App() {
             </p>
           </div>
         )}
+        
+        {/* UX FIX #5: Toast notification system */}
+        <ToastManager />
       </div>
     </div>
   );

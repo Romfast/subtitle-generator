@@ -65,6 +65,11 @@ const EditableSubtitleItem = ({
   const handleSave = () => {
     if (text !== subtitle.text) {
       updateSubtitle(index, text);
+      
+      // UX FIX #5: Haptic feedback for successful save
+      if (isMobile && navigator.vibrate) {
+        navigator.vibrate(100); // Single long vibration for save confirmation
+      }
     }
     setIsEditing(false);
   };
@@ -102,9 +107,9 @@ const EditableSubtitleItem = ({
     e.stopPropagation();
     setIsEditing(true);
     
-    // Feedback haptic pe mobil
+    // UX FIX #5: Enhanced haptic feedback
     if (isMobile && navigator.vibrate) {
-      navigator.vibrate(50);
+      navigator.vibrate([50, 25, 50]); // Double tap pattern for edit mode
     }
   };
   

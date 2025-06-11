@@ -103,6 +103,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
   const [presets, setPresets] = useState([]);
   const [presetName, setPresetName] = useState('');
   const [showSavePreset, setShowSavePreset] = useState(false);
+  
+  // UX FIX #3: Mobile tab system state
+  const [activeTab, setActiveTab] = useState('style');
 
   // Detectare mobil
   useEffect(() => {
@@ -537,26 +540,68 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     );
   };
 
-  return (
-    <div className="subtitle-style-controls-modern">
-      {/* Demo Presets la început pentru acces rapid */}
-      <div className="demo-presets-section">
-        <h4 className="section-title">⚡ Preseturi Rapide</h4>
-        <div className="demo-presets-grid-modern">
-          {Object.entries(DEMO_PRESETS).map(([key, preset]) => (
+  // UX FIX #3: Mobile tab component
+  const MobileTabNavigation = () => {
+    if (!isMobile) return null;
+    
+    const tabs = [
+      { id: 'presets', label: '⚡ Presets', icon: '⚡' },
+      { id: 'style', label: '🎨 Stil', icon: '🎨' },
+      { id: 'highlight', label: '✨ Evidențiere', icon: '✨' },
+      { id: 'position', label: '📍 Poziție', icon: '📍' },
+      { id: 'layout', label: '📐 Layout', icon: '📐' },
+      { id: 'saved', label: '💾 Salvate', icon: '💾' }
+    ];
+    
+    return (
+      <div className="mobile-tab-navigation">
+        <div className="mobile-tab-list">
+          {tabs.map(tab => (
             <button
-              key={key}
-              onClick={() => applyDemoPreset(key)}
-              className="demo-preset-btn-modern"
-              style={{ backgroundColor: preset.color }}
-              title={`Aplicați presetul ${preset.name}`}
+              key={tab.id}
+              className={`mobile-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab(tab.id);
+                // UX FIX #3: Haptic feedback
+                if (navigator.vibrate) {
+                  navigator.vibrate(30);
+                }
+              }}
             >
-              <span className="preset-icon">{preset.icon}</span>
-              <span className="preset-name">{preset.name}</span>
+              <span className="tab-icon">{tab.icon}</span>
+              <span className="tab-label">{tab.label.split(' ')[1] || tab.label}</span>
             </button>
           ))}
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="subtitle-style-controls-modern">
+      {/* UX FIX #3: Mobile tab navigation */}
+      <MobileTabNavigation />
+      
+      {/* Demo Presets - shown on desktop always, on mobile only when presets tab active */}
+      {(!isMobile || activeTab === 'presets') && (
+        <div className="demo-presets-section">
+          <h4 className="section-title">⚡ Preseturi Rapide</h4>
+          <div className="demo-presets-grid-modern">
+            {Object.entries(DEMO_PRESETS).map(([key, preset]) => (
+              <button
+                key={key}
+                onClick={() => applyDemoPreset(key)}
+                className="demo-preset-btn-modern"
+                style={{ backgroundColor: preset.color }}
+                title={`Aplicați presetul ${preset.name}`}
+              >
+                <span className="preset-icon">{preset.icon}</span>
+                <span className="preset-name">{preset.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* FIX: Butonul de aplicare setări în header-ul configurărilor */}
       {hasChanges && (
@@ -585,9 +630,10 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       {/* Toate configurațiile într-un singur container fără tab-uri */}
       <div className="unified-controls-container">
         
-        {/* Secțiunea Font și Dimensiuni */}
-        <div className="control-group">
-          <h4 className="group-title">🎨 Stil Text</h4>
+        {/* Secțiunea Font și Dimensiuni - shown on desktop always, on mobile only when style tab active */}
+        {(!isMobile || activeTab === 'style') && (
+          <div className="control-group">
+            <h4 className="group-title">🎨 Stil Text</h4>
           <div className="controls-grid">
             
             <ModernSelect 
@@ -635,12 +681,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               onChange={handleLocalChange}
             />
 
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Secțiunea Evidențiere Cuvânt */}
-        <div className="control-group">
-          <h4 className="group-title">✨ Evidențiere Cuvânt</h4>
+        {/* Secțiunea Evidențiere Cuvânt - shown on desktop always, on mobile only when highlight tab active */}
+        {(!isMobile || activeTab === 'highlight') && (
+          <div className="control-group">
+            <h4 className="group-title">✨ Evidențiere Cuvânt</h4>
           <div className="controls-grid">
             
             <ModernToggle 
@@ -672,12 +720,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               </>
             )}
 
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Secțiunea Poziționare */}
-        <div className="control-group">
-          <h4 className="group-title">📍 Poziționare</h4>
+        {/* Secțiunea Poziționare - shown on desktop always, on mobile only when position tab active */}
+        {(!isMobile || activeTab === 'position') && (
+          <div className="control-group">
+            <h4 className="group-title">📍 Poziționare</h4>
           <div className="controls-grid">
             
             <ModernSelect 
@@ -727,12 +777,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               </>
             )}
 
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Secțiunea Layout și Opțiuni */}
-        <div className="control-group">
-          <h4 className="group-title">📐 Layout și Opțiuni</h4>
+        {/* Secțiunea Layout și Opțiuni - shown on desktop always, on mobile only when layout tab active */}
+        {(!isMobile || activeTab === 'layout') && (
+          <div className="control-group">
+            <h4 className="group-title">📐 Layout și Opțiuni</h4>
           <div className="controls-grid">
             
             <SimpleRangeSlider 
@@ -757,12 +809,14 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
               onChange={handleLocalToggle}
             />
 
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Salvare presetări - SECȚIUNE COMPLETĂ SIMPLIFICATĂ */}
-        <div className="control-group">
-          <h4 className="group-title">💾 Presetări Personale</h4>
+        {/* Salvare presetări - shown on desktop always, on mobile only when saved tab active */}
+        {(!isMobile || activeTab === 'saved') && (
+          <div className="control-group">
+            <h4 className="group-title">💾 Presetări Personale</h4>
           
           {/* Buton salvare centralizat și mare */}
           <div style={{ 
@@ -967,8 +1021,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             )}
           </div>
         </div>
+        )}
 
-        {/* Info Box - Status actual */}
+        {/* Info Box - Status actual - always shown on desktop, shown on all tabs on mobile */}
         <div className="status-info-box">
           <div className="status-row">
             <span className="status-label">Font:</span>
@@ -1006,7 +1061,6 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
