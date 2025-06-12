@@ -575,6 +575,8 @@ def create_video_with_subtitles():
             'highlightMode': style.get('highlightMode', 'none'),  # NEW: Highlight mode support
             'maxLines': int(style.get('maxLines', 2)),  # FIX #8: Include maxLines
             'maxWidth': int(style.get('maxWidth', 50)),   # FIX #9: Folosim 70% implicit
+            # CRITICAL FIX: Add maxWordsPerLine parameter
+            'maxWordsPerLine': style.get('maxWordsPerLine', None),  # None = auto-calculation
             # FIX #6: Adăugăm informații mobile
             'isMobile': is_mobile,
             'screenWidth': screen_width,
@@ -628,6 +630,12 @@ def create_video_with_subtitles():
             video_width=video_width
         )
         
+        # DEBUG: Verificăm primele 3 subtitrări formatate
+        print("DEBUG: Checking first 3 formatted subtitles:")
+        for i, sub in enumerate(formatted_subtitles[:3]):
+            newline_char = '\n'
+            print(f"  Subtitle {i+1}: '{sub['text']}' (contains \\n: {newline_char in sub['text']})")
+        
         # Create a temporary SRT file with the subtitles
         temp_srt_path = os.path.join(tempfile.gettempdir(), f"{base_name}_{unique_id}.srt")
         
@@ -636,8 +644,9 @@ def create_video_with_subtitles():
                 start_time = format_srt_timestamp(sub['start'])
                 end_time = format_srt_timestamp(sub['end'])
                 
-                # Procesează textul conform opțiunilor de stil (ALL CAPS, eliminare punctuație)
-                text = process_subtitle_text(sub['text'].strip(), validated_style)
+                # Procesează textul conform opțiunilor de stil (ALL CAPS, eliminare punctuație, formatare pe linii)
+                from custom_position import process_text_with_options
+                text = process_text_with_options(sub['text'].strip(), validated_style)
                 
                 srt_file.write(f"{i}\n")
                 srt_file.write(f"{start_time} --> {end_time}\n")
@@ -730,6 +739,10 @@ def create_video_with_subtitles():
                         'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True,
                         'textAlign': 2,
+                        # CRITICAL FIX: Add line formatting parameters
+                        'maxLines': validated_style['maxLines'],
+                        'maxWordsPerLine': validated_style.get('maxWordsPerLine'),
+                        'videoWidth': video_width,
                         # FIX #6: Transmitem informații mobile
                         'isMobile': is_mobile,
                         'screenWidth': screen_width
@@ -751,6 +764,10 @@ def create_video_with_subtitles():
                         'customY': custom_y,
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
+                        # CRITICAL FIX: Add line formatting parameters
+                        'maxLines': validated_style['maxLines'],
+                        'maxWordsPerLine': validated_style.get('maxWordsPerLine'),
+                        'videoWidth': video_width,
                         # FIX #6: Transmitem informații mobile
                         'isMobile': is_mobile,
                         'screenWidth': screen_width
@@ -775,6 +792,10 @@ def create_video_with_subtitles():
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True,
+                        # CRITICAL FIX: Add line formatting parameters
+                        'maxLines': validated_style['maxLines'],
+                        'maxWordsPerLine': validated_style.get('maxWordsPerLine'),
+                        'videoWidth': video_width,
                         # FIX #6: Transmitem informații mobile
                         'isMobile': is_mobile,
                         'screenWidth': screen_width
@@ -794,6 +815,10 @@ def create_video_with_subtitles():
                         'position': position,
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
+                        # CRITICAL FIX: Add line formatting parameters
+                        'maxLines': validated_style['maxLines'],
+                        'maxWordsPerLine': validated_style.get('maxWordsPerLine'),
+                        'videoWidth': video_width,
                         # FIX #6: Transmitem informații mobile
                         'isMobile': is_mobile,
                         'screenWidth': screen_width

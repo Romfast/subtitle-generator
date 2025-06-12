@@ -114,14 +114,15 @@ def calculate_word_position_in_text(text, word_index, font_size):
 
 def process_text_with_options(text, style):
     """
-    Procesează textul conform opțiunilor din style (ALL CAPS, eliminare punctuație).
+    Procesează textul conform opțiunilor din style (ALL CAPS, eliminare punctuație, împărțire pe linii).
+    UPDATED: Include formarea pe linii bazată pe maxLines și maxWordsPerLine din configurare.
     
     Args:
         text: Textul de procesat
         style: Dicționar cu opțiunile de stil
     
     Returns:
-        str: Textul procesat
+        str: Textul procesat și formatat pe linii
     """
     processed_text = text
     
@@ -134,6 +135,67 @@ def process_text_with_options(text, style):
         import re
         processed_text = re.sub(r'[.,\/#!$%\^&\*;:{}=\-_`~()]', '', processed_text)
         processed_text = re.sub(r'\s{2,}', ' ', processed_text)  # eliminăm spațiile multiple
+    
+    # CRITICAL FIX: Aplicăm formatarea pe linii conform configurației DOAR dacă nu e deja formatat
+    max_lines = style.get('maxLines', 2)
+    max_words_per_line = style.get('maxWordsPerLine', None)
+    
+    print(f"DEBUG: Processing text formatting - maxLines={max_lines}, maxWordsPerLine={max_words_per_line}")
+    newline_char = '\n'
+    print(f"DEBUG: Original processed text: '{processed_text}' (already contains \\n: {newline_char in processed_text})")
+    
+    # Dacă textul DEJA conține line breaks, nu mai aplicăm formatarea
+    if newline_char in processed_text:
+        print("DEBUG: Text already formatted with line breaks, skipping additional formatting")
+        return processed_text
+    else:
+        print("DEBUG: Text does NOT contain line breaks, will attempt formatting")
+    
+    # Dacă avem configurare explicită pentru maxWordsPerLine, o folosim
+    if max_words_per_line is not None:
+        # Formatare manuală bazată pe configurare
+        words = processed_text.split()
+        if words and len(words) > max_words_per_line:
+            lines = []
+            for i in range(0, len(words), max_words_per_line):
+                line_words = words[i:i + max_words_per_line]
+                lines.append(' '.join(line_words))
+                if len(lines) >= max_lines:
+                    # Dacă avem mai multe cuvinte, le adăugăm pe ultima linie
+                    if i + max_words_per_line < len(words):
+                        remaining_words = words[i + max_words_per_line:]
+                        lines[-1] += ' ' + ' '.join(remaining_words)
+                    break
+            processed_text = '\n'.join(lines)
+            print(f"Manual line formatting: {len(words)} words -> {len(lines)} lines, {max_words_per_line} words/line")
+            print(f"DEBUG: Manual formatted text: '{processed_text}'")
+    else:
+        # CRITICAL FIX: Forțează împărțirea pe maxLines chiar și pentru texte scurte
+        words = processed_text.split()
+        print(f"DEBUG: Word count: {len(words)}, maxLines: {max_lines}")
+        
+        if len(words) > 1 and max_lines > 1:
+            # Calculăm cuvintele per linie pentru a umple maxLines
+            words_per_line = max(1, len(words) // max_lines)
+            if len(words) % max_lines != 0:
+                words_per_line += 1
+            
+            lines = []
+            for i in range(0, len(words), words_per_line):
+                line_words = words[i:i + words_per_line]
+                lines.append(' '.join(line_words))
+                if len(lines) >= max_lines:
+                    # Dacă avem mai multe cuvinte rămase, le adăugăm la ultima linie
+                    if i + words_per_line < len(words):
+                        remaining_words = words[i + words_per_line:]
+                        lines[-1] += ' ' + ' '.join(remaining_words)
+                    break
+            
+            processed_text = '\n'.join(lines)
+            print(f"FORCED line formatting: {len(words)} words -> {len(lines)} lines, ~{words_per_line} words/line")
+            print(f"DEBUG: Forced formatted text: '{processed_text}'")
+        else:
+            print(f"DEBUG: Skipping formatting (only {len(words)} words or maxLines={max_lines})")
     
     return processed_text
 
@@ -259,17 +321,20 @@ def create_ass_file_with_custom_position(srt_path, output_path, style, subtitles
     alignment = get_ass_alignment_from_position(position, useCustomPosition)
     margins = calculate_ass_margins_from_position(position, useCustomPosition, customX, customY, is_mobile)
     
-    # Header ASS complet cu BOLD=1 pentru fonturile groase
-    ass_header = """[Script Info]
+    # Header ASS complet cu BOLD=1 pentru fonturile groase + MaxTextWidth pentru line wrapping
+    video_width = style.get('videoWidth', 1920)
+    max_text_width = int(video_width * 0.8)  # 80% din lățimea video-ului
+    
+    ass_header = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
 ScaledBorderAndShadow: yes
-WrapStyle: 0
+WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},1,0,0,0,100,100,0,0,1,{outline_width},{shadow_depth},{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Default,{{font_family}},{{font_size}},&H{{primary_color}},&H{{secondary_color}},&H{{outline_color}},&H{{back_color}},1,0,0,0,100,100,0,0,1,{{outline_width}},{{shadow_depth}},{{alignment}},{{margin_l}},{{margin_r}},{{margin_v}},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -330,7 +395,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Procesează textul conform opțiunilor din style
             text = process_text_with_options(sub['text'].strip(), style)
+            newline_char = '\n'
+            double_backslash_n = '\\N'
+            print(f"DEBUG: Text before ASS formatting: '{text}' (contains \\n: {newline_char in text})")
             text = text.replace('\n', '\\N')
+            print(f"DEBUG: Text after ASS formatting: '{text}' (contains \\\\N: {double_backslash_n in text})")
+            
+            # DEBUG: Removed force test to see natural behavior
             
             # CRITICAL FIX: Calculăm poziționarea corectă
             position_tag = ""
@@ -363,6 +434,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             
             # Scriem linia de dialog
             dialog_line = f"Dialogue: 0,{start_ts},{end_ts},Default,,0,0,0,,{position_tag}{text}\n"
+            print(f"DEBUG: Writing ASS dialogue line: '{dialog_line.strip()}'")
             ass_file.write(dialog_line)
             
             # Log pentru debugging la primele câteva subtitrări
@@ -536,7 +608,7 @@ ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
 ScaledBorderAndShadow: yes
-WrapStyle: 0
+WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -600,6 +672,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         for i, sub in enumerate(subtitles):
             text = process_text_with_options(sub['text'].strip(), style)
             text = text.replace('\n', '\\N')
+            
+            # DEBUG: Removed force test to see natural behavior
             
             start_time = sub['start']
             end_time = sub['end']
@@ -720,7 +794,7 @@ PlayResX: 1920
 PlayResY: 1080
 Timer: 100.0000
 ScaledBorderAndShadow: yes
-WrapStyle: 0
+WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -876,7 +950,7 @@ ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
 ScaledBorderAndShadow: yes
-WrapStyle: 0
+WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding

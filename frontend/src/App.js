@@ -71,6 +71,8 @@ function App() {
     borderWidth: 2,
     maxLines: 1,
     maxWidth: 50,
+    // CRITICAL FIX: Add maxWordsPerLine to initial state
+    maxWordsPerLine: null,  // null = auto-calculation based on video width
     useCustomPosition: false,
     customX: 50,
     customY: 70,
@@ -338,7 +340,7 @@ function App() {
     let processedValue = value;
     
     if (name === 'maxLines' || name === 'maxWidth' || name === 'customX' || 
-        name === 'customY' || name === 'fontSize' || name === 'borderWidth') {
+        name === 'customY' || name === 'fontSize' || name === 'borderWidth' || name === 'maxWordsPerLine') {
       processedValue = parseInt(value, 10);
     } else if (name === 'useCustomPosition' || name === 'allCaps' || 
                name === 'removePunctuation' || name === 'useKaraoke') {
@@ -431,6 +433,8 @@ function App() {
         highlightMode: subtitleStyle.highlightMode || 'none',  // NEW: Add highlight mode
         maxLines: parseInt(subtitleStyle.maxLines) || 1,
         maxWidth: parseInt(subtitleStyle.maxWidth) || 50,
+        // CRITICAL FIX: Add maxWordsPerLine to video generation payload
+        maxWordsPerLine: subtitleStyle.maxWordsPerLine || null,
         isMobile: isMobile,
         screenWidth: window.innerWidth,
         screenHeight: window.innerHeight
