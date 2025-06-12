@@ -572,6 +572,7 @@ def create_video_with_subtitles():
             'useKaraoke': bool(style.get('useKaraoke', False)),
             'currentWordColor': style.get('currentWordColor', '#FFFF00'),
             'currentWordBorderColor': style.get('currentWordBorderColor', '#000000'),
+            'highlightMode': style.get('highlightMode', 'none'),  # NEW: Highlight mode support
             'maxLines': int(style.get('maxLines', 2)),  # FIX #8: Include maxLines
             'maxWidth': int(style.get('maxWidth', 50)),   # FIX #9: Folosim 70% implicit
             # FIX #6: Adăugăm informații mobile
@@ -690,11 +691,14 @@ def create_video_with_subtitles():
             
         # Activăm sau dezactivăm karaoke (evidențierea cuvântului curent)
         use_karaoke = validated_style['useKaraoke']
+        
+        # NEW: Extragem modul de evidențiere
+        highlight_mode = validated_style.get('highlightMode', 'none')
 
         # Log pentru debugging
         print(f"Applying subtitle style: font={font_family}, size={font_size}, color={font_color}, border={border_color}, width={border_width}")
         print(f"Position: {'custom' if use_custom_position else position}, X={custom_x}, Y={custom_y}")
-        print(f"Word highlighting: {use_karaoke}, current word color: {current_word_color}")
+        print(f"Word highlighting: {use_karaoke}, current word color: {current_word_color}, highlight mode: {highlight_mode}")
         print(f"Mobile optimizations: is_mobile={is_mobile}, screen_width={screen_width}")
 
         update_task_status(task_id, "processing", 30, "Aplicare subtitrări cu stil personalizat")
@@ -721,6 +725,7 @@ def create_video_with_subtitles():
                         'customY': custom_y,
                         'currentWordColor': current_word_color,
                         'currentWordBorderColor': current_word_border_color,
+                        'highlightMode': highlight_mode,  # NEW: Add highlight mode
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True,
@@ -766,6 +771,7 @@ def create_video_with_subtitles():
                         'position': position,
                         'currentWordColor': current_word_color,
                         'currentWordBorderColor': current_word_border_color,
+                        'highlightMode': highlight_mode,  # NEW: Add highlight mode
                         'allCaps': validated_style['allCaps'],
                         'removePunctuation': validated_style['removePunctuation'],
                         'useKaraoke': True,

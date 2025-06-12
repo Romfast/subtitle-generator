@@ -269,7 +269,7 @@ WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},1,0,0,0,100,100,0,0,1,{outline_width},0,{alignment},{margin_l},{margin_r},{margin_v},1
+Style: Default,{font_family},{font_size},&H{primary_color},&H{secondary_color},&H{outline_color},&H{back_color},1,0,0,0,100,100,0,0,1,{outline_width},{shadow_depth},{alignment},{margin_l},{margin_r},{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -285,6 +285,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     outline_color = hex_to_ass_color(style.get('borderColor', '#000000'))
     outline_width = style.get('borderWidth', 2)
     
+    # GLOW EFFECT: Pentru glow, nu folosim shadow-ul din stil, ci aplicăm în fiecare linie
+    highlight_mode = style.get('highlightMode', 'none')
+    shadow_depth = 0
+    back_color = "000000"  # Culoarea shadow-ului (mereu negru pentru stilul de bază)
+    
+    # Nu aplicăm shadow global aici pentru glow - va fi aplicat inline în fiecare linie
+    print(f"Highlight mode: {highlight_mode}, using shadow depth: {shadow_depth}")
+    
     # FIX #6: Pe mobil, mărim puțin grosimea conturului pentru vizibilitate
     if is_mobile:
         outline_width = max(outline_width, outline_width * 1.2)
@@ -297,8 +305,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         primary_color=font_color[2:],  # Eliminăm &H din început
         secondary_color="FFFFFF",
         outline_color=outline_color[2:],
-        back_color="000000",
+        back_color="000000",  # Culoarea shadow-ului (mereu negru)
         outline_width=outline_width,
+        shadow_depth=shadow_depth,  # Adăugat pentru glow
         alignment=alignment,
         margin_l=margins['MarginL'],
         margin_r=margins['MarginR'],
@@ -363,10 +372,75 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     print(f"ASS file created successfully: {output_path}")
     return output_path
 
-def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size, highlight_border_color=None, is_mobile=False):
+def get_highlight_mode_effects(highlight_mode, highlight_color, highlighted_font_size, base_font_size, highlight_border_color=None):
+    """
+    REDESIGNED: Returnează tag-uri ASS care funcționează real și se potrivesc cu preview-ul.
+    Folosește doar efecte care sunt suportate nativ în ASS format.
+    
+    Args:
+        highlight_mode: Modul de evidențiere (none, shadow, border, glow, double_border, thick_shadow)
+        highlight_color: Culoarea pentru evidențiere (fără &H prefix)
+        highlighted_font_size: Mărimea fontului pentru cuvântul evidențiat
+        base_font_size: Mărimea fontului pentru cuvintele normale
+        highlight_border_color: Culoarea conturului pentru cuvântul evidențiat (OPȚIONAL)
+    
+    Returns:
+        str: Tag-urile ASS pentru efectul dorit
+    """
+    if not highlight_mode or highlight_mode == 'none':
+        # Modul simplu - doar culori și mărime
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&"
+        if highlight_border_color:
+            result += f"\\3c&H{highlight_border_color}&"
+        return result
+    
+    elif highlight_mode == 'shadow':
+        # Shadow - umbră neagră clasică în jos-dreapta (simplu și vizibil)
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&\\xshad2\\yshad2\\4c&H000000&"
+        print(f"Applied shadow highlighting: {result}")
+        return result
+    
+    elif highlight_mode == 'border':
+        # Border subțire - contur de 2 pixeli
+        border_color = highlight_border_color if highlight_border_color else "000000"
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&\\bord2\\3c&H{border_color}&"
+        print(f"Applied border highlighting: {result}")
+        return result
+    
+    elif highlight_mode == 'glow':
+        # Glow - va fi aplicat global în create_enhanced_highlighted_text
+        # Aici returnam doar schimbarea de culoare și mărime
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&"
+        print(f"Applied glow highlighting (global glow handled separately): {result}")
+        return result
+    
+    elif highlight_mode == 'double_border':
+        # Double border - contur mediu de 4 pixeli
+        border_color = highlight_border_color if highlight_border_color else "000000"
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&\\bord4\\3c&H{border_color}&"
+        print(f"Applied double border highlighting: {result}")
+        return result
+    
+    elif highlight_mode == 'thick_shadow':
+        # Thick border - contur foarte gros de 6 pixeli
+        border_color = highlight_border_color if highlight_border_color else "000000"
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&\\bord6\\3c&H{border_color}&"
+        print(f"Applied thick border highlighting: {result}")
+        return result
+    
+    else:
+        # Fallback la modul simplu
+        print(f"WARNING: Unknown highlight mode '{highlight_mode}', using simple mode")
+        result = f"\\fs{highlighted_font_size}\\c&H{highlight_color}&"
+        if highlight_border_color:
+            result += f"\\3c&H{highlight_border_color}&"
+        return result
+
+def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_color, highlighted_font_size, base_font_size, highlight_border_color=None, is_mobile=False, highlight_mode='none', style=None):
     """
     FIX COMPLET: Creează textul cu un cuvânt evidențiat folosind tag-uri ASS inline.
     ÎMBUNĂTĂȚITĂ: Include mărirea fontului și CONTURUL PERSONALIZAT pentru cuvântul evidențiat.
+    NEW: Suport pentru multiple moduri de evidențiere.
     FIX #6: Ajustări pentru mobil.
     
     Args:
@@ -377,30 +451,49 @@ def create_enhanced_highlighted_text(words, highlighted_word_index, highlight_co
         base_font_size: Mărimea fontului pentru cuvintele normale
         highlight_border_color: Culoarea conturului pentru cuvântul evidențiat (OPȚIONAL)
         is_mobile: Dacă este pe mobil (pentru ajustări speciale)
+        highlight_mode: Modul de evidențiere (none, backdrop, underline, glow, box, outline, gradient)
     
     Returns:
-        str: Textul formatat cu tag-uri ASS pentru evidențiere + mărire + contur personalizat
+        str: Textul formatat cu tag-uri ASS pentru evidențiere + mărire + contur personalizat + mod evidențiere
     """
     if not words or highlighted_word_index >= len(words):
         return ' '.join(words) if words else ''
     
     result_parts = []
     
-    for i, word in enumerate(words):
-        if i == highlighted_word_index:
-            # Cuvântul evidențiat: schimb culoarea, mărimea, conturul și revin la setările normale
-            # CRITICAL FIX: Adăugăm și conturul personalizat dacă este specificat
-            if highlight_border_color:
-                # \fs = font size, \c = primary color, \3c = outline color, \r = reset to style
-                result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&\\3c&H{highlight_border_color}&}}{word}{{\\r}}")
-                print(f"Applied highlight with custom border: color={highlight_color}, border={highlight_border_color}, mobile={is_mobile}")
-            else:
-                # Fallback la conturul standard
-                result_parts.append(f"{{\\fs{highlighted_font_size}\\c&H{highlight_color}&}}{word}{{\\r}}")
-                print(f"Applied highlight with standard border: color={highlight_color}, mobile={is_mobile}")
+    # Pentru modul GLOW, aplicăm shadow global pe toate cuvintele
+    if highlight_mode == 'glow':
+        # Glow global pe toate cuvintele
+        if style:
+            glow_base_color = hex_to_ass_color(style.get('fontColor', '#FFFFFF'))[2:]  # Fără &H
         else:
-            # Cuvânt normal - folosește setările din stil
-            result_parts.append(word)
+            glow_base_color = "FFFFFF"  # Fallback la alb
+        
+        for i, word in enumerate(words):
+            if i == highlighted_word_index:
+                # Cuvântul evidențiat - glow cu border transparent + culoare specială
+                result_parts.append(f"{{\\c&H{highlight_color}&\\bord3\\3c&H{glow_base_color}&\\3a&HF0&\\fs{highlighted_font_size}}}{word}{{\\r}}")
+            else:
+                # Cuvintele normale - glow cu border transparent soft
+                result_parts.append(f"{{\\bord2\\3c&H{glow_base_color}&\\3a&HE0&}}{word}{{\\r}}")
+        
+        print(f"Applied SOFT GLOW mode with very transparent border color {glow_base_color}")
+    else:
+        # Pentru alte moduri, logica normală
+        for i, word in enumerate(words):
+            if i == highlighted_word_index:
+                # Obținem tag-urile pentru modul de evidențiere
+                highlight_effects = get_highlight_mode_effects(
+                    highlight_mode, highlight_color, highlighted_font_size, 
+                    base_font_size, highlight_border_color
+                )
+                
+                # Aplicăm efectele și resetăm la stilul normal
+                result_parts.append(f"{{{highlight_effects}}}{word}{{\\r}}")
+                print(f"Applied highlight mode '{highlight_mode}': color={highlight_color}, border={highlight_border_color}, mobile={is_mobile}")
+            else:
+                # Cuvânt normal - folosește setările din stil
+                result_parts.append(word)
     
     return ' '.join(result_parts)
 
@@ -472,6 +565,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     else:
         print("No custom highlight border color specified, using default")
     
+    # NEW: Obținem modul de evidențiere
+    highlight_mode = style.get('highlightMode', 'none')
+    print(f"Using highlight mode: {highlight_mode}")
+    
     border_width = style.get('borderWidth', 2)
     
     # FIX #6: Pe mobil, mărim puțin grosimea conturului pentru vizibilitate
@@ -540,9 +637,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     first_word_start = max(start_time, word_timings[0]['start'])
                     first_word_end = min(word_timings[0]['end'], end_time) if len(word_timings) > 1 else end_time
                     
-                    # Textul cu primul cuvânt evidențiat + mărit + contur personalizat
+                    # Textul cu primul cuvânt evidențiat + mărit + contur personalizat + mod evidențiere
                     highlighted_text = create_enhanced_highlighted_text(
-                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size, highlight_border_color, is_mobile
+                        processed_words, 0, highlight_color, highlighted_font_size, base_font_size, highlight_border_color, is_mobile, highlight_mode, style
                     )
                     word_events.append((first_word_start, first_word_end, highlighted_text))
                 
@@ -554,7 +651,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     
                     if word_start < word_end:  # Doar dacă avem un interval valid
                         highlighted_text = create_enhanced_highlighted_text(
-                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size, highlight_border_color, is_mobile
+                            processed_words, word_idx, highlight_color, highlighted_font_size, base_font_size, highlight_border_color, is_mobile, highlight_mode, style
                         )
                         word_events.append((word_start, word_end, highlighted_text))
                 
@@ -941,6 +1038,45 @@ def validate_ass_timestamps(subtitles):
     
     print(f"Timestamp validation complete for {len(subtitles)} subtitles")
 
+def test_all_highlight_effects():
+    """
+    Testează toate efectele de highlighting pentru a verifica dacă sunt vizibile în ASS.
+    Returnează exemple de tag-uri pentru fiecare mod.
+    """
+    test_results = {}
+    highlight_color = "FFFF00"  # Galben
+    highlight_border_color = "000000"  # Negru
+    highlighted_font_size = 48
+    base_font_size = 36
+    
+    modes = ['none', 'shadow', 'border', 'glow', 'double_border', 'thick_shadow']
+    
+    for mode in modes:
+        try:
+            tags = get_highlight_mode_effects(
+                mode, highlight_color, highlighted_font_size, 
+                base_font_size, highlight_border_color
+            )
+            test_results[mode] = {
+                'tags': tags,
+                'description': f"Test pentru modul {mode}",
+                'expected_visibility': 'high' if mode in ['border', 'thick_shadow'] else 'medium'
+            }
+        except Exception as e:
+            test_results[mode] = {
+                'tags': f"ERROR: {e}",
+                'description': f"Eroare la testarea modului {mode}",
+                'expected_visibility': 'none'
+            }
+    
+    print("=== TEST REZULTATE HIGHLIGHTING EFFECTS ===")
+    for mode, result in test_results.items():
+        print(f"{mode.upper()}: {result['tags']}")
+        print(f"  Vizibilitate așteptată: {result['expected_visibility']}")
+        print()
+    
+    return test_results
+
 def get_subtitle_statistics(subtitles):
     """
     Returnează statistici despre subtitrări pentru debugging, incluzând timing word-level.
@@ -977,3 +1113,7 @@ Enhanced Subtitle Statistics:
 """
     
     return stats
+
+# TEST: Rulează testul pentru highlighting effects
+if __name__ == "__main__":
+    test_all_highlight_effects()

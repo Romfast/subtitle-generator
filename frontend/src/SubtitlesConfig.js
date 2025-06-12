@@ -41,54 +41,186 @@ const predefinedColors = {
   ]
 };
 
-// DEMO PRESETS EXTINSE
+// SOCIAL MEDIA INSPIRED PRESETS - Based on TikTok, YouTube, CapCut Popular Styles
 const DEMO_PRESETS = {
-  'default': {
-    name: 'Default', icon: '⭐', color: '#10b981',
+  'tiktok_classic': {
+    name: 'TikTok Classic', icon: '🔥', color: '#FF0050',
     style: {
-      fontSize: 48, fontFamily: 'Inter', fontColor: '#00FF00', borderColor: '#000000', borderWidth: 2,
-      position: 'bottom-30', useCustomPosition: false, customX: 50, customY: 70, allCaps: true,
-      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FFFF00', currentWordBorderColor: '#000000'
+      fontSize: 48, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FFFF00', currentWordBorderColor: '#000000',
+      highlightMode: 'thick_shadow'
     }
   },
-  'cinema_classic': {
-    name: 'Cinema', icon: '🎬', color: '#1f2937',
+  'tiktok_viral': {
+    name: 'TikTok Viral', icon: '⚡', color: '#25F4EE',
     style: {
-      fontSize: 32, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
-      position: 'bottom', useCustomPosition: false, customX: 50, customY: 90, allCaps: true,
-      removePunctuation: false, useKaraoke: false, maxLines: 1, currentWordColor: '#FFFF00', currentWordBorderColor: '#000000'
+      fontSize: 52, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#25F4EE', currentWordBorderColor: '#000000',
+      highlightMode: 'thick_shadow'
     }
   },
-  'single_word_focus': {
-    name: 'Focus', icon: '🎯', color: '#dc2626',
+  'youtube_standard': {
+    name: 'YouTube Standard', icon: '📺', color: '#FF0000',
     style: {
-      fontSize: 56, fontFamily: 'Poppins', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
-      position: 'bottom-30', useCustomPosition: false, customX: 50, customY: 50, allCaps: true,
-      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FF3366', currentWordBorderColor: '#FFFFFF'
-    }
-  },
-  'rounded_soft': {
-    name: 'Soft', icon: '🌸', color: '#ec4899',
-    style: {
-      fontSize: 28, fontFamily: 'Nunito', fontColor: '#F8F9FA', borderColor: '#E5E7EB', borderWidth: 1,
+      fontSize: 42, fontFamily: 'Inter', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 2,
       position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
-      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#F472B6', currentWordBorderColor: '#BE185D'
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#FFFF00', currentWordBorderColor: '#000000',
+      highlightMode: 'shadow'
     }
   },
-  'bold_impact': {
-    name: 'Impact', icon: '💥', color: '#1f2937',
+  'youtube_gaming': {
+    name: 'YouTube Gaming', icon: '🎮', color: '#0F0F23',
     style: {
-      fontSize: 64, fontFamily: 'Inter', fontColor: '#FFFFFF', borderColor: '#1F2937', borderWidth: 4,
-      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 85, allCaps: true,
-      removePunctuation: true, useKaraoke: false, maxLines: 1, currentWordColor: '#EF4444', currentWordBorderColor: '#7F1D1D'
+      fontSize: 46, fontFamily: 'Bebas Neue', fontColor: '#00FF41', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FF073A', currentWordBorderColor: '#000000',
+      highlightMode: 'border'
     }
   },
-  'neon_futuristic': {
-    name: 'Neon', icon: '⚡', color: '#8b5cf6',
+  'capcut_trendy': {
+    name: 'CapCut Trendy', icon: '🎨', color: '#6C5CE7',
     style: {
-      fontSize: 36, fontFamily: 'Source Sans Pro', fontColor: '#00FFFF', borderColor: '#8B00FF', borderWidth: 2,
-      position: 'bottom-30', useCustomPosition: false, customX: 50, customY: 30, allCaps: true,
-      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#00FF88', currentWordBorderColor: '#FF0080'
+      fontSize: 44, fontFamily: 'Poppins', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#FDCB6E', currentWordBorderColor: '#000000',
+      highlightMode: 'border'
+    }
+  },
+  'capcut_neon': {
+    name: 'CapCut Neon', icon: '💫', color: '#A8E6CF',
+    style: {
+      fontSize: 40, fontFamily: 'Bebas Neue', fontColor: '#00FFFF', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FF6B6B', currentWordBorderColor: '#000000',
+      highlightMode: 'glow'
+    }
+  },
+  'instagram_story': {
+    name: 'Instagram Story', icon: '📱', color: '#E1306C',
+    style: {
+      fontSize: 38, fontFamily: 'Poppins', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#F77737', currentWordBorderColor: '#000000',
+      highlightMode: 'double_border'
+    }
+  },
+  'classic_cinema': {
+    name: 'Classic Cinema', icon: '🎬', color: '#2F3542',
+    style: {
+      fontSize: 42, fontFamily: 'Inter', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#FFF200', currentWordBorderColor: '#000000',
+      highlightMode: 'shadow'
+    }
+  },
+  'motivational': {
+    name: 'Motivational', icon: '💪', color: '#FF6348',
+    style: {
+      fontSize: 50, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 4,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FFA502', currentWordBorderColor: '#000000',
+      highlightMode: 'border'
+    }
+  },
+  'podcast_style': {
+    name: 'Podcast Style', icon: '🎧', color: '#474787',
+    style: {
+      fontSize: 36, fontFamily: 'Inter', fontColor: '#F1F2F6', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#3742FA', currentWordBorderColor: '#000000',
+      highlightMode: 'border'
+    }
+  },
+  'meme_culture': {
+    name: 'Meme Culture', icon: '🤣', color: '#FFA726',
+    style: {
+      fontSize: 44, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FF5722', currentWordBorderColor: '#000000',
+      highlightMode: 'thick_shadow'
+    }
+  },
+  'anime_style': {
+    name: 'Anime Glow', icon: '🌸', color: '#9C27B0',
+    style: {
+      fontSize: 40, fontFamily: 'Poppins', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#E91E63', currentWordBorderColor: '#000000',
+      highlightMode: 'glow'
+    }
+  },
+  'sports_energy': {
+    name: 'Sports Energy', icon: '⚽', color: '#4CAF50',
+    style: {
+      fontSize: 48, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#8BC34A', currentWordBorderColor: '#000000',
+      highlightMode: 'shadow'
+    }
+  },
+  'tech_review': {
+    name: 'Tech Review', icon: '📱', color: '#607D8B',
+    style: {
+      fontSize: 38, fontFamily: 'Inter', fontColor: '#ECEFF1', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#00BCD4', currentWordBorderColor: '#000000',
+      highlightMode: 'border'
+    }
+  },
+  'beauty_fashion': {
+    name: 'Beauty Fashion', icon: '💄', color: '#E91E63',
+    style: {
+      fontSize: 42, fontFamily: 'Poppins', fontColor: '#FCE4EC', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#F06292', currentWordBorderColor: '#000000',
+      highlightMode: 'glow'
+    }
+  },
+  'cooking_food': {
+    name: 'Cooking Food', icon: '🍳', color: '#FF5722',
+    style: {
+      fontSize: 40, fontFamily: 'Montserrat', fontColor: '#FFF3E0', borderColor: '#000000', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#FF8A65', currentWordBorderColor: '#000000',
+      highlightMode: 'double_border'
+    }
+  },
+  'music_video': {
+    name: 'Music Video', icon: '🎵', color: '#9C27B0',
+    style: {
+      fontSize: 46, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#000000', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#AB47BC', currentWordBorderColor: '#000000',
+      highlightMode: 'double_border'
+    }
+  },
+  'travel_vlog': {
+    name: 'Travel Vlog', icon: '✈️', color: '#2196F3',
+    style: {
+      fontSize: 38, fontFamily: 'Inter', fontColor: '#E3F2FD', borderColor: '#0D47A1', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#42A5F5', currentWordBorderColor: '#0D47A1',
+      highlightMode: 'shadow'
+    }
+  },
+  'dance_challenge': {
+    name: 'Dance Challenge', icon: '💃', color: '#FF4081',
+    style: {
+      fontSize: 50, fontFamily: 'Bebas Neue', fontColor: '#FFFFFF', borderColor: '#AD1457', borderWidth: 3,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: true,
+      removePunctuation: false, useKaraoke: true, maxLines: 1, currentWordColor: '#FF80AB', currentWordBorderColor: '#000000',
+      highlightMode: 'border'
+    }
+  },
+  'news_style': {
+    name: 'News Style', icon: '📰', color: '#1565C0',
+    style: {
+      fontSize: 36, fontFamily: 'Inter', fontColor: '#FFFFFF', borderColor: '#0D47A1', borderWidth: 2,
+      position: 'bottom-20', useCustomPosition: false, customX: 50, customY: 80, allCaps: false,
+      removePunctuation: false, useKaraoke: true, maxLines: 2, currentWordColor: '#1976D2', currentWordBorderColor: '#0D47A1',
+      highlightMode: 'border'
     }
   }
 };
@@ -97,6 +229,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
   // FIX: State local pentru toate configurările - NU se aplică automat
   const [localStyle, setLocalStyle] = useState(subtitleStyle);
   const [hasChanges, setHasChanges] = useState(false);
+  const [changesFromPreset, setChangesFromPreset] = useState(false); // NEW: Track if changes are from preset
   
   const [useCustomPosition, setUseCustomPosition] = useState(subtitleStyle.useCustomPosition || false);
   const [isMobile, setIsMobile] = useState(false);
@@ -126,6 +259,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     setLocalStyle(subtitleStyle);
     setUseCustomPosition(subtitleStyle.useCustomPosition || false);
     setHasChanges(false);
+    setChangesFromPreset(false); // Reset preset flag when style changes externally
   }, [subtitleStyle]);
 
   // Încarcă presetările la pornire
@@ -144,15 +278,16 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       processedValue = e.target.checked;
     }
     
-    console.log(`Local change: ${name} = ${processedValue}`);
+    console.log(`Manual change: ${name} = ${processedValue}`);
     
     setLocalStyle(prev => ({
       ...prev,
       [name]: processedValue
     }));
     
-    // Marcăm că avem modificări
+    // Marcăm că avem modificări MANUALE (nu din preset)
     setHasChanges(true);
+    setChangesFromPreset(false); // Clear preset flag for manual changes
   }, []);
 
   // FIX: Handler pentru toggle-uri
@@ -164,7 +299,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       [name]: newValue
     }));
     
+    // Marcăm că avem modificări MANUALE (nu din preset)
     setHasChanges(true);
+    setChangesFromPreset(false); // Clear preset flag for manual changes
   }, [localStyle]);
 
   // FIX: Handler pentru poziționare personalizată
@@ -177,7 +314,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       useCustomPosition: newValue
     }));
     
+    // Marcăm că avem modificări MANUALE (nu din preset)
     setHasChanges(true);
+    setChangesFromPreset(false); // Clear preset flag for manual changes
   }, [useCustomPosition]);
 
   // FIX: Handler pentru culorile predefinite
@@ -187,7 +326,9 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       [name]: colorValue
     }));
     
+    // Marcăm că avem modificări MANUALE (nu din preset)
     setHasChanges(true);
+    setChangesFromPreset(false); // Clear preset flag for manual changes
   }, []);
 
   // FIX: Funcții pentru aplicarea și resetarea modificărilor
@@ -295,29 +436,43 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
     }
   };
 
-  // FIX: Încărcare preset - actualizează local style
+  // FIX: Încărcare preset - APLICĂ AUTOMAT
   const loadPreset = (preset) => {
     const newStyle = { ...preset.style };
     
-    setLocalStyle(newStyle);
-    setUseCustomPosition(newStyle.useCustomPosition || false);
-    setHasChanges(true); // Marcăm că avem modificări de aplicat
+    // Aplicăm DIRECT la parent fără să așteptăm butonul Apply
+    Object.keys(newStyle).forEach(key => {
+      handleStyleChange({
+        target: {
+          name: key,
+          value: newStyle[key]
+        }
+      });
+    });
     
-    console.log(`Preset "${preset.name}" loaded into local state`, newStyle);
-    alert(`Presetarea "${preset.name}" a fost încărcată! Apăsați "Aplică Setările" pentru a vizualiza.`);
+    console.log(`Preset "${preset.name}" applied automatically`, newStyle);
   };
 
-  // FIX: Aplică preset demo direct
+  // FIX: Aplică preset demo AUTOMAT
   const applyDemoPreset = (presetKey) => {
     const preset = DEMO_PRESETS[presetKey];
     if (preset) {
       const newStyle = { ...preset.style };
       
-      setLocalStyle(newStyle);
-      setUseCustomPosition(newStyle.useCustomPosition || false);
-      setHasChanges(true);
+      console.log(`Applying demo preset "${preset.name}" with highlightMode: ${newStyle.highlightMode}`);
       
-      console.log(`Demo preset "${preset.name}" loaded into local state`, newStyle);
+      // Aplicăm DIRECT la parent fără să așteptăm butonul Apply
+      Object.keys(newStyle).forEach(key => {
+        console.log(`Applying style key: ${key} = ${newStyle[key]}`);
+        handleStyleChange({
+          target: {
+            name: key,
+            value: newStyle[key]
+          }
+        });
+      });
+      
+      console.log(`Demo preset "${preset.name}" applied automatically`, newStyle);
     }
   };
 
@@ -584,7 +739,7 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
       {/* Unified Presets Section - shown on desktop always, on mobile only when presets tab active */}
       {(!isMobile || activeTab === 'presets') && (
         <div className="unified-presets-section">
-          <h4 className="section-title">⚡ Presetări</h4>
+          <h4 className="section-title">🔥 Stiluri Populare</h4>
           
           {/* Demo Presets Grid */}
           <div className="demo-presets-grid-modern">
@@ -673,8 +828,8 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
         </div>
       )}
 
-      {/* FIX: Butonul de aplicare setări în header-ul configurărilor */}
-      {hasChanges && (
+      {/* FIX: Butonul de aplicare setări DOAR pentru modificări manuale */}
+      {hasChanges && !changesFromPreset && (
         <div className="pending-changes-panel">
           <div className="pending-changes-info">
             <span className="changes-icon">⚠️</span>
@@ -770,6 +925,21 @@ const SubtitlesConfig = ({ subtitleStyle, handleStyleChange, compact = false }) 
 
             {localStyle.useKaraoke && (
               <>
+                <ModernSelect 
+                  name="highlightMode"
+                  value={localStyle.highlightMode || 'none'}
+                  label="Mod Evidențiere"
+                  onChange={handleLocalChange}
+                  options={[
+                    { value: 'none', label: '🔸 Simplu - Doar culori' },
+                    { value: 'shadow', label: '🌑 Shadow - Umbră colorată' },
+                    { value: 'border', label: '🔲 Border Subțire - 2px' },
+                    { value: 'glow', label: '✨ Glow Global - Strălucire pe tot' },
+                    { value: 'double_border', label: '⭕ Border Mediu - 4px' },
+                    { value: 'thick_shadow', label: '🟦 Border Gros - 6px' }
+                  ]}
+                />
+
                 <div className="control-item">
                   <span className="control-label">Culoare Evidențiere</span>
                   <ModernColorSelector 

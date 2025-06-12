@@ -428,7 +428,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
             textAlign: 'center'
           }}>
             <span
-              className={`subtitle-word single-word ${isCurrentWord ? 'highlighted' : ''}`}
+              className={`subtitle-word single-word ${isCurrentWord ? 'highlighted' : ''} ${isCurrentWord && subtitleStyle.highlightMode && subtitleStyle.highlightMode !== 'none' ? `highlight-${subtitleStyle.highlightMode}` : ''}`}
               style={{
                 color: wordStyle.fontColor,
                 fontWeight: 'bold',
@@ -472,7 +472,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
         return (
           <span
             key={`word-${lineIndex}-${wordIndex}`}
-            className={`subtitle-word ${isCurrentWord ? 'highlighted' : ''}`}
+            className={`subtitle-word ${isCurrentWord ? 'highlighted' : ''} ${isCurrentWord && subtitleStyle.highlightMode && subtitleStyle.highlightMode !== 'none' ? `highlight-${subtitleStyle.highlightMode}` : ''}`}
             style={{
               color: wordStyle.fontColor,
               fontWeight: 'bold',
@@ -774,6 +774,7 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
       <div 
         ref={subtitleRef}
         className={`subtitle-overlay ${isDragging ? 'dragging' : ''} ${isMobileDevice ? 'mobile-mode' : ''} ${isSingleWordMode ? 'single-word-mode' : ''}`}
+        data-highlight-mode={subtitleStyle.highlightMode || 'none'}
         style={{
           ...finalStyle,
           maxWidth: isMobileDevice ? '90%' : `${subtitleStyle.maxWidth || 50}%`,

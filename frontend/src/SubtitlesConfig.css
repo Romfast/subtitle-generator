@@ -109,9 +109,11 @@
 
 .demo-presets-grid-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
   margin-bottom: 20px;
+  /* Limit to max 5 columns for better visibility */
+  max-width: 100%;
 }
 
 /* Saved presets grid similar to demo presets */
@@ -127,16 +129,23 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px 8px;
+  padding: 10px 6px;
   border: none;
   border-radius: 10px;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.8rem;
-  min-height: 60px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  min-height: 55px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  text-shadow: 
+    1px 1px 2px rgba(0, 0, 0, 0.8),
+    -1px -1px 2px rgba(0, 0, 0, 0.8),
+    1px -1px 2px rgba(0, 0, 0, 0.8),
+    -1px 1px 2px rgba(0, 0, 0, 0.8),
+    0 0 4px rgba(0, 0, 0, 0.9);
 }
 
 .demo-preset-btn-modern:hover {
@@ -152,13 +161,17 @@
 .preset-icon {
   font-size: 1.4rem;
   margin-bottom: 4px;
+  text-shadow: inherit;
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8));
 }
 
 .preset-name {
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  text-shadow: inherit;
+  color: inherit;
 }
 
 /* Saved preset button styling */

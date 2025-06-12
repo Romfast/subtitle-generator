@@ -934,6 +934,91 @@ section:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
+/* REDESIGNED: ASS-Compatible Highlighting Modes */
+/* These modes match exactly what the backend can generate in ASS format */
+
+/* Shadow Mode - Drop shadow effect (ASS: \xshad\yshad\4c) */
+.subtitle-word.highlighted.highlight-shadow {
+  text-shadow: 
+    2px 2px 0 #000000,
+    2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  border-radius: 4px !important;
+}
+
+/* Border Mode - Colored border around text (ASS: \bord\3c) */
+.subtitle-word.highlighted.highlight-border {
+  text-shadow: 
+    -1px -1px 0 currentColor,
+    1px -1px 0 currentColor,
+    -1px 1px 0 currentColor,
+    1px 1px 0 currentColor,
+    -2px 0 0 currentColor,
+    2px 0 0 currentColor,
+    0 -2px 0 currentColor,
+    0 2px 0 currentColor !important;
+  border-radius: 4px !important;
+}
+
+/* Glow Mode - Global glow effect on all words, with color highlighting on current word */
+/* IMPORTANT: In glow mode, ALL words get global shadow, not just highlighted word */
+.subtitle-overlay[data-highlight-mode="glow"] .subtitle-word {
+  /* Global glow effect applied to ALL words - VERY SOFT and SUBTLE */
+  text-shadow: 
+    0 0 6px rgba(255, 255, 255, 0.4),
+    0 0 12px rgba(255, 255, 255, 0.2),
+    0 0 18px rgba(255, 255, 255, 0.1) !important;
+  filter: brightness(1.05);
+}
+
+.subtitle-word.highlighted.highlight-glow {
+  /* Additional effects only for the highlighted word in glow mode */
+  filter: brightness(1.3) !important;
+  border-radius: 6px !important;
+  transform: scale(1.05);
+  animation: glow-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0% { 
+    filter: brightness(1.3);
+    transform: scale(1.05);
+  }
+  100% { 
+    filter: brightness(1.5);
+    transform: scale(1.08);
+  }
+}
+
+/* Double Border Mode - Border plus shadow (ASS: \bord\3c\shad\4c) */
+.subtitle-word.highlighted.highlight-double_border {
+  text-shadow: 
+    -1px -1px 0 currentColor,
+    1px -1px 0 currentColor,
+    -1px 1px 0 currentColor,
+    1px 1px 0 currentColor,
+    -2px 0 0 currentColor,
+    2px 0 0 currentColor,
+    0 -2px 0 currentColor,
+    0 2px 0 currentColor,
+    1px 1px 2px rgba(0, 0, 0, 0.7) !important;
+  border-radius: 4px !important;
+}
+
+/* Thick Shadow Mode - Heavy shadow effect (ASS: \xshad3\yshad3\4c\4a) */
+.subtitle-word.highlighted.highlight-thick_shadow {
+  text-shadow: 
+    3px 3px 0 #000000,
+    3px 3px 6px rgba(0, 0, 0, 0.6),
+    3px 3px 10px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 4px !important;
+}
+
+/* None Mode - Simple highlighting with just color change */
+.subtitle-word.highlighted.highlight-none {
+  /* No special effects, just the color change and size increase */
+  border-radius: 4px !important;
+}
+
 /* Mobile specific collapsible styling */
 @media (max-width: 768px) {
   /* FIX: Mobile layout adjustments */

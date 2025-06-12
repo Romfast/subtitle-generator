@@ -78,7 +78,8 @@ function App() {
     currentWordBorderColor: '#000000',
     allCaps: true,
     removePunctuation: false,
-    useKaraoke: true
+    useKaraoke: true,
+    highlightMode: 'none'
   });
 
   const fileInputRef = useRef();
@@ -343,8 +344,14 @@ function App() {
                name === 'removePunctuation' || name === 'useKaraoke') {
       processedValue = Boolean(value);
     }
+    // highlightMode should remain as string, no processing needed
     
     console.log('Style change applied immediately:', name, value, '->', processedValue);
+    
+    // Special debug for highlightMode
+    if (name === 'highlightMode') {
+      console.log('HIGHLIGHT MODE UPDATE:', processedValue);
+    }
     
     // FIX: Aplicăm direct modificarea - fără pending
     setSubtitleStyle(prev => ({
@@ -421,6 +428,7 @@ function App() {
         useKaraoke: Boolean(subtitleStyle.useKaraoke),
         currentWordColor: subtitleStyle.currentWordColor || '#FFFF00',
         currentWordBorderColor: subtitleStyle.currentWordBorderColor || '#000000',
+        highlightMode: subtitleStyle.highlightMode || 'none',  // NEW: Add highlight mode
         maxLines: parseInt(subtitleStyle.maxLines) || 1,
         maxWidth: parseInt(subtitleStyle.maxWidth) || 50,
         isMobile: isMobile,
