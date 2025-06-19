@@ -468,12 +468,19 @@ def generate_subtitles():
          # Importăm noile funcții
         from subtitles_utils import format_srt_with_auto_lines
         
+        # FIX: Get font_size from style for more accurate line splitting
+        # Use a default if not provided, aligning with frontend or a sensible default for backend processing.
+        base_font_size_for_splitting = style.get('fontSize', 48) # Default to 48 if not in style
+        # Note: This is the base font size. adjust_font_size_for_video is not called here yet.
+        # The character splitting will be based on this base size for the initial VTT.
+
         # Aplicăm noua formatare automată
         formatted_subtitles = format_srt_with_auto_lines(
             raw_subtitles, 
             max_lines=max_lines,           # FIX #8: Configurabil
             max_width_percent=max_width_percent,  # FIX #9: 70% în loc de 50%
-            video_width=video_width        # FIX #9: Dimensiuni reale video
+            video_width=video_width,        # FIX #9: Dimensiuni reale video
+            font_size=base_font_size_for_splitting # Pass font_size for new logic
         )
         
         # Create subtitle file in VTT format
@@ -622,12 +629,25 @@ def create_video_with_subtitles():
         # Importăm noile funcții
         from subtitles_utils import format_srt_with_auto_lines
         
-        # Aplicăm formatarea automată pentru video final
+        # First, calculate the actual font size that will be used in the ASS file
+        # This is crucial for accurate character-based line splitting.
+        base_font_size_from_style = validated_style['fontSize']
+        actual_font_size_for_ass = adjust_font_size_for_video(
+            base_font_size_from_style,
+            video_width,
+            1920, # Reference width, can be adjusted if needed
+            is_mobile=validated_style['isMobile'],
+            screen_width=validated_style['screenWidth']
+        )
+        print(f"Adjusted font size for ASS and line splitting: {actual_font_size_for_ass} (base: {base_font_size_from_style})")
+
+        # Aplicăm formatarea automată pentru video final, using the actual_font_size_for_ass
         formatted_subtitles = format_srt_with_auto_lines(
             subtitles, 
             max_lines=max_lines,
             max_width_percent=max_width,
-            video_width=video_width
+            video_width=video_width,
+            font_size=actual_font_size_for_ass # Pass the adjusted font size
         )
         
         # DEBUG: Verificăm primele 3 subtitrări formatate
@@ -660,18 +680,14 @@ def create_video_with_subtitles():
         
         # Extract style parameters din stilul validat
         font_family = validated_style['fontFamily']
-        base_font_size = validated_style['fontSize']
+        # base_font_size = validated_style['fontSize'] # Base size from frontend
+
+        # FIX #6 & Integration with line splitting:
+        # The actual font_size to be used for ASS styling is already calculated as actual_font_size_for_ass
+        # before calling format_srt_with_auto_lines. We use this same font_size here.
+        font_size = actual_font_size_for_ass
         
-        # FIX #6: Ajustăm dimensiunea fontului pentru video cu tratament special pentru mobil
-        font_size = adjust_font_size_for_video(
-            base_font_size, 
-            video_width, 
-            1920, 
-            is_mobile=is_mobile,
-            screen_width=screen_width
-        )
-        
-        print(f"Font size adjusted from {base_font_size} to {font_size} for video width {video_width}px "
+        print(f"Using font size for ASS styling: {font_size} (derived from base: {validated_style['fontSize']}) for video width {video_width}px "
               f"(mobile: {is_mobile}, screen: {screen_width}px)")
         
         font_color = validated_style['fontColor']

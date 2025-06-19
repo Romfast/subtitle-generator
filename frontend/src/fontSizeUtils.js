@@ -64,6 +64,18 @@ export const calculateVideoFontSize = (baseFontSize, videoWidth = 1280, videoHei
  * Calculează mărimea fontului pentru previzualizare, să corespundă cu cea din video final
  * Această funcție va face previzualizarea să arate identic cu rezultatul final
  * EXTENDED: Suport inteligent pentru fonturi mari
+ *
+ * NOTE ON PREVIEW vs. FINAL ASS FONT SIZE:
+ * This function aims to provide a visually proportional font size for the browser preview.
+ * 1. It first calls `calculateVideoFontSize` which estimates the font size intended for the
+ *    final video render (similar to backend's `adjust_font_size_for_video`).
+ * 2. Then, it scales this `videoFontSize` down to the actual size of the preview player
+ *    element in the browser (`previewWidth`).
+ * This means the returned `previewFontSize` is an *approximation* for display purposes.
+ * The actual pixel font size in the final ASS file is determined by the backend's
+ * `adjust_font_size_for_video` function, which uses the original video dimensions.
+ * Discrepancies can still occur due to different rendering engines (browser vs. libass/ffmpeg)
+ * and slight variations in scaling logic or available video dimension information.
  */
 export const calculatePreviewFontSize = (baseFontSize, previewWidth = 640, videoWidth = 1280) => {
   // Calculăm dimensiunea care va fi folosită în video final

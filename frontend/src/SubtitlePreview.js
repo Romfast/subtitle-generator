@@ -168,58 +168,66 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
     return highlightedSize;
   };
   
-  // Formatează textul subtitrării - IMPROVED pentru single word focus
+  // Formatează textul subtitrării - IMPROVED pentru single word focus & respecting backend newlines
   const formatSubtitleText = (text) => {
     if (!text) return { lines: [], allWords: [] };
-    
+
     let processedText = text;
     if (subtitleStyle.allCaps) {
       processedText = processedText.toUpperCase();
     }
-    
+
     if (subtitleStyle.removePunctuation) {
       processedText = processedText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
       processedText = processedText.replace(/\s{2,}/g, " ");
     }
-    
+
+    // Prioritize newlines from backend
+    if (processedText.includes('\n')) {
+      const linesFromBackend = processedText.split('\n');
+      const allWords = processedText.replace(/\n/g, ' ').split(/\s+/).filter(word => word.length > 0);
+      // console.log("Using backend newlines. Lines:", linesFromBackend, "All words:", allWords);
+      return { lines: linesFromBackend, allWords, currentWordOnly: false };
+    }
+
+    // Fallback to frontend logic if no newlines from backend (should be rare with new backend logic)
     const allWords = processedText.split(/\s+/).filter(word => word.length > 0);
-    const maxWordsPerLine = parseInt(subtitleStyle.maxWordsPerLine || 3, 10); 
-    const maxLines = parseInt(subtitleStyle.maxLines || 1, 10);
-    
-    // SPECIAL CASE: Pentru presetarea "single word focus" (maxWordsPerLine = 1)
-    if (maxWordsPerLine === 1) {
-      // Pentru un singur cuvânt per linie, afișăm doar cuvântul curent evidențiat
-      // sau primul cuvânt dacă karaoke nu e activat
-      if (subtitleStyle.useKaraoke && currentWordIndex < allWords.length) {
-        return { 
-          lines: [allWords[currentWordIndex]], 
+    const maxWordsPerLine = parseInt(subtitleStyle.maxWordsPerLine || 10, 10); // Increased default for this fallback
+    const maxLines = parseInt(subtitleStyle.maxLines || 2, 10);
+
+    if (maxWordsPerLine === 1 && subtitleStyle.useKaraoke) { // Single word focus mode
+      if (currentWordIndex < allWords.length) {
+        return {
+          lines: [allWords[currentWordIndex]],
           allWords: allWords,
-          currentWordOnly: true 
+          currentWordOnly: true
+        };
+      } else if (allWords.length > 0) { // Fallback if karaoke index is out of bounds
+        return {
+          lines: [allWords[0]],
+          allWords: allWords,
+          currentWordOnly: true
         };
       } else {
-        // Fără karaoke, afișăm primul cuvânt
-        return { 
-          lines: allWords.length > 0 ? [allWords[0]] : [], 
-          allWords: allWords,
-          currentWordOnly: true 
-        };
+        return { lines: [], allWords: [], currentWordOnly: false };
       }
     }
     
-    // Pentru presetări normale, folosim logica obișnuită
     const lines = [];
-    for (let i = 0; i < allWords.length && lines.length < maxLines; i += maxWordsPerLine) {
-      const lineWords = allWords.slice(i, i + maxWordsPerLine);
-      lines.push(lineWords.join(' '));
-    }
-    
-    if (allWords.length > maxLines * maxWordsPerLine && lines.length === maxLines) {
-      const extraWords = allWords.slice(maxLines * maxWordsPerLine);
-      if (extraWords.length > 0) {
-        lines[maxLines - 1] += ' ' + extraWords.join(' ');
+    if (allWords.length > 0) {
+      for (let i = 0; i < allWords.length && lines.length < maxLines; i += maxWordsPerLine) {
+        const lineWords = allWords.slice(i, i + maxWordsPerLine);
+        lines.push(lineWords.join(' '));
+      }
+
+      if (allWords.length > maxLines * maxWordsPerLine && lines.length === maxLines) {
+        const extraWords = allWords.slice(maxLines * maxWordsPerLine);
+        if (extraWords.length > 0) {
+          lines[maxLines - 1] += ' ' + extraWords.join(' ');
+        }
       }
     }
-    
+    // console.log("Using frontend line splitting. Lines:", lines, "All words:", allWords);
     return { lines, allWords, currentWordOnly: false };
   };
   
@@ -704,63 +712,69 @@ const SubtitlePreview = ({ subtitles, currentTime, subtitleStyle, updatePosition
   
   // CRITICAL FIX: Calculează poziția finală CORECT pentru toate platformele
   let finalStyle = {};
-  
-  // Determinăm poziția X și Y bazate pe setări
-  let targetX, targetY;
-  
+  let targetXPercent, targetYPercent;
+
   if (subtitleStyle.useCustomPosition) {
-    // Poziționare personalizată - folosim coordonatele exacte
-    targetX = subtitleStyle.customX || 50;
-    targetY = subtitleStyle.customY || 90;
-    console.log('Using custom position:', { x: targetX, y: targetY });
+    targetXPercent = subtitleStyle.customX || 50;
+    targetYPercent = subtitleStyle.customY || 90;
   } else {
-    // Poziționare predefinită - convertim poziția în coordonate
     const positionMap = {
-      'top': { x: 50, y: 10 },
-      'top-20': { x: 50, y: 20 },
-      'top-30': { x: 50, y: 30 },
-      'top-40': { x: 50, y: 40 },
+      'top': { x: 50, y: 10 }, 'top-20': { x: 50, y: 20 }, 'top-30': { x: 50, y: 30 }, 'top-40': { x: 50, y: 40 },
       'middle': { x: 50, y: 50 },
-      'bottom-40': { x: 50, y: 60 },
-      'bottom-30': { x: 50, y: 70 },
-      'bottom-20': { x: 50, y: 80 },
-      'bottom': { x: 50, y: 90 },
-      'top-left': { x: 10, y: 10 },
-      'top-right': { x: 90, y: 10 },
-      'bottom-left': { x: 10, y: 90 },
-      'bottom-right': { x: 90, y: 90 }
+      'bottom-40': { x: 50, y: 60 }, 'bottom-30': { x: 50, y: 70 }, 'bottom-20': { x: 50, y: 80 }, 'bottom': { x: 50, y: 90 },
+      'top-left': { x: 0, y: 0 }, 'top-right': { x: 100, y: 0 }, // Adjusted for transform logic
+      'bottom-left': { x: 0, y: 100 }, 'bottom-right': { x: 100, y: 100 } // Adjusted for transform logic
     };
-    
-    const coords = positionMap[subtitleStyle.position] || { x: 50, y: 90 };
-    targetX = coords.x;
-    targetY = coords.y;
-    console.log('Using preset position:', subtitleStyle.position, coords);
+    const coords = positionMap[subtitleStyle.position] || { x: 50, y: 90 }; // Default to bottom center-ish
+    targetXPercent = coords.x;
+    targetYPercent = coords.y;
   }
+
+  const getTransformForPosition = (positionPreset) => {
+    switch (positionPreset) {
+      case 'top': case 'top-20': case 'top-30': case 'top-40': return 'translate(-50%, 0)'; // AN 8 (TopCenter)
+      case 'middle': return 'translate(-50%, -50%)'; // AN 5 (MiddleCenter)
+      case 'bottom': case 'bottom-20': case 'bottom-30': case 'bottom-40': return 'translate(-50%, -100%)'; // AN 2 (BottomCenter)
+      case 'top-left': return 'translate(0, 0)'; // AN 7 (TopLeft)
+      case 'top-right': return 'translate(-100%, 0)'; // AN 9 (TopRight)
+      case 'bottom-left': return 'translate(0, -100%)'; // AN 1 (BottomLeft)
+      case 'bottom-right': return 'translate(-100%, -100%)'; // AN 3 (BottomRight)
+      // middle-left and middle-right are less common for subtitles, default to center for now if needed.
+      // case 'middle-left': return 'translate(0, -50%)'; // AN 4
+      // case 'middle-right': return 'translate(-100%, -50%)'; // AN 6
+      default: return 'translate(-50%, -100%)'; // Default to BottomCenter (AN 2)
+    }
+  };
   
+  const currentTransform = getTransformForPosition(subtitleStyle.position);
+
   if (isMobileDevice && videoRect) {
-    // Pe mobil folosim fixed positioning pentru a fi deasupra controalelor video
-    const mobilePos = getMobilePosition(targetX, targetY);
-    
+    const mobilePos = getMobilePosition(targetXPercent, targetYPercent); // getMobilePosition uses percentages
     finalStyle = {
       position: 'fixed',
-      left: `${mobilePos.x}px`,
+      left: `${mobilePos.x}px`, // getMobilePosition now returns pixel values for fixed
       top: `${mobilePos.y}px`,
-      transform: 'translate(-50%, -50%)',
+      transform: currentTransform, // Apply alignment transform
       zIndex: 9999,
     };
-    
-    console.log('Mobile positioning:', { targetX, targetY, mobilePos, finalStyle });
-  } else {
-    // Pe desktop folosim positioning absolut în cadrul containerului video
+  } else if (videoRect) { // Desktop and videoRect is available
+    const pixelX = (targetXPercent / 100) * videoRect.width;
+    const pixelY = (targetYPercent / 100) * videoRect.height;
     finalStyle = {
       position: 'absolute',
-      left: `${targetX}%`,
-      top: `${targetY}%`,
-      transform: 'translate(-50%, -50%)',
+      left: `${pixelX}px`,
+      top: `${pixelY}px`,
+      transform: currentTransform, // Apply alignment transform
       zIndex: 20,
     };
-    
-    console.log('Desktop positioning:', { targetX, targetY, finalStyle });
+  } else { // Fallback if videoRect is not yet available
+    finalStyle = {
+      position: 'absolute',
+      left: `${targetXPercent}%`,
+      top: `${targetYPercent}%`,
+      transform: currentTransform,
+      zIndex: 20,
+    };
   }
   
   const previewFontSize = getPreviewFontSize();
